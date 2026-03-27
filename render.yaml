@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: notare-updates
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT
+    envVars:
+      - key: ADMIN_KEY
+        sync: false
+    plan: free
