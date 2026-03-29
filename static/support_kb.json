@@ -1,0 +1,310 @@
+{
+  "_description": "Notare support knowledge base. Matched by keywords. Exhaustive coverage to minimize escalations.",
+  "entries": [
+    {
+      "keywords": ["license", "key", "activate", "activation", "trial", "enter key", "license key"],
+      "question": "How do I activate Notare?",
+      "answer": "Launch Notare and enter your license key in the activation screen. If you don't have a key yet, use the Contact form on our website to request a free 7-day trial key. Keys are typically issued within one business day."
+    },
+    {
+      "keywords": ["trial", "free", "demo", "try", "test", "how long", "7 day"],
+      "question": "How does the free trial work?",
+      "answer": "Request a trial key through our Contact page. You'll receive a 7-day Professional license with full access to all features. No credit card required. At the end of the trial, you can purchase a subscription to continue."
+    },
+    {
+      "keywords": ["expired", "renew", "subscription", "payment", "billing", "cancel"],
+      "question": "My license expired or I need to renew",
+      "answer": "Contact us through the support form or website to renew your subscription. Your jobs, profiles, and data are preserved even after expiration. Once renewed, enter your new key and everything will be available again."
+    },
+    {
+      "keywords": ["install", "setup", "download", "where", "find", "location"],
+      "question": "Where is Notare installed?",
+      "answer": "Notare installs to your local AppData folder by default. You can find it by searching for 'Notare' in your Start menu. All your data (jobs, profiles, exports) is stored in the same folder as the application."
+    },
+    {
+      "keywords": ["uninstall", "remove", "delete"],
+      "question": "How do I uninstall Notare?",
+      "answer": "Go to Windows Settings, then Apps, find Notare in the list, and click Uninstall. Your job data will remain in the install folder unless you manually delete it."
+    },
+    {
+      "keywords": ["template", "upload", "word template", "dotm", "docm", "docx"],
+      "question": "How do I use my Word template?",
+      "answer": "Go to the Profiles page, select or create a profile, and scroll to the Template section. Upload your .dotm file there. Notare will auto-detect the paragraph styles and bookmarks in your template and use them when exporting. You only need to upload it once per profile."
+    },
+    {
+      "keywords": ["bookmark", "bookmarks", "fill", "cover page", "case number", "caption"],
+      "question": "How do bookmarks work in exports?",
+      "answer": "When you upload a Word template, Notare detects any bookmarks (like CaseNumber, CourtName, Judge, etc.). During export, it fills those bookmarks with information from your job setup. Use 'Detect Bookmarks' in your profile to auto-map them, or manually map them using the bookmark mapping field."
+    },
+    {
+      "keywords": ["bookmark", "wrong", "not filling", "empty", "missing data"],
+      "question": "Bookmarks are not filling correctly",
+      "answer": "Go to your profile, scroll to Bookmark Mapping, and click 'Detect Bookmarks from Template'. This rescans your template. Make sure each bookmark is mapped to the correct field (e.g., CaseNo maps to case_number, not court_name). Check that you filled in the corresponding fields when creating the job."
+    },
+    {
+      "keywords": ["style", "colloquy", "q and a", "question answer", "parenthetical", "formatting"],
+      "question": "How do I switch between Q&A and colloquy formatting?",
+      "answer": "Notare auto-detects styles based on the content (questions, answers, procedural language). You can also manually switch styles using hotkeys: Alt+C for Colloquy, Alt+X for Question, Alt+Z for Answer, Alt+P for Parenthetical. These work in both the editor and during live recording."
+    },
+    {
+      "keywords": ["hotkey", "keyboard", "shortcut", "alt", "key"],
+      "question": "What keyboard shortcuts are available?",
+      "answer": "Speaker labels: Alt+U (THE COURT), Alt+W (THE WITNESS), Alt+K (THE CLERK), Alt+D (DEFENDANT). Styles: Alt+C (Colloquy), Alt+X (Question), Alt+Z (Answer), Alt+P (Parenthetical). Actions: Alt+F (Flag), Alt+N (Indiscernible). Audio: F5 (Play/Pause), F7 (Back 5s), F8 (Forward 5s), F9/F10 (Speed down/up)."
+    },
+    {
+      "keywords": ["transcribe", "audio", "upload audio", "start transcription", "mode", "how to"],
+      "question": "How do I transcribe audio?",
+      "answer": "Create a new job from the dashboard. Select your capture mode: Mode A (remote/Zoom), Mode B (multi-mic), Mode C (room mic live), or Mode D (upload audio files). Add speaker names and roles, upload any case documents, then click Create. For Mode D, upload your audio files and click Process."
+    },
+    {
+      "keywords": ["mode a", "zoom", "teams", "remote", "platform audio", "virtual"],
+      "question": "How does Mode A (remote capture) work?",
+      "answer": "Mode A captures both your microphone and platform audio from Zoom, Teams, or other conferencing software. Select your mic from the dropdown and start recording. The platform audio is captured separately for better speaker separation."
+    },
+    {
+      "keywords": ["mode b", "multi mic", "multiple microphone", "channel", "hardware"],
+      "question": "How does Mode B (multi-mic) work?",
+      "answer": "Mode B is for in-person proceedings with separate microphones for each speaker. Connect your multi-channel audio hardware, then assign each channel to a speaker name in the job setup. Notare maps channels directly to speakers for the most accurate attribution."
+    },
+    {
+      "keywords": ["mode c", "room mic", "live", "single mic", "one microphone"],
+      "question": "How does Mode C (room mic) work?",
+      "answer": "Mode C uses a single room microphone for live proceedings. Select your mic and start recording. Notare captures audio through the server and transcribes in real-time, displaying text as it is spoken. Use hotkeys to flag, label speakers, and switch styles during the proceeding."
+    },
+    {
+      "keywords": ["mode d", "upload", "pre-recorded", "batch", "file"],
+      "question": "How does Mode D (upload) work?",
+      "answer": "Mode D processes pre-recorded audio files. Upload WAV, MP3, M4A, AAC, FLAC, or TRM files when creating a job. Click Process on the dashboard and Notare will transcribe, detect speakers, and apply your proofing rules. The completed transcript opens in the editor."
+    },
+    {
+      "keywords": ["trm", "ftr", "for the record", "court audio", "oregon"],
+      "question": "How do I use FTR .trm files?",
+      "answer": "Upload your .trm files directly. Notare converts them to WAV automatically using the bundled ffmpeg. If you have multiple .trm segments from the same session, select all of them and Notare will concatenate them in order before processing."
+    },
+    {
+      "keywords": ["speaker", "speakers", "diarization", "who is speaking", "identify speaker", "wrong speaker"],
+      "question": "How does speaker detection work?",
+      "answer": "Notare uses voice analysis to distinguish speakers by how they sound. Add speaker names and roles in job setup for best results. After transcription, click any speaker label in the editor to reassign it. Use Alt+U/W/K/D hotkeys for quick assignment. Find/Replace can rename a speaker throughout the entire transcript."
+    },
+    {
+      "keywords": ["speaker", "wrong", "incorrect", "rename", "change speaker", "reassign"],
+      "question": "How do I fix incorrect speaker labels?",
+      "answer": "Click any speaker label in the editor to change it. For bulk changes, use Find/Replace to rename all instances of a speaker. Hotkeys (Alt+U for THE COURT, Alt+W for THE WITNESS, etc.) let you assign with one keystroke. Speaker detection improves with multi-mic setups and when you add speaker names during job setup."
+    },
+    {
+      "keywords": ["export", "word", "pdf", "save", "format", "lef", "ascii", "condensed", "ptx", "sync", "livenote", "sanction", "deposition"],
+      "question": "What export formats are available?",
+      "answer": "Notare supports 13 export formats: Standard Deposition (full court format with caption, appearances, index, certificates, errata, and word index), Word (.docx/.docm with macros), PDF, Condensed PDF (4-on-1), ASCII, LEF (LiveNote), PTX (Sanction), Video Sync (.dvt), Word Index, Reference Doc, Raw ASR, Plain Text, and JSON. Use the Export dropdown in the editor toolbar."
+    },
+    {
+      "keywords": ["deposition", "standard depo", "court format", "caption", "appearances", "certificate", "errata"],
+      "question": "What is the Standard Deposition export?",
+      "answer": "The Standard Deposition export generates a single PDF matching the format used by law firms and courts. It includes: cover page, caption page, appearances page, examination index with page references, line-numbered transcript body with Q&A and colloquy formatting, certificate of reporter, certificate of transcriber, errata sheet, and a hyperlinked word index."
+    },
+    {
+      "keywords": ["package", "generate package", "all formats", "bundle", "one click"],
+      "question": "What does Generate Package do?",
+      "answer": "Generate Package creates all export formats in one click and bundles them into a single zip file. It includes the deposition PDF, condensed PDF, ASCII, Word Index, LEF, PTX, video sync, and Word export. This is the equivalent of a full transcript delivery package."
+    },
+    {
+      "keywords": ["macro", "vba", "security warning", "blocked", "enable macro", "not working"],
+      "question": "Macros are not working in my Word export",
+      "answer": "Make sure your source template is a .dotm file (macro-enabled). Notare exports as .docm with the original VBA project preserved. If macros are blocked, check your Office Trust Center: File, Options, Trust Center, Trust Center Settings, Macro Settings. Enable macros for trusted locations or set to 'Disable with notification' so you can enable per-document."
+    },
+    {
+      "keywords": ["export", "not working", "error", "failed", "internal server"],
+      "question": "Export is giving an error",
+      "answer": "Common causes: 1) No transcript data yet (the job needs to be processed first). 2) Profile settings issue (try selecting a different profile or creating a new one). 3) Template file moved or deleted (re-upload your template in the profile). Close and restart Notare, then try the export again. If the error persists, check the notare.log file for details."
+    },
+    {
+      "keywords": ["import", "upload transcript", "completed transcript", "finished", "edited"],
+      "question": "How do I import a completed transcript?",
+      "answer": "Click 'Import Transcript' in the editor toolbar. Upload a .docx, .txt, or .pdf file. Notare parses the text, detects speaker labels and Q&A formatting, and creates editable segments. You can then run proofing, edit, and re-export in any format."
+    },
+    {
+      "keywords": ["proofing", "proofreading", "auto proof", "run proofing", "rules"],
+      "question": "How do I run proofing rules?",
+      "answer": "Click 'Run Proofing' in the editor toolbar. This applies all proofing rules from your jurisdiction profile: informal speech cleanup (gonna to going to, etc.), legal term capitalization (Your Honor, THE COURT), punctuation fixes, Exhibit/Count number formatting, and any custom rules you've added. Proofing runs automatically after transcription, but you can re-run it anytime."
+    },
+    {
+      "keywords": ["proofing", "custom", "rule", "add rule", "my own"],
+      "question": "How do I add custom proofing rules?",
+      "answer": "Go to your jurisdiction profile and scroll to the Auto-Proofing section. Add custom replacements in the format 'find -> replace' (one per line). You can also add custom capitalizations. Toggle individual built-in rules on or off. Rules are applied in order, so put more specific rules first."
+    },
+    {
+      "keywords": ["word boost", "vocabulary", "custom spelling", "misheard", "wrong word"],
+      "question": "How do I improve transcription accuracy for specific words?",
+      "answer": "Go to your jurisdiction profile and scroll to Vocabulary Boost. Add words and phrases the engine should prioritize (one per line), like county names, legal terms, or proper nouns. For Custom Spelling, add corrections in 'misspelling -> correct' format. These are sent to the transcription engine to improve recognition."
+    },
+    {
+      "keywords": ["live", "real time", "realtime", "streaming", "microphone", "cc", "rolling"],
+      "question": "How does live rolling transcription work?",
+      "answer": "Create a Mode C job, select your microphone from the dropdown, and click Record. Notare captures audio through the server and transcribes in 3-second segments, displaying text as it appears. Use hotkeys during the session to flag segments, assign speakers, and switch formatting styles. The full recording is saved for later reprocessing if needed."
+    },
+    {
+      "keywords": ["live", "not working", "no text", "no transcript", "rolling not working"],
+      "question": "Live transcription is not showing text",
+      "answer": "Make sure you selected a microphone from the dropdown before clicking Record. The first few seconds may be silent while the transcription model loads. Speak clearly within range of the microphone. If no text appears after 10 seconds, try a different microphone from the dropdown. Check that your audio input is not muted in Windows Sound settings."
+    },
+    {
+      "keywords": ["flag", "flagging", "mark", "review", "unclear"],
+      "question": "How do I flag segments for review?",
+      "answer": "Press Alt+F to flag the current segment. Flags appear in the review queue in the sidebar. Click a flag to jump to that segment; click the same flag again to dismiss it. During live recording, flags mark timestamps so you can replay and review after the proceeding."
+    },
+    {
+      "keywords": ["indiscernible", "inaudible", "can't hear", "unclear"],
+      "question": "How do I mark something as indiscernible?",
+      "answer": "Press Alt+N while on the segment. This replaces the text with '(indiscernible)' and flags it for review. You can also manually type '(indiscernible)' in any segment by clicking on the text."
+    },
+    {
+      "keywords": ["find", "replace", "search", "find and replace", "global"],
+      "question": "How do I find and replace text?",
+      "answer": "Click 'Find/Replace' in the editor toolbar. Enter the text to find and replacement text. This searches the entire transcript and replaces all matching instances. Useful for correcting recurring errors or renaming speakers throughout the document."
+    },
+    {
+      "keywords": ["search", "find transcript", "search all", "keyword"],
+      "question": "How do I search across all my transcripts?",
+      "answer": "Use the search bar on the dashboard. Type any keyword, speaker name, or case number. Results show matching text with context from every transcript in your archive. Click a result to open that job in the editor."
+    },
+    {
+      "keywords": ["profile", "jurisdiction", "create profile", "new profile"],
+      "question": "How do I create a jurisdiction profile?",
+      "answer": "Go to the Profiles page and click 'New Profile'. Enter the jurisdiction name, court name, reporter info, formatting preferences, and proofing rules. Upload your Word template and map bookmarks. Once saved, select this profile when creating new jobs to auto-fill all settings."
+    },
+    {
+      "keywords": ["engine", "whisper", "assemblyai", "deepgram", "rev", "cloud", "local", "which engine"],
+      "question": "Which transcription engine should I use?",
+      "answer": "Whisper (local) is free and keeps everything on your machine, but requires more processing power. An NVIDIA GPU makes it fast. AssemblyAI and Deepgram are cloud-based with good accuracy and faster processing. Rev.ai is built specifically for legal transcription. Choose based on your priorities: privacy (Whisper), speed (Deepgram), or legal accuracy (Rev.ai)."
+    },
+    {
+      "keywords": ["api key", "assemblyai key", "deepgram key", "rev key", "where to enter"],
+      "question": "Where do I enter my API key for cloud engines?",
+      "answer": "Go to Settings from the dashboard. Select your preferred engine and enter the API key in the field provided. API keys are stored locally on your machine. You can get API keys from: assemblyai.com, deepgram.com, or rev.ai."
+    },
+    {
+      "keywords": ["offline", "internet", "local", "no internet", "secure", "privacy", "data"],
+      "question": "Can I use Notare without internet?",
+      "answer": "Yes. When using the local Whisper engine, all transcription happens entirely on your machine with no data sent anywhere. Internet is only needed for: license activation on first launch, cloud transcription engines (optional), and checking for software updates."
+    },
+    {
+      "keywords": ["gpu", "cuda", "nvidia", "slow", "speed", "performance", "how long"],
+      "question": "Why is transcription slow?",
+      "answer": "Local Whisper transcription speed depends on your hardware. With an NVIDIA GPU, a one-hour recording typically processes in 5-10 minutes. On CPU only, it may take 30-60 minutes. Tips: use a smaller Whisper model (tiny.en or base.en in Settings), use a cloud engine for faster results, or process shorter segments."
+    },
+    {
+      "keywords": ["accuracy", "mistakes", "wrong words", "errors", "quality"],
+      "question": "How can I improve transcription accuracy?",
+      "answer": "1) Use higher quality audio (multi-mic > single mic, quiet room > noisy). 2) Use a larger Whisper model (large-v3 is most accurate, but slower). 3) Add Word Boost terms in your profile for specialized vocabulary. 4) Use a cloud engine like Rev.ai which is trained on legal audio. 5) Audio quality is the single biggest factor in accuracy."
+    },
+    {
+      "keywords": ["error", "crash", "not working", "won't open", "broken", "bug", "problem"],
+      "question": "Notare is not working properly",
+      "answer": "Try these steps in order: 1) Close Notare completely and reopen it. 2) Check the notare.log file in your Notare folder for specific error messages. 3) Make sure you have the latest version (Notare checks automatically on startup). 4) Try creating a new job to see if the issue is specific to one job. If the problem persists, click the ? button and contact support with your log file."
+    },
+    {
+      "keywords": ["blank", "white screen", "nothing shows", "empty window"],
+      "question": "Notare shows a blank or white screen",
+      "answer": "This usually means the server didn't start properly. Close Notare and restart it. If the issue continues: 1) Check if another copy of Notare is already running (check Task Manager). 2) Check if port 8080 is in use by another application. 3) Check the notare.log file for errors."
+    },
+    {
+      "keywords": ["update", "upgrade", "new version", "latest", "how to update"],
+      "question": "How do I update Notare?",
+      "answer": "Notare checks for updates automatically when it starts. If an update is available, it downloads and installs automatically. You'll see the latest changes on the next launch. No manual steps needed."
+    },
+    {
+      "keywords": ["collaborate", "share", "team", "multiple", "editors", "proofreader"],
+      "question": "How does collaboration work?",
+      "answer": "Click 'Collaborate' in the editor toolbar to generate a share link. Another editor can open this link to join the session. Segment locking prevents conflicts when both editors work simultaneously. Changes sync in real-time. Built for a reporter and proofreader splitting the work."
+    },
+    {
+      "keywords": ["live share", "attorney", "lawyer", "real time view", "share link"],
+      "question": "How do I share a live transcript with attorneys?",
+      "answer": "During a live recording, click 'Share Live' to generate a link. Attorneys can open this in their browser to see the transcript updating in real-time. They have view-only access. After the session, you can generate separate share links with different permissions (view, download, print)."
+    },
+    {
+      "keywords": ["document", "case filing", "extract", "ner", "case info", "auto fill"],
+      "question": "How does document extraction work?",
+      "answer": "When creating a job, upload case filings (PDF, Word, text) in the Documents section. Notare identifies the document type and extracts case numbers, court names, parties, attorneys, judges, dates, and times using built-in intelligence. This information auto-fills your job setup fields and template bookmarks. All processing happens locally."
+    },
+    {
+      "keywords": ["case", "case management", "organize", "cases"],
+      "question": "How do I organize cases?",
+      "answer": "Use the Cases page to group related jobs together. Create a case with a case number and caption, then assign jobs to it. This lets you search, export, and manage all transcripts for a single matter in one place."
+    },
+    {
+      "keywords": ["audio", "play", "pause", "playback", "listen", "review audio"],
+      "question": "How do I play back audio while editing?",
+      "answer": "The audio player appears at the top of the editor when audio is available. Click play or press F5 to start/pause. Use F7 to skip back 5 seconds and F8 to skip forward. Click any segment's timestamp to jump to that point in the audio. Adjust playback speed with the dropdown (0.25x to 2x)."
+    },
+    {
+      "keywords": ["edit", "change text", "modify", "correct", "fix text"],
+      "question": "How do I edit transcript text?",
+      "answer": "Click on any segment's text in the editor to make it editable. Type your corrections directly. Changes save automatically when you click away. Use Find/Replace for bulk changes. All edits are logged for training data to improve future transcription accuracy."
+    },
+    {
+      "keywords": ["exhibits", "evidence", "mark exhibit", "exhibit list"],
+      "question": "How do exhibits work?",
+      "answer": "Exhibits referenced in the transcript are detected automatically and listed in the sidebar. You can add, edit, or remove exhibits manually. Exhibit references in the text are hyperlinked. The Standard Deposition export includes a complete exhibit index with page references."
+    },
+    {
+      "keywords": ["certificate", "cert", "notary", "transcriber cert", "reporter cert"],
+      "question": "How do I customize the certificate in exports?",
+      "answer": "Go to your jurisdiction profile and enter your certificate template text in the Certificate field. This text is used in the Standard Deposition export. Include placeholders like your name, credential, and date fields. If left blank, a standard certificate template is used."
+    },
+    {
+      "keywords": ["errata", "correction sheet", "changes", "witness corrections"],
+      "question": "What is the errata sheet?",
+      "answer": "The errata sheet is included in the Standard Deposition export. It provides a formatted page where the deponent can note corrections to the transcript with reason codes (to clarify the record, to conform to facts, to correct transcription errors). This is standard in deposition practice."
+    },
+    {
+      "keywords": ["word index", "concordance", "word list", "index"],
+      "question": "What is the word index?",
+      "answer": "The word index lists every significant word in the transcript with page and line references. Common words (the, and, is, etc.) are excluded. In the Standard Deposition export, references are hyperlinked so clicking a page:line reference jumps to that location in the transcript."
+    },
+    {
+      "keywords": ["condensed", "4 on 1", "four page", "mini page", "review copy"],
+      "question": "What is the condensed transcript?",
+      "answer": "The condensed PDF puts four transcript pages on each physical page in a 2x2 grid. Each mini-page has its own line numbers and page numbers. This is standard in deposition practice for attorney review copies and is more economical for printing."
+    },
+    {
+      "keywords": ["video sync", "dvt", "click to play", "timecode", "video"],
+      "question": "What is video sync?",
+      "answer": "The video sync export (.dvt) maps each page and line of the transcript to a video timecode. Trial presentation software uses this file to link the transcript to deposition video so attorneys can click a line and play the corresponding video clip."
+    },
+    {
+      "keywords": ["lef", "livenote", "caseview"],
+      "question": "What is the LEF export?",
+      "answer": "LEF (LiveNote Evidence Format) is a pipe-delimited text format used by LiveNote and CaseView, which are popular deposition review platforms used by law firms. The format includes page and line numbers with the transcript text."
+    },
+    {
+      "keywords": ["ptx", "sanction", "trial presentation"],
+      "question": "What is the PTX export?",
+      "answer": "PTX is an XML-based format compatible with Sanction and other trial presentation software. It includes page/line references, speaker labels, and timestamps, allowing attorneys to import transcripts directly into their trial preparation tools."
+    },
+    {
+      "keywords": ["data", "backup", "where stored", "files", "folder"],
+      "question": "Where is my data stored?",
+      "answer": "All data is stored locally in the Notare installation folder. Jobs are in the 'sessions' subfolder, exports in the 'exports' subfolder, profiles in 'profiles.json', and templates in the 'templates' subfolder. Nothing is stored on external servers."
+    },
+    {
+      "keywords": ["multiple computers", "two computers", "transfer", "move"],
+      "question": "Can I use Notare on multiple computers?",
+      "answer": "Each license key activates one installation. To move Notare to a new computer, install it on the new machine and enter your license key. Your job data does not transfer automatically. To move data, copy the 'sessions' and 'templates' folders from the old installation to the new one."
+    },
+    {
+      "keywords": ["print", "printer", "hard copy"],
+      "question": "How do I print a transcript?",
+      "answer": "Export your transcript as a PDF (standard or deposition format), then print the PDF using your system's print dialog. The PDF includes proper page breaks, line numbers, and margins formatted for standard letter paper."
+    },
+    {
+      "keywords": ["font", "size", "appearance", "dark mode", "theme"],
+      "question": "Can I change the appearance or font?",
+      "answer": "The editor uses system fonts for readability. Export formatting is controlled by your Word template (for Word exports) or standard court transcript formatting (for PDF/deposition exports). Dark mode and theme settings are available in Settings."
+    },
+    {
+      "keywords": ["support", "help", "contact", "phone", "email", "reach"],
+      "question": "How do I contact support?",
+      "answer": "Click the ? button in the bottom-right corner of any screen. Type your question for instant answers. If the automated help doesn't resolve your issue, click 'Contact Support Team' to send a message directly to our team. You can also reach us through the contact form at notarelegal.com."
+    }
+  ]
+}

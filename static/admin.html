@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Admin Panel</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f7f5f2; color: #3d3d4e; }
+        .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-box { background: #ffffff; border: 1px solid #e0ddd8; border-radius: 8px; padding: 40px; width: 360px; text-align: center; }
+        .login-box h2 { font-size: 20px; margin-bottom: 8px; color: #c8a55c; font-family: Georgia, serif; }
+        .login-box p { font-size: 13px; color: #9a9aaa; margin-bottom: 24px; }
+        .login-box input { width: 100%; padding: 12px; background: #ffffff; border: 1px solid #e0ddd8; border-radius: 4px; color: #0f1b2d; font-size: 14px; margin-bottom: 12px; }
+        .login-box input:focus { outline: none; border-color: #0f1b2d; }
+        .login-box button { width: 100%; padding: 12px; background: #0f1b2d; color: #ffffff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .login-box .error { color: #0f1b2d; font-size: 12px; margin-top: 8px; display: none; }
+
+        .admin { display: none; }
+        .admin-header { background: #fafafa; border-bottom: 1px solid #e0ddd8; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .admin-header h1 { font-size: 16px; color: #c8a55c; letter-spacing: 2px; }
+        .admin-header .user { font-size: 13px; color: #9a9aaa; }
+        .admin-nav { background: #ffffff; border-bottom: 1px solid #e0ddd8; padding: 0 24px; display: flex; gap: 0; }
+        .admin-nav a { padding: 12px 16px; font-size: 13px; color: #6b6b7b; text-decoration: none; border-bottom: 2px solid transparent; }
+        .admin-nav a:hover { color: #3d3d4e; }
+        .admin-nav a.active { color: #0f1b2d; border-bottom-color: #0f1b2d; }
+        .content { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .card { background: #ffffff; border: 1px solid #e0ddd8; border-radius: 6px; padding: 20px; margin-bottom: 16px; }
+        .card h3 { font-size: 14px; margin-bottom: 12px; color: #c8a55c; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #ffffff; border: 1px solid #e0ddd8; border-radius: 6px; padding: 20px; text-align: center; }
+        .stat-card .num { font-size: 32px; font-weight: 700; color: #0f1b2d; }
+        .stat-card .label { font-size: 11px; color: #9a9aaa; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 11px; color: #9a9aaa; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; border-bottom: 1px solid #e0ddd8; }
+        td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #f0eeeb; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .badge.active { background: rgba(78,204,163,0.15); color: #2d8a6e; }
+        .badge.trial { background: rgba(240,165,0,0.15); color: #c8903c; }
+        .badge.expired { background: rgba(184,64,64,0.15); color: #b84040; }
+        .badge.solo { background: rgba(93,173,226,0.15); color: #3d7ab8; }
+        .badge.pro { background: rgba(233,69,96,0.15); color: #0f1b2d; }
+        .badge.agency { background: rgba(200,165,92,0.15); color: #c8a55c; }
+        .badge.academic { background: rgba(93,109,226,0.15); color: #3d4db8; }
+        .btn { display: inline-block; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+        .btn-sm { padding: 4px 10px; font-size: 11px; }
+        .btn-primary { background: #0f1b2d; color: #ffffff; }
+        .btn-secondary { background: #f0eeeb; color: #3d3d4e; }
+        .btn-danger { background: #b84040; color: #ffffff; }
+        input, select { padding: 8px 12px; background: #f7f5f2; border: 1px solid #e0ddd8; border-radius: 4px; color: #0f1b2d; font-size: 13px; font-family: inherit; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #ffffff; border: 1px solid #e0ddd8; border-radius: 8px; padding: 24px; min-width: 500px; }
+        .modal h3 { margin-bottom: 16px; color: #0f1b2d; }
+        .modal label { display: block; font-size: 12px; color: #6b6b7b; margin-bottom: 4px; margin-top: 12px; }
+        .modal input, .modal select { width: 100%; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-box">
+        <h2>NOTARE ADMIN</h2>
+        <p>Internal access only</p>
+        <input type="text" id="adminUser" placeholder="Username">
+        <input type="password" id="adminPass" placeholder="Password">
+        <button onclick="login()">Sign In</button>
+        <div class="error" id="loginError">Invalid credentials</div>
+    </div>
+</div>
+
+<!-- Admin Panel -->
+<div class="admin" id="adminPanel">
+    <div class="admin-header">
+        <h1>NOTARE ADMIN</h1>
+        <div>
+            <span class="user" id="adminName"></span>
+            <button class="btn btn-sm btn-secondary" onclick="logout()" style="margin-left: 12px;">Logout</button>
+        </div>
+    </div>
+    <div class="admin-nav">
+        <a href="#" class="active" onclick="showTab('dashboard', this)">Dashboard</a>
+        <a href="#" onclick="showTab('plans', this)">Plan Reference</a>
+        <a href="#" onclick="showTab('licenses', this)">Licenses</a>
+        <a href="#" onclick="showTab('customers', this)">Customers</a>
+        <a href="#" onclick="showTab('contacts', this)">Contact Requests</a>
+        <a href="#" onclick="showTab('referrals', this)">Referrals</a>
+        <a href="#" onclick="showTab('support', this)">Support</a>
+        <a href="#" onclick="showTab('system', this)">System</a>
+    </div>
+
+    <div class="content">
+
+        <!-- Dashboard -->
+        <div class="tab-content active" id="tab-dashboard">
+            <div class="stats">
+                <div class="stat-card"><div class="num" id="statLicenses">0</div><div class="label">Active Licenses</div></div>
+                <div class="stat-card"><div class="num" id="statCustomers">0</div><div class="label">Customers</div></div>
+                <div class="stat-card"><div class="num" id="statContacts">0</div><div class="label">Pending Contacts</div></div>
+                <div class="stat-card"><div class="num" id="statRevenue">$0</div><div class="label">Monthly Revenue</div></div>
+            </div>
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <div id="recentActivity" style="font-size: 13px; color: #6b6b7b;">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Plan Reference -->
+        <div class="tab-content" id="tab-plans">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">Plan Reference</h2>
+            <p style="font-size: 13px; color: #6b6b7b; margin-bottom: 20px;">Complete breakdown of all tiers. Use this when generating licenses or answering customer questions about what's included.</p>
+
+            <div class="card">
+                <h3>Tier Breakdown</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tier</th>
+                            <th>Code</th>
+                            <th>Price</th>
+                            <th>Seats</th>
+                            <th>Includes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Solo</strong></td>
+                            <td style="font-family: monospace;">solo</td>
+                            <td>$49.99/mo</td>
+                            <td>1</td>
+                            <td>All capture modes, unlimited transcription, templates, profiles, speaker ID, document auto-fill, reference docs, multi-pass accuracy</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Solo + Cases</strong></td>
+                            <td style="font-family: monospace;">solo_cases</td>
+                            <td>$69.99/mo</td>
+                            <td>1</td>
+                            <td>Everything in Solo + case management, case linking, deadline tracking, case-level reports</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Solo + Voices</strong></td>
+                            <td style="font-family: monospace;">solo_voices</td>
+                            <td>$69.99/mo</td>
+                            <td>1</td>
+                            <td>Everything in Solo + persistent voice profiles, cross-session speaker recognition, speaker directory</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Professional</strong></td>
+                            <td style="font-family: monospace;">professional</td>
+                            <td>$99.99/mo</td>
+                            <td>1</td>
+                            <td>Everything in Solo + Cases + Voices. Priority support.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Agency</strong></td>
+                            <td style="font-family: monospace;">agency</td>
+                            <td>$199.99/mo</td>
+                            <td>5</td>
+                            <td>Everything in Professional + shared profiles, shared speaker database, multi-reporter queue</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Enterprise</strong></td>
+                            <td style="font-family: monospace;">enterprise</td>
+                            <td>Custom</td>
+                            <td>Unlimited</td>
+                            <td>Everything in Agency + annual offline licensing, dedicated onboarding, phone support. <em style="color:#c8a55c;">Coming soon:</em> court-administered profiles (court provides template, we configure &amp; distribute to all their reporters)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trial</strong></td>
+                            <td style="font-family: monospace;">trial</td>
+                            <td>Free</td>
+                            <td>1</td>
+                            <td>Full Professional access for 7-days. No payment required. Converts to paid or deactivates.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Feature Matrix</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Solo</th>
+                            <th>+Cases</th>
+                            <th>+Voices</th>
+                            <th>Pro</th>
+                            <th>Agency</th>
+                            <th>Enterprise</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>All capture modes (A/B/C/D)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Unlimited local transcription</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Word template export + macros</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Jurisdiction profiles</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Speaker auto-identification</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Document auto-fill</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Reference document</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Multi-pass accuracy</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr style="border-top: 2px solid #e0ddd8;"><td><strong>Case management</strong></td><td>—</td><td>&#10003;</td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td><strong>Voice profiles</strong></td><td>—</td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr style="border-top: 2px solid #e0ddd8;"><td>Multi-seat (5 users)</td><td>—</td><td>—</td><td>—</td><td>—</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Shared profiles &amp; speaker DB</td><td>—</td><td>—</td><td>—</td><td>—</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Court-administered profiles <span style="font-size:10px;color:#c8a55c;font-weight:600;">COMING SOON</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>&#10003;</td></tr>
+                        <tr><td>Offline annual licensing</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>&#10003;</td></tr>
+                        <tr style="border-top: 2px solid #e0ddd8;"><td>Email support</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>Priority</td><td>Priority</td><td>Priority</td></tr>
+                        <tr><td>Phone support</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>&#10003;</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Quick Reference — License Generation</h3>
+                <p style="font-size: 13px; color: #6b6b7b; line-height: 1.8;">
+                    <strong>When generating a license:</strong><br>
+                    1. Select the tier code that matches what the customer purchased<br>
+                    2. Set duration: 7-days for trial, 365 for annual, 0 for unlimited (enterprise/internal)<br>
+                    3. The key format is auto-generated: NOTARE-XXXX-XXXX-XXXX<br>
+                    4. Send the key to the customer — they enter it once on first launch<br>
+                    5. Key validates locally against admin_data.json — no internet required after activation<br>
+                    <br>
+                    <strong>To upgrade a customer:</strong><br>
+                    1. Deactivate the old license in the Licenses tab<br>
+                    2. Generate a new license with the higher tier<br>
+                    3. Send the new key — they enter it in Settings<br>
+                    <br>
+                    <strong>Master keys</strong> (enterprise, no expiry) should only be issued to company owners and internal staff.
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>Permission Levels</h3>
+                <table>
+                    <thead>
+                        <tr><th>Level</th><th>Who Gets It</th><th>Can Do</th><th>Cannot Do</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Master / Enterprise</strong></td>
+                            <td>Company owners (Terry, Elizabeth), internal staff</td>
+                            <td>Full app access, all features unlocked regardless of tier, never expires, can access admin panel</td>
+                            <td>Nothing — unrestricted</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Professional</strong></td>
+                            <td>Paying customers on the Professional plan</td>
+                            <td>All features: transcription, cases, voices, templates, export. Priority email support.</td>
+                            <td>No admin panel access. No multi-seat. Cannot generate keys.</td>
+                        </tr>
+                        <tr style="background: #f7f5f2;">
+                            <td><strong>Support / Internal</strong></td>
+                            <td>Tech support staff, QA testers, contractors</td>
+                            <td>Full app access for testing and troubleshooting. Admin panel access (read-only). Can view customer data to diagnose issues.</td>
+                            <td>Cannot generate or deactivate keys. Cannot create admin accounts. Key expires — must be renewed by an admin.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Solo + Cases / Solo + Voices</strong></td>
+                            <td>Customers who chose a specific add-on tier</td>
+                            <td>All Solo features plus their selected add-on (cases OR voices, not both)</td>
+                            <td>The add-on they didn't select is locked. No admin access.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Solo</strong></td>
+                            <td>Base tier customers</td>
+                            <td>Core transcription, all capture modes, templates, profiles, speaker ID, reference docs</td>
+                            <td>No case management. No voice profiles. No admin access.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trial</strong></td>
+                            <td>Prospective customers evaluating the product</td>
+                            <td>Full Professional access for 7-days</td>
+                            <td>Auto-deactivates after 7-days. No admin access. Must convert to paid to continue.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Admin Account Roles</h3>
+                <table>
+                    <thead>
+                        <tr><th>Role</th><th>Access</th><th>Notes</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Admin</strong></td>
+                            <td>Full access: generate/deactivate licenses, manage customers, read contacts, create/remove admin accounts, system settings</td>
+                            <td>Terry (tech + support), Elizabeth (sales + licensing). Can create other admin and support accounts.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Support</strong></td>
+                            <td>Read-only admin panel: view all licenses, customers, contacts, system status. Full app access for testing/reproducing issues. Can view everything needed to diagnose problems.</td>
+                            <td>For tech support staff. Can see everything, can debug using the app, but cannot generate keys, deactivate licenses, create accounts, or make any changes to the business data. View and diagnose only.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Licenses -->
+        <div class="tab-content" id="tab-licenses">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                <h2 style="font-size: 20px;">License Management</h2>
+                <button class="btn btn-primary" onclick="showNewLicense()">+ Generate License</button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>Key</th><th>Customer</th><th>Tier</th><th>Status</th><th>Created</th><th>Expires</th><th>Actions</th></tr></thead>
+                    <tbody id="licenseTable"></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Academic Batch Generation</h3>
+                <div class="form-row">
+                    <div>
+                        <label style="display:block; font-size:12px; color:#6b6b7b; margin-bottom:4px;">School / Institution Name</label>
+                        <input type="text" id="batchSchool" style="width:100%;" placeholder="e.g. State University">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:12px; color:#6b6b7b; margin-bottom:4px;">Contact Email</label>
+                        <input type="email" id="batchEmail" style="width:100%;" placeholder="admin@school.edu">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:12px; color:#6b6b7b; margin-bottom:4px;">Number of Licenses (1-100)</label>
+                        <input type="number" id="batchCount" style="width:100%;" min="1" max="100" value="10">
+                    </div>
+                </div>
+                <div class="form-row" style="grid-template-columns: 1fr 1fr auto;">
+                    <div>
+                        <label style="display:block; font-size:12px; color:#6b6b7b; margin-bottom:4px;">Duration</label>
+                        <select id="batchDuration" style="width:100%;">
+                            <option value="30">7-days</option>
+                            <option value="90">90 days</option>
+                            <option value="365" selected>1 year</option>
+                            <option value="0">Unlimited</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; align-items:flex-end;">
+                        <button class="btn btn-primary" onclick="generateAcademicBatch()">Generate Academic Batch</button>
+                    </div>
+                </div>
+                <div id="batchResult" style="display:none; margin-top: 16px;">
+                    <label style="display:block; font-size:12px; color:#6b6b7b; margin-bottom:4px;">Generated Keys</label>
+                    <textarea id="batchKeys" readonly style="width:100%; height:160px; font-family:'Consolas',monospace; font-size:12px; background:#f7f5f2; border:1px solid #e0ddd8; border-radius:4px; padding:10px; color:#0f1b2d; resize:vertical;"></textarea>
+                    <button class="btn btn-sm btn-secondary" style="margin-top:8px;" onclick="copyBatchKeys()">Copy All Keys</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customers -->
+        <div class="tab-content" id="tab-customers">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">Customers</h2>
+            <div class="card">
+                <table>
+                    <thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Tier</th><th>License</th><th>Since</th></tr></thead>
+                    <tbody id="customerTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Contacts -->
+        <div class="tab-content" id="tab-contacts">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">Contact Requests</h2>
+            <div id="contactList"></div>
+        </div>
+
+        <!-- Referrals -->
+        <div class="tab-content" id="tab-referrals">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                <h2 style="font-size: 20px;">Referral Program</h2>
+                <button class="btn btn-primary" onclick="showNewReferral()">+ Generate Referral Code</button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>Code</th><th>Name</th><th>Discount</th><th>Uses / Max</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+                    <tbody id="referralTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Support -->
+        <div class="tab-content" id="tab-support">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">Support Tickets</h2>
+            <div class="stats" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card"><div class="num" id="ticketsOpen">0</div><div class="label">Open</div></div>
+                <div class="stat-card"><div class="num" id="ticketsClaimed">0</div><div class="label">In Progress</div></div>
+                <div class="stat-card"><div class="num" id="ticketsResolved">0</div><div class="label">Resolved</div></div>
+            </div>
+            <div class="card">
+                <h3>Open Tickets</h3>
+                <table>
+                    <thead><tr><th>Time</th><th>Customer</th><th>Issue</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="ticketsTable"></tbody>
+                </table>
+                <p id="noTickets" style="font-size: 13px; color: #9a9aaa; text-align: center; padding: 24px; display: none;">No support tickets. All clear.</p>
+            </div>
+
+            <div class="card">
+                <h3>Resolved Tickets</h3>
+                <table>
+                    <thead><tr><th>Time</th><th>Customer</th><th>Issue</th><th>Resolved By</th><th>Resolution</th></tr></thead>
+                    <tbody id="resolvedTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- System -->
+        <div class="tab-content" id="tab-system">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">System</h2>
+            <div class="card">
+                <h3>Admin Accounts</h3>
+                <table>
+                    <thead><tr><th>Username</th><th>Role</th><th>Actions</th></tr></thead>
+                    <tbody id="adminTable"></tbody>
+                </table>
+                <button class="btn btn-sm btn-secondary" style="margin-top: 12px;" onclick="showNewAdmin()">+ Add Admin</button>
+            </div>
+            <div class="card">
+                <h3>Server Info</h3>
+                <div style="font-size: 13px; color: #6b6b7b; line-height: 2;" id="serverInfo">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New License Modal -->
+<div class="modal-overlay" id="licenseModal">
+    <div class="modal">
+        <h3>Generate License Key</h3>
+        <label>Customer Name</label>
+        <input type="text" id="licName">
+        <label>Customer Email</label>
+        <input type="email" id="licEmail">
+        <label>Organization</label>
+        <input type="text" id="licOrg">
+        <label>Tier</label>
+        <select id="licTier">
+            <option value="solo">Solo ($49.99)</option>
+            <option value="solo_cases">Solo + Cases ($69.99)</option>
+            <option value="solo_voices">Solo + Voices ($69.99)</option>
+            <option value="professional">Professional ($99.99)</option>
+            <option value="agency">Agency ($199.99)</option>
+            <option value="enterprise">Enterprise (Custom)</option>
+            <option value="support">Support / Internal (Full access, read-only admin)</option>
+            <option value="trial">Trial (7-days)</option>
+            <option value="academic">Academic ($29.99)</option>
+        </select>
+        <label>Duration</label>
+        <select id="licDuration">
+            <option value="30">7-days</option>
+            <option value="90">90 days</option>
+            <option value="365" selected>1 year</option>
+            <option value="0">Unlimited</option>
+        </select>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="document.getElementById('licenseModal').classList.remove('active')">Cancel</button>
+            <button class="btn btn-primary" onclick="generateLicense()">Generate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Upgrade License Modal -->
+<div class="modal-overlay" id="upgradeModal">
+    <div class="modal">
+        <h3>Upgrade License</h3>
+        <p style="font-size: 13px; color: #6b6b7b; margin-bottom: 12px;">
+            This will deactivate the customer's current key and generate a new one at the selected tier.
+            The customer will need to enter their new key on next launch.
+        </p>
+        <label>Customer</label>
+        <input type="text" id="upgCustomer" readonly style="background: #f0eeeb;">
+        <label>Current Tier</label>
+        <input type="text" id="upgCurrentTier" readonly style="background: #f0eeeb;">
+        <label>New Tier</label>
+        <select id="upgNewTier">
+            <option value="solo">Solo ($49.99)</option>
+            <option value="solo_cases">Solo + Cases ($69.99)</option>
+            <option value="solo_voices">Solo + Voices ($69.99)</option>
+            <option value="professional">Professional ($99.99)</option>
+            <option value="agency">Agency ($199.99)</option>
+            <option value="enterprise">Enterprise (Custom)</option>
+        </select>
+        <label>Duration</label>
+        <select id="upgDuration">
+            <option value="30">7-days</option>
+            <option value="90">90 days</option>
+            <option value="365" selected>1 year</option>
+            <option value="0">Unlimited</option>
+        </select>
+        <input type="hidden" id="upgOldKey">
+        <input type="hidden" id="upgEmail">
+        <input type="hidden" id="upgOrg">
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="document.getElementById('upgradeModal').classList.remove('active')">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmUpgrade()">Upgrade & Generate New Key</button>
+        </div>
+    </div>
+</div>
+
+<!-- New Key Display Modal -->
+<div class="modal-overlay" id="newKeyModal">
+    <div class="modal" style="text-align: center;">
+        <h3 style="color: #2d8a6e;">New License Key Generated</h3>
+        <p style="font-size: 13px; color: #6b6b7b; margin: 12px 0;">
+            Send this key to the customer. Their old key has been deactivated.<br>
+            <strong style="color: #b84040;">They should keep this key somewhere safe.</strong>
+        </p>
+        <div style="background: #f7f5f2; border: 2px solid #c8a55c; border-radius: 6px; padding: 20px; margin: 16px 0; font-family: 'Consolas', monospace; font-size: 18px; letter-spacing: 1px; color: #0f1b2d; user-select: all;" id="newKeyDisplay"></div>
+        <p id="newKeyCustomer" style="font-size: 12px; color: #9a9aaa; margin-bottom: 16px;"></p>
+        <div style="display: flex; gap: 8px; justify-content: center;">
+            <button class="btn btn-primary" onclick="copyNewKey()" id="copyKeyBtn">Copy to Clipboard</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('newKeyModal').classList.remove('active'); loadLicenses();">Done</button>
+        </div>
+        <p style="font-size: 11px; color: #9a9aaa; margin-top: 12px;">
+            If the customer needs a copy emailed later, you'll have it in the Licenses tab.
+        </p>
+    </div>
+</div>
+
+<!-- New Admin Modal -->
+<div class="modal-overlay" id="adminModal">
+    <div class="modal">
+        <h3>Add Admin Account</h3>
+        <label>Username</label>
+        <input type="text" id="newAdminUser">
+        <label>Password</label>
+        <input type="password" id="newAdminPass">
+        <label>Role</label>
+        <select id="newAdminRole">
+            <option value="admin">Admin (full access)</option>
+            <option value="support">Support (read-only + contacts)</option>
+        </select>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="document.getElementById('adminModal').classList.remove('active')">Cancel</button>
+            <button class="btn btn-primary" onclick="createAdmin()">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- Referral Code Modal -->
+<div class="modal-overlay" id="referralModal">
+    <div class="modal">
+        <h3>Generate Referral Code</h3>
+        <label>Referral Name / Label</label>
+        <input type="text" id="refName" placeholder="e.g. Spring 2026 Campaign">
+        <label>Discount Percentage</label>
+        <input type="number" id="refDiscount" value="10" min="1" max="100">
+        <label>Max Uses</label>
+        <input type="number" id="refMaxUses" value="50" min="1">
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="document.getElementById('referralModal').classList.remove('active')">Cancel</button>
+            <button class="btn btn-primary" onclick="generateReferral()">Generate</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = '/api/admin';
+
+function login() {
+    const user = document.getElementById('adminUser').value;
+    const pass = document.getElementById('adminPass').value;
+    fetch(`${API}/login`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username: user, password: pass }),
+    }).then(r => r.json()).then(data => {
+        if (data.ok) {
+            window._adminToken = data.token;
+            window._adminName = user;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('adminName').textContent = user;
+            loadDashboard();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    });
+}
+
+function logout() {
+    window._adminToken = null;
+    location.reload();
+}
+
+function authFetch(url, opts = {}) {
+    opts.headers = { ...opts.headers, 'Authorization': window._adminToken || '' };
+    return fetch(url, opts);
+}
+
+function showTab(name, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'licenses') loadLicenses();
+    if (name === 'customers') loadCustomers();
+    if (name === 'contacts') loadContacts();
+    if (name === 'referrals') loadReferrals();
+    if (name === 'support') loadSupportTickets();
+    if (name === 'system') loadSystem();
+}
+
+async function loadDashboard() {
+    const r = await authFetch(`${API}/dashboard`);
+    const d = await r.json();
+    document.getElementById('statLicenses').textContent = d.active_licenses || 0;
+    document.getElementById('statCustomers').textContent = d.total_customers || 0;
+    document.getElementById('statContacts').textContent = d.pending_contacts || 0;
+    document.getElementById('statRevenue').textContent = '$' + (d.monthly_revenue || 0);
+    document.getElementById('recentActivity').innerHTML = (d.recent || [])
+        .map(a => `<div style="padding: 4px 0; border-bottom: 1px solid #f0eeeb;">${a}</div>`).join('') || 'No recent activity';
+}
+
+async function loadLicenses() {
+    const r = await authFetch(`${API}/licenses`);
+    const licenses = await r.json();
+    document.getElementById('licenseTable').innerHTML = licenses.map(l => `
+        <tr>
+            <td style="font-family: monospace; font-size: 12px;"><span style="cursor:pointer;" onclick="this.textContent=this.dataset.full; this.style.fontSize='11px'" data-full="${l.key}" title="Click to reveal">${l.key.substring(0,8)}...</span> <button class="btn btn-sm btn-secondary" style="padding:2px 6px; font-size:10px;" onclick="navigator.clipboard.writeText('${l.key}'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy',2000)">Copy</button></td>
+            <td>${l.customer_name || '—'}</td>
+            <td><span class="badge ${l.tier}">${l.tier}</span></td>
+            <td><span class="badge ${l.status}">${l.status}</span></td>
+            <td>${l.created || ''}</td>
+            <td>${l.expires || 'Never'}</td>
+            <td>
+                ${l.status === 'active' && !l.master ? `<button class="btn btn-sm" style="background:#c8a55c;color:#fff;" onclick="upgradeLicense('${l.key}','${(l.customer_name||'').replace(/'/g,"\\'")}','${l.email||''}','${(l.org||'').replace(/'/g,"\\'")}','${l.tier}')">Upgrade</button>` : ''}
+                ${l.status === 'active' ? `<button class="btn btn-sm btn-danger" onclick="deactivateLicense('${l.key}')">Deactivate</button>` : ''}
+                ${l.status !== 'active' ? `<button class="btn btn-sm btn-secondary" onclick="activateLicense('${l.key}')">Activate</button>` : ''}
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function loadCustomers() {
+    const r = await authFetch(`${API}/customers`);
+    const customers = await r.json();
+    document.getElementById('customerTable').innerHTML = customers.map(c => `
+        <tr>
+            <td>${c.name}</td>
+            <td>${c.email}</td>
+            <td>${c.org || '—'}</td>
+            <td><span class="badge ${c.tier}">${c.tier}</span></td>
+            <td style="font-family: monospace; font-size: 11px;"><span style="cursor:pointer;" onclick="this.textContent=this.dataset.full" data-full="${c.license_key || ''}" title="Click to reveal">${(c.license_key || '').substring(0,8)}...</span> <button class="btn btn-sm btn-secondary" style="padding:2px 6px; font-size:10px;" onclick="navigator.clipboard.writeText('${c.license_key || ''}'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy',2000)">Copy</button></td>
+            <td>${c.created || ''}</td>
+        </tr>
+    `).join('');
+}
+
+async function loadContacts() {
+    const r = await authFetch(`${API}/contacts`);
+    const contacts = await r.json();
+    document.getElementById('contactList').innerHTML = contacts.map(c => `
+        <div class="card">
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <strong>${c.name}</strong> — <span style="color: #6b6b7b;">${c.email}</span>
+                    ${c.org ? ` | ${c.org}` : ''}
+                </div>
+                <span style="font-size: 11px; color: #9a9aaa;">${c.timestamp || ''}</span>
+            </div>
+            <div style="font-size: 12px; color: #c8a55c; margin-top: 4px;">${c.interest || ''}</div>
+            <p style="font-size: 13px; color: #6b6b7b; margin-top: 8px;">${c.message || ''}</p>
+        </div>
+    `).join('') || '<div class="card"><p style="color: #9a9aaa;">No contact requests yet.</p></div>';
+}
+
+async function loadSystem() {
+    const r = await authFetch(`${API}/system`);
+    const s = await r.json();
+    document.getElementById('serverInfo').innerHTML = `
+        <div>Version: ${s.version || '0.2'}</div>
+        <div>Uptime: ${s.uptime || '—'}</div>
+        <div>Active Jobs: ${s.active_jobs || 0}</div>
+        <div>Total Jobs: ${s.total_jobs || 0}</div>
+    `;
+    document.getElementById('adminTable').innerHTML = (s.admins || []).map(a => `
+        <tr>
+            <td>${a.username}</td>
+            <td>${a.role}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="removeAdmin('${a.username}')">Remove</button></td>
+        </tr>
+    `).join('');
+}
+
+function showNewLicense() { document.getElementById('licenseModal').classList.add('active'); }
+function showNewAdmin() { document.getElementById('adminModal').classList.add('active'); }
+
+async function generateLicense() {
+    const r = await authFetch(`${API}/license/generate`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            customer_name: document.getElementById('licName').value,
+            email: document.getElementById('licEmail').value,
+            org: document.getElementById('licOrg').value,
+            tier: document.getElementById('licTier').value,
+            duration_days: parseInt(document.getElementById('licDuration').value),
+        }),
+    });
+    const data = await r.json();
+    document.getElementById('licenseModal').classList.remove('active');
+    if (data.key) {
+        const customer = document.getElementById('licName').value || 'New customer';
+        const tier = document.getElementById('licTier').value;
+        showNewKeyModal(data.key, customer, tier);
+    }
+}
+
+async function deactivateLicense(key) {
+    if (!confirm('Deactivate this license?')) return;
+    await authFetch(`${API}/license/${key}/deactivate`, { method: 'POST' });
+    loadLicenses();
+}
+
+async function activateLicense(key) {
+    await authFetch(`${API}/license/${key}/activate`, { method: 'POST' });
+    loadLicenses();
+}
+
+async function createAdmin() {
+    await authFetch(`${API}/admin/create`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            username: document.getElementById('newAdminUser').value,
+            password: document.getElementById('newAdminPass').value,
+            role: document.getElementById('newAdminRole').value,
+        }),
+    });
+    document.getElementById('adminModal').classList.remove('active');
+    loadSystem();
+}
+
+async function removeAdmin(username) {
+    if (!confirm(`Remove admin "${username}"?`)) return;
+    await authFetch(`${API}/admin/${username}`, { method: 'DELETE' });
+    loadSystem();
+}
+
+function upgradeLicense(oldKey, customerName, email, org, currentTier) {
+    document.getElementById('upgOldKey').value = oldKey;
+    document.getElementById('upgCustomer').value = customerName || '—';
+    document.getElementById('upgCurrentTier').value = currentTier;
+    document.getElementById('upgEmail').value = email || '';
+    document.getElementById('upgOrg').value = org || '';
+    // Pre-select the next tier up
+    const tierOrder = ['solo', 'solo_cases', 'solo_voices', 'professional', 'agency', 'enterprise'];
+    const idx = tierOrder.indexOf(currentTier);
+    if (idx >= 0 && idx < tierOrder.length - 1) {
+        document.getElementById('upgNewTier').value = tierOrder[idx + 1];
+    }
+    document.getElementById('upgradeModal').classList.add('active');
+}
+
+async function confirmUpgrade() {
+    const oldKey = document.getElementById('upgOldKey').value;
+    const newTier = document.getElementById('upgNewTier').value;
+    const duration = parseInt(document.getElementById('upgDuration').value);
+    const email = document.getElementById('upgEmail').value;
+    const org = document.getElementById('upgOrg').value;
+    const customer = document.getElementById('upgCustomer').value;
+
+    const r = await authFetch(`${API}/license/upgrade`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            old_key: oldKey,
+            new_tier: newTier,
+            duration_days: duration,
+            email: email,
+            org: org,
+        }),
+    });
+    const data = await r.json();
+    document.getElementById('upgradeModal').classList.remove('active');
+    if (data.new_key) {
+        showNewKeyModal(data.new_key, customer, newTier);
+    } else {
+        alert('Upgrade failed: ' + (data.error || 'Unknown error'));
+    }
+}
+
+function showNewKeyModal(key, customer, tier) {
+    document.getElementById('newKeyDisplay').textContent = key;
+    document.getElementById('newKeyCustomer').textContent = `${customer} — upgraded to ${tier}`;
+    document.getElementById('copyKeyBtn').textContent = 'Copy to Clipboard';
+    document.getElementById('newKeyModal').classList.add('active');
+}
+
+function copyNewKey() {
+    const key = document.getElementById('newKeyDisplay').textContent;
+    navigator.clipboard.writeText(key).then(() => {
+        document.getElementById('copyKeyBtn').textContent = 'Copied!';
+        setTimeout(() => { document.getElementById('copyKeyBtn').textContent = 'Copy to Clipboard'; }, 2000);
+    }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = key;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        document.getElementById('copyKeyBtn').textContent = 'Copied!';
+        setTimeout(() => { document.getElementById('copyKeyBtn').textContent = 'Copy to Clipboard'; }, 2000);
+    });
+}
+
+// --- Referral Functions ---
+function showNewReferral() { document.getElementById('referralModal').classList.add('active'); }
+
+async function generateReferral() {
+    const r = await authFetch(`${API}/referral/generate`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            name: document.getElementById('refName').value,
+            discount_pct: parseInt(document.getElementById('refDiscount').value),
+            max_uses: parseInt(document.getElementById('refMaxUses').value),
+        }),
+    });
+    const data = await r.json();
+    document.getElementById('referralModal').classList.remove('active');
+    if (data.code) {
+        alert('Referral code generated: ' + data.code);
+    }
+    loadReferrals();
+}
+
+async function loadReferrals() {
+    const r = await authFetch(`${API}/referrals`);
+    const referrals = await r.json();
+    // Backend returns dict: {code: {referrer_name, name, discount_pct, max_uses, status, created, uses}}
+    const entries = Object.entries(referrals);
+    document.getElementById('referralTable').innerHTML = entries.length ? entries.map(([code, ref]) => `
+        <tr>
+            <td style="font-family: monospace; font-size: 12px;">${code}</td>
+            <td>${ref.name || ref.referrer_name || '—'}</td>
+            <td>${ref.discount_pct || 10}%</td>
+            <td>${Array.isArray(ref.uses) ? ref.uses.length : (ref.uses || 0)} / ${ref.max_uses || '—'}</td>
+            <td><span class="badge ${ref.status === 'active' ? 'active' : 'expired'}">${ref.status || 'active'}</span></td>
+            <td>${ref.created || ''}</td>
+            <td><button class="btn btn-sm btn-secondary" onclick="copyReferralCode('${code}', this)">Copy</button></td>
+        </tr>
+    `).join('') : '<tr><td colspan="7" style="color:#9a9aaa; text-align:center;">No referral codes yet.</td></tr>';
+}
+
+function copyReferralCode(code, btn) {
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
+}
+
+// --- Support Ticket Functions ---
+async function loadSupportTickets() {
+    try {
+        const r = await fetch('/api/support/tickets');
+        const data = await r.json();
+        const tickets = data.tickets || [];
+
+        const open = tickets.filter(t => t.status === 'open');
+        const claimed = tickets.filter(t => t.status === 'claimed');
+        const resolved = tickets.filter(t => t.status === 'resolved');
+
+        document.getElementById('ticketsOpen').textContent = open.length;
+        document.getElementById('ticketsClaimed').textContent = claimed.length;
+        document.getElementById('ticketsResolved').textContent = resolved.length;
+
+        const active = [...open, ...claimed];
+        if (active.length === 0) {
+            document.getElementById('ticketsTable').innerHTML = '';
+            document.getElementById('noTickets').style.display = 'block';
+        } else {
+            document.getElementById('noTickets').style.display = 'none';
+            document.getElementById('ticketsTable').innerHTML = active.map(t => `
+                <tr>
+                    <td style="font-size:12px;">${(t.timestamp || '').replace('T', ' ').substring(0, 19)}</td>
+                    <td><strong>${t.customer || t.name || 'Unknown'}</strong><br><span style="font-size:11px;color:#9a9aaa;">${t.reporter_key || t.email || ''}</span></td>
+                    <td style="max-width:300px;">
+                        <div style="font-size:13px;">${t.question || t.subject || ''}</div>
+                        <div style="font-size:12px;color:#6b6b7b;margin-top:4px;">${t.description || t.message || ''}</div>
+                        ${t.conversation && t.conversation.length > 0 ? '<div style="font-size:11px;color:#9a9aaa;margin-top:4px;">(' + t.conversation.length + ' messages in chat history)</div>' : ''}
+                    </td>
+                    <td><span class="badge ${t.status === 'open' ? 'trial' : 'active'}">${t.status}</span>
+                        ${t.claimed_by ? '<br><span style="font-size:11px;">' + t.claimed_by + '</span>' : ''}
+                    </td>
+                    <td>
+                        ${t.status === 'open' ? '<button class="btn btn-sm btn-primary" onclick="claimTicket(\'' + t.id + '\')">Claim</button>' : ''}
+                        <button class="btn btn-sm btn-secondary" onclick="resolveTicket('" + t.id + "')">Resolve</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('resolvedTable').innerHTML = resolved.length ? resolved.map(t => `
+            <tr>
+                <td style="font-size:12px;">${(t.timestamp || '').substring(0, 19)}</td>
+                <td>${t.customer || 'Unknown'}</td>
+                <td>${t.question || t.description || ''}</td>
+                <td>${t.resolved_by || ''}</td>
+                <td>${t.resolution || ''}</td>
+            </tr>
+        `).join('') : '<tr><td colspan="5" style="color:#9a9aaa;text-align:center;">No resolved tickets yet.</td></tr>';
+
+    } catch(e) {
+        console.error('Failed to load support tickets:', e);
+    }
+}
+
+async function claimTicket(ticketId) {
+    try {
+        await fetch('/api/support/tickets/claim', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ticket_id: ticketId}),
+        });
+        loadSupportTickets();
+    } catch(e) { alert('Failed to claim ticket'); }
+}
+
+async function resolveTicket(ticketId) {
+    const resolution = prompt('Resolution notes (what was done):');
+    if (resolution === null) return;
+    try {
+        await fetch('/api/support/tickets/resolve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ticket_id: ticketId, resolution: resolution}),
+        });
+        loadSupportTickets();
+    } catch(e) { alert('Failed to resolve ticket'); }
+}
+
+// --- Academic Batch Functions ---
+async function generateAcademicBatch() {
+    const school = document.getElementById('batchSchool').value;
+    const email = document.getElementById('batchEmail').value;
+    const count = parseInt(document.getElementById('batchCount').value);
+    const duration = parseInt(document.getElementById('batchDuration').value);
+    if (!school || !email) { alert('Please fill in school name and contact email.'); return; }
+    if (count < 1 || count > 100) { alert('Number of licenses must be between 1 and 100.'); return; }
+    const r = await authFetch(`${API}/license/generate-batch`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ school_name: school, contact_email: email, count: count, duration_days: duration }),
+    });
+    const data = await r.json();
+    if (data.keys && data.keys.length) {
+        document.getElementById('batchKeys').value = data.keys.join('\n');
+        document.getElementById('batchResult').style.display = 'block';
+    } else {
+        alert('Batch generation failed: ' + (data.error || 'Unknown error'));
+    }
+}
+
+function copyBatchKeys() {
+    const ta = document.getElementById('batchKeys');
+    navigator.clipboard.writeText(ta.value).then(() => {
+        const btn = ta.nextElementSibling;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy All Keys'; }, 2000);
+    });
+}
+
+// Auto-login if token exists
+if (window._adminToken) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    document.getElementById('adminName').textContent = window._adminName;
+    loadDashboard();
+}
+</script>
+<script src="/static/support_widget.js"></script>
+</body>
+</html>
