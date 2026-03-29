@@ -92,6 +92,16 @@ async def download_update(version: str):
     return JSONResponse({"error": "Package not found"}, status_code=404)
 
 
+@app.get("/api/download-installer")
+async def download_installer():
+    """Redirect to the installer download. User sees notarelegal.com URL, gets the file from GitHub."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(
+        "https://github.com/DayshaLindale/notare-updates/releases/download/v0.3.0/NotareSetup_v0.3.0.exe",
+        status_code=302,
+    )
+
+
 @app.get("/api/update/info")
 async def update_info():
     """Public version info — no auth needed."""
