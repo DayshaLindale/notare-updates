@@ -40,8 +40,8 @@
         nav .links { display: flex; gap: 28px; align-items: center; }
         nav .links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
         nav .links a:hover { color: var(--navy); }
-        nav .cta { background: var(--navy); color: white; padding: 10px 22px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; }
-        nav .cta:hover { background: var(--navy-light); }
+        nav .cta { background: var(--navy); color: var(--gold); padding: 10px 22px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; }
+        nav .cta:hover { background: var(--navy-light); color: var(--gold); }
 
         /* Sections */
         section { padding: 80px 24px; }
@@ -57,7 +57,8 @@
         .hero h1 { font-size: 44px; font-weight: 700; line-height: 1.2; margin-bottom: 20px; color: var(--navy); }
         .hero p { font-size: 17px; color: var(--text-body); line-height: 1.8; margin-bottom: 28px; max-width: 500px; }
         .hero .cta-row { display: flex; gap: 12px; align-items: center; }
-        .hero .btn-primary { background: var(--navy); color: white; padding: 14px 28px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .hero .btn-primary { background: var(--navy); color: var(--gold); padding: 14px 28px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .hero .btn-primary:hover { background: var(--navy-light); }
         .hero .btn-secondary { color: var(--navy); padding: 14px 28px; text-decoration: none; font-weight: 500; font-size: 14px; border: 1px solid var(--border); border-radius: 4px; }
         .hero .note { font-size: 13px; color: var(--text-light); margin-top: 16px; }
         .hero .product-preview {
@@ -139,9 +140,11 @@
         .price-card ul { list-style: none; margin-bottom: 24px; }
         .price-card li { padding: 6px 0; font-size: 13px; color: var(--text-body); }
         .price-card li::before { content: '\2713'; color: var(--green); margin-right: 8px; }
-        .price-card .btn { display: block; text-align: center; padding: 12px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 13px; }
-        .price-card .btn-fill { background: var(--navy); color: white; }
-        .price-card .btn-outline { border: 1px solid var(--border); color: var(--navy); }
+        .price-card .btn { display: block; text-align: center; padding: 12px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 13px; transition: background 0.2s, color 0.2s; }
+        .price-card .btn-fill { background: var(--navy); color: var(--gold); }
+        .price-card .btn-fill:hover { background: var(--navy-light); color: var(--gold); }
+        .price-card .btn-outline { border: 1px solid var(--border); color: var(--gold); background: var(--navy); }
+        .price-card .btn-outline:hover { background: var(--navy-light); }
 
         /* Add-ons */
         .addons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; }
@@ -452,7 +455,7 @@
             <p style="font-size: 14px; color: var(--navy); font-weight: 600; margin-bottom: 8px;">Try Notare free for 30 days.</p>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Download the installer, then request a trial key. Full Professional access. no payment, no credit card.</p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                <a href="/static/download.html" class="btn-primary" style="background: var(--navy); color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 14px;">Download Installer</a>
+                <a href="/static/download.html" class="btn-primary" style="background: var(--navy); color: var(--gold); padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 14px;">Download Installer</a>
                 <a href="/static/contact.html" class="btn-secondary" style="color: var(--navy); padding: 12px 24px; text-decoration: none; font-weight: 500; font-size: 14px; border: 1px solid var(--border); border-radius: 4px;">Request Trial Key</a>
             </div>
         </div>
@@ -478,7 +481,7 @@
     <h2>Ready to try it?</h2>
     <p>Download Notare, request a free 30-day trial key, and see how it fits your workflow. No commitment, no credit card.</p>
     <div style="display: flex; gap: 12px; justify-content: center;">
-        <a href="/static/download.html" class="btn-primary" style="background: var(--navy); color: white; padding: 14px 28px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 14px;">Download Notare</a>
+        <a href="/static/download.html" class="btn-primary" style="background: var(--navy); color: var(--gold); padding: 14px 28px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 14px;">Download Notare</a>
         <a href="/static/contact.html" style="color: var(--navy); padding: 14px 28px; text-decoration: none; font-weight: 500; font-size: 14px; border: 1px solid var(--border); border-radius: 4px;">Request Trial Key</a>
     </div>
 </section>
