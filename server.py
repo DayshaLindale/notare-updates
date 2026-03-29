@@ -78,6 +78,14 @@ async def check_update(current: str = "0.0.0"):
                 "size": pkg.stat().st_size,
                 "released": manifest.get("released", ""),
             })
+        else:
+            # Package hosted on GitHub Releases
+            return JSONResponse({
+                "update_available": True,
+                "version": server_version,
+                "url": f"https://github.com/DayshaLindale/notare-updates/releases/download/v{server_version}/notare-{server_version}.zip",
+                "released": manifest.get("released", ""),
+            })
 
     return JSONResponse({"update_available": False, "version": server_version})
 
