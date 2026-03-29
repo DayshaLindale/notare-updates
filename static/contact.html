@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare | Contact</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #fafafa; color: #3d3d4e; line-height: 1.7; }
+        h1, h2 { font-family: 'Playfair Display', serif; color: #0f1b2d; }
+        nav { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #e0ddd8; padding: 14px 0; position: fixed; width: 100%; top: 0; z-index: 100; }
+        nav .inner { max-width: 900px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
+        nav .logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-decoration: none; color: #0f1b2d; }
+        nav .logo span { color: #c8a55c; }
+        nav a.back { color: #6b6b7b; text-decoration: none; font-size: 14px; }
+        .content { max-width: 600px; margin: 0 auto; padding: 120px 24px 80px; }
+        h1 { font-size: 36px; margin-bottom: 12px; }
+        p { margin-bottom: 16px; font-size: 16px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b7b; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #e0ddd8; border-radius: 4px; font-size: 14px; font-family: 'Inter', sans-serif; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #c8a55c; box-shadow: 0 0 0 2px rgba(200,165,92,0.12); }
+        textarea { min-height: 120px; resize: vertical; }
+        .btn { background: #0f1b2d; color: white; padding: 14px 28px; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .btn:hover { background: #1a2b45; }
+        .success { display: none; text-align: center; padding: 40px; }
+        .success h2 { margin-bottom: 12px; }
+        .muted { color: #6b6b7b; }
+    </style>
+</head>
+<body>
+    <nav><div class="inner"><a href="/static/site.html" class="logo" style="display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:22px;" alt="">Notare</a><div style="display:flex;gap:28px;align-items:center;"><a href="/static/site.html" style="color:#6b6b7b;text-decoration:none;font-size:14px;">Home</a><a href="/static/site.html#features" style="color:#6b6b7b;text-decoration:none;font-size:14px;">Features</a><a href="/static/download.html" style="color:#6b6b7b;text-decoration:none;font-size:14px;">Download</a></div></div></nav>
+    <div class="content">
+        <div id="formSection">
+            <h1>Get in Touch</h1>
+            <p class="muted">Whether you're requesting a trial key, asking about pricing, or just have a question, we'd like to hear from you.</p>
+
+            <form id="contactForm" style="margin-top: 32px;">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="cName" required placeholder="Your full name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="cEmail" required placeholder="you@firm.com">
+                </div>
+                <div class="form-group">
+                    <label>Organization</label>
+                    <input type="text" id="cOrg" placeholder="Firm, court system, or agency">
+                </div>
+                <div class="form-group">
+                    <label>I'm interested in</label>
+                    <select id="cInterest">
+                        <option value="trial">Requesting a trial key</option>
+                        <option value="pricing">Pricing information</option>
+                        <option value="enterprise">Enterprise / court system licensing</option>
+                        <option value="partnership">Partnership or integration</option>
+                        <option value="other">Something else</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="cMessage" placeholder="Tell us about your workflow, what you're looking for, or any questions you have."></textarea>
+                </div>
+                <button type="submit" class="btn">Send Message</button>
+            </form>
+        </div>
+
+        <div class="success" id="successSection">
+            <h2>Thank you.</h2>
+            <p>We've received your message and will get back to you within one business day.</p>
+            <a href="/static/site.html" style="color: #c8a55c; font-weight: 500;">Back to Notare</a>
+        </div>
+    </div>
+
+    <footer style="background:#0f1b2d;color:rgba(255,255,255,0.7);padding:40px 24px;text-align:center;font-size:13px;">
+        <p>&copy; 2026 Legacy Transcription Services, LLC. All rights reserved.</p>
+        <p style="margin-top:8px;"><a href="/static/privacy.html" style="color:#c8a55c;text-decoration:none;">Privacy Policy</a> &bull; <a href="/static/site.html" style="color:#c8a55c;text-decoration:none;">Home</a></p>
+    </footer>
+
+    <script>
+    document.getElementById('contactForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        // Submit to local API. visible in admin panel under Contact Requests
+        const data = {
+            name: document.getElementById('cName').value,
+            email: document.getElementById('cEmail').value,
+            org: document.getElementById('cOrg').value,
+            interest: document.getElementById('cInterest').value,
+            message: document.getElementById('cMessage').value,
+            timestamp: new Date().toISOString(),
+        };
+        try {
+            await fetch('/api/contact', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        } catch(e) { alert("Could not send message. Please try again."); return; }
+        document.getElementById('formSection').style.display = 'none';
+        document.getElementById('successSection').style.display = 'block';
+    });
+    </script>
+</body>
+</html>

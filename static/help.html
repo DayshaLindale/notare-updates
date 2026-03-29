@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare | Help & Troubleshooting</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; }
+        .faq summary { font-weight: 600; font-size: 14px; cursor: pointer; color: var(--text-dark); }
+        .faq summary:hover { color: var(--gold); }
+        .faq .answer { margin-top: 10px; font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+        .faq .answer ul { margin: 8px 0 8px 20px; }
+        .faq .answer li { margin-bottom: 4px; }
+        .faq .answer code { background: var(--cream); padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+        .section-label { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; margin-top: 28px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/static/site.html" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html" class="active">Help</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <h2 class="page-title">Help & Troubleshooting</h2>
+
+        <div class="faq">
+            <div class="section-label">Getting Started</div>
+
+            <details><summary>How do I start Notare?</summary>
+                <div class="answer">Double-click the Notare shortcut on your desktop, or run <code>Notare.exe</code> from the install folder. The app will open in its own window.</div>
+            </details>
+
+            <details><summary>Where do I enter my license key?</summary>
+                <div class="answer">On first launch, Notare prompts for your license key. Enter the key provided by your administrator. It's saved locally. you won't need to enter it again unless you reinstall.</div>
+            </details>
+
+            <details><summary>The app won't start or shows a blank window</summary>
+                <div class="answer">Close the app completely and try again. If the issue persists, try running <code>START.bat</code> from the install folder. this shows a console with error messages that can help diagnose the issue. Contact support with the error text.</div>
+            </details>
+
+            <details><summary>I see "port already in use" error</summary>
+                <div class="answer">Another instance of Notare is already running. Close all Notare windows, open Task Manager (Ctrl+Shift+Esc), end any Python or Notare processes, then try again.</div>
+            </details>
+
+            <div class="section-label">Audio & Transcription</div>
+
+            <details><summary>My .trm files aren't being recognized</summary>
+                <div class="answer">FTR .trm files are converted automatically using the bundled ffmpeg. If conversion fails, check that <code>ffmpeg.exe</code> is in the Notare install folder. If it's missing, reinstall Notare.</div>
+            </details>
+
+            <details><summary>Transcription shows "no audio files found"</summary>
+                <div class="answer">Check that your audio files are a supported format: WAV, MP3, M4A, AAC, FLAC, or TRM. If uploading multiple .trm segments, make sure all files are selected. Notare concatenates them automatically.</div>
+            </details>
+
+            <details><summary>Transcription accuracy is poor</summary>
+                <div class="answer">Accuracy depends on audio quality. Common causes:
+                    <ul>
+                        <li>Background noise (HVAC, room echo, traffic)</li>
+                        <li>Speakers far from microphone</li>
+                        <li>Multiple speakers talking simultaneously</li>
+                        <li>Low recording volume</li>
+                    </ul>
+                    For best results, use multi-channel audio (Mode B) with dedicated microphones. Single-mic room capture (Mode C) will always have reduced accuracy with multiple speakers. Segments flagged below 90% confidence are highlighted for your review.
+                </div>
+            </details>
+
+            <details><summary>Speaker names are wrong or showing as "Speaker A"</summary>
+                <div class="answer">Notare identifies speakers from court appearances at the start of proceedings. If appearances aren't captured in the audio, speakers get generic labels. To fix:
+                    <ul>
+                        <li>Click any speaker label in the editor to reassign it</li>
+                        <li>Use Find/Replace to rename a speaker throughout the entire transcript</li>
+                        <li>Hotkeys (Alt+U for THE COURT, etc.) let you assign with one keystroke</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details><summary>Processing seems stuck or is taking very long</summary>
+                <div class="answer">Long recordings take time. a 3-hour hearing may take 5-15 minutes to process depending on your hardware. Check the progress bar. If it's been more than 20 minutes with no progress, close and restart the app. Your job data is saved and you can reprocess from the dashboard.</div>
+            </details>
+
+            <div class="section-label">Templates & Export</div>
+
+            <details><summary>Word export doesn't use my template formatting</summary>
+                <div class="answer">Check your jurisdiction profile:
+                    <ul>
+                        <li>The template path must be the full file path to your .dotm file</li>
+                        <li>Style names must match exactly what's in your Word template</li>
+                        <li>Use "Detect Bookmarks" in the profile to auto-map your template's fields</li>
+                    </ul>
+                    Open your template in Word and check the Styles panel for the exact names.
+                </div>
+            </details>
+
+            <details><summary>Macros are missing or not working in the exported document</summary>
+                <div class="answer">Your source template must be a .dotm file (macro-enabled template). Notare exports as .docm to preserve macros. The original template's VBA project is re-injected into the export with the correct content types so macros function as intended. If macros still don't run, check your Office Trust Center settings under File > Options > Trust Center.</div>
+            </details>
+
+            <details><summary>Bookmarks aren't being filled in the exported document</summary>
+                <div class="answer">Go to your jurisdiction profile, scroll to Bookmark Mapping, and click "Detect Bookmarks from Template." This scans your template and maps each bookmark to the correct data field. Review the mapping and correct any that show "?". these are bookmarks Notare couldn't auto-identify.</div>
+            </details>
+
+            <details><summary>What export formats are available?</summary>
+                <div class="answer">Notare exports to 12 formats:
+                    <ul>
+                        <li><strong>Word</strong> (.docx/.docm): your template with styles, bookmarks, and working macros</li>
+                        <li><strong>PDF</strong>: full-size, line-numbered, court-compliant</li>
+                        <li><strong>Condensed PDF</strong>: 4 pages per sheet, standard depo review format</li>
+                        <li><strong>ASCII</strong>: line-numbered, page-delimited plain text for review tools</li>
+                        <li><strong>LEF</strong>: LiveNote/CaseView compatible format</li>
+                        <li><strong>PTX</strong>: Sanction/trial presentation XML with timestamps</li>
+                        <li><strong>Video Sync</strong> (.dvt): page:line to timecode mapping</li>
+                        <li><strong>Word Index</strong>: every word with page:line references</li>
+                        <li><strong>Reference Doc</strong>: flag report with case info</li>
+                        <li><strong>Raw ASR</strong>: unedited engine output</li>
+                        <li><strong>TXT</strong>: simple plain text</li>
+                        <li><strong>JSON</strong>: structured data for integration</li>
+                    </ul>
+                    All exports save to your local Notare/exports folder. No browser downloads, no security flags.
+                </div>
+            </details>
+
+            <div class="section-label">Live Capture</div>
+
+            <details><summary>Microphone isn't detected</summary>
+                <div class="answer">Your browser needs permission to access the microphone. When prompted, click "Allow." If you previously denied permission, click the lock icon in the address bar and reset microphone permissions. Chrome and Edge work best for live capture.</div>
+            </details>
+
+            <details><summary>Mode A: No platform audio captured from Zoom/Teams</summary>
+                <div class="answer">When sharing your screen for platform audio capture, you must check "Share audio" in the browser's share dialog. If you missed it, stop recording and start again. Select the Zoom or Teams window specifically, not the entire screen.</div>
+            </details>
+
+            <div class="section-label">Account & License</div>
+
+            <details><summary>My license key is rejected</summary>
+                <div class="answer">Check that you're entering the key exactly as provided, including dashes (e.g., NOTARE-XXXX-XXXX-XXXX). Keys are case-sensitive. If you've copy-pasted, make sure there are no extra spaces. Contact your administrator if the issue persists.</div>
+            </details>
+
+            <details><summary>My license expired</summary>
+                <div class="answer">Contact your administrator to renew. Your data is never deleted. all transcripts, profiles, and jobs are preserved locally. Only processing features pause until the license is renewed.</div>
+            </details>
+
+            <details><summary>How do I change my plan?</summary>
+                <div class="answer">Contact your administrator. They'll generate a new license key for your upgraded tier. Enter the new key in Settings to activate the upgrade. Your existing data and profiles are preserved.</div>
+            </details>
+
+            <div class="section-label">Still Need Help?</div>
+
+            <details open><summary>How do I contact support?</summary>
+                <div class="answer">Email us or use the contact form on the Notare website. When reporting an issue, please include:
+                    <ul>
+                        <li>What you were doing when the issue occurred</li>
+                        <li>Any error messages you saw</li>
+                        <li>The type of audio file you were processing</li>
+                        <li>Your Notare version (shown in Settings)</li>
+                    </ul>
+                </div>
+            </details>
+        </div>
+    </div>
+<script src="/static/theme.js"></script>
+<script src="/static/support_widget.js"></script>
+</body>
+</html>

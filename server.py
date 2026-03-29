@@ -37,6 +37,12 @@ ADMIN_KEY = os.environ.get("ADMIN_KEY", "notare-update-admin-2026")
 app = FastAPI(title="Notare Update Server", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+# Static site files (served at /static/ and root)
+STATIC_DIR = BASE_DIR / "static"
+if STATIC_DIR.exists():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 
 # ---------------------------------------------------------------------------
 # Manifest — tracks current version and update history
@@ -187,6 +193,10 @@ async def delete_update(version: str, authorization: str = Header(None)):
 
 @app.get("/")
 async def root():
+    """Serve the marketing site if static files exist, otherwise API info."""
+    site_file = STATIC_DIR / "site.html"
+    if site_file.exists():
+        return FileResponse(str(site_file), media_type="text/html")
     manifest = load_manifest()
     return JSONResponse({
         "service": "Notare Update Server",
@@ -198,6 +208,54 @@ async def root():
 @app.get("/health")
 async def health():
     return JSONResponse({"status": "ok"})
+
+
+# ---------------------------------------------------------------------------
+# Support ticket relay (clients push tickets here, support users poll here)
+# ---------------------------------------------------------------------------
+
+_pending_tickets = []
+
+@app.post("/api/support/submit")
+async def submit_support_ticket(request: Request):
+    """Receive a support ticket from a client installation."""
+    try:
+        data = await request.json()
+        _pending_tickets.append(data)
+        return JSONResponse({"ok": True})
+    except Exception:
+        return JSONResponse({"error": "Invalid request"}, status_code=400)
+
+@app.get("/api/support/pending")
+async def get_pending_tickets(request: Request):
+    """Support users poll this for new tickets."""
+    return JSONResponse({"tickets": _pending_tickets})
+
+@app.post("/api/support/claim")
+async def claim_ticket(request: Request):
+    """Mark a ticket as claimed (remove from pending)."""
+    try:
+        data = await request.json()
+        ticket_id = data.get("ticket_id")
+        _pending_tickets[:] = [t for t in _pending_tickets if t.get("id") != ticket_id]
+        return JSONResponse({"ok": True})
+    except Exception:
+        return JSONResponse({"error": "Invalid request"}, status_code=400)
+
+@app.post("/api/notify")
+async def receive_notification(request: Request):
+    """Receive contact form / help request notifications from client apps."""
+    try:
+        data = await request.json()
+        _pending_tickets.append(data)
+        return JSONResponse({"ok": True})
+    except Exception:
+        return JSONResponse({"error": "Invalid request"}, status_code=400)
+
+@app.get("/api/notifications")
+async def get_notifications(request: Request):
+    """Support users poll for notifications."""
+    return JSONResponse({"notifications": _pending_tickets})
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#0f1b2d"/>
+  <!--
+    The entire left stroke of the N is shaped as a quill pen.
+    Wide feathered top, tapering down to a fine nib at the bottom.
+    The stroke itself has the organic shape — not a straight line.
+  -->
+  <!-- Left stroke = quill body: wide at top (feather), narrows to nib -->
+  <path d="
+    M6 5
+    C4 4, 3 3, 5 2
+    C7 1.5, 10 2, 12 4
+    C11 3, 9 2.5, 7 3
+    C8 3.5, 9 4, 10 5
+    L11 6
+    L11.5 8
+    L11 22
+    L10.5 25
+    L10 26.5
+    L9.5 25
+    L9 22
+    L9 8
+    L9.5 6
+    Z
+  " fill="#c8a55c"/>
+  <!-- N diagonal -->
+  <line x1="10" y1="8" x2="22" y2="25" stroke="#c8a55c" stroke-width="2.6" stroke-linecap="round"/>
+  <!-- N right stroke -->
+  <line x1="22" y1="8" x2="22" y2="25" stroke="#c8a55c" stroke-width="2.6" stroke-linecap="round"/>
+</svg>
