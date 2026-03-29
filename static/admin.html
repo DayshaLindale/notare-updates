@@ -421,15 +421,13 @@
         <input type="text" id="licOrg">
         <label>Tier</label>
         <select id="licTier">
-            <option value="solo">Solo ($49.99)</option>
-            <option value="solo_cases">Solo + Cases ($69.99)</option>
-            <option value="solo_voices">Solo + Voices ($69.99)</option>
-            <option value="professional">Professional ($99.99)</option>
-            <option value="agency">Agency ($199.99)</option>
-            <option value="enterprise">Enterprise (Custom)</option>
-            <option value="support">Support / Internal (Full access, read-only admin)</option>
-            <option value="trial">Trial (7-days)</option>
-            <option value="academic">Academic ($29.99)</option>
+            <option value="solo">Solo ($59/mo)</option>
+            <option value="professional">Professional ($89/mo)</option>
+            <option value="agency">Agency ($119/mo)</option>
+            <option value="enterprise">Enterprise ($249/mo+)</option>
+            <option value="academic">Academic (Custom)</option>
+            <option value="support">Support / Internal (Tester)</option>
+            <option value="trial">Trial (7 days)</option>
         </select>
         <label>Duration</label>
         <select id="licDuration">
@@ -459,12 +457,10 @@
         <input type="text" id="upgCurrentTier" readonly style="background: #f0eeeb;">
         <label>New Tier</label>
         <select id="upgNewTier">
-            <option value="solo">Solo ($49.99)</option>
-            <option value="solo_cases">Solo + Cases ($69.99)</option>
-            <option value="solo_voices">Solo + Voices ($69.99)</option>
-            <option value="professional">Professional ($99.99)</option>
-            <option value="agency">Agency ($199.99)</option>
-            <option value="enterprise">Enterprise (Custom)</option>
+            <option value="solo">Solo ($59/mo)</option>
+            <option value="professional">Professional ($89/mo)</option>
+            <option value="agency">Agency ($119/mo)</option>
+            <option value="enterprise">Enterprise ($249/mo+)</option>
         </select>
         <label>Duration</label>
         <select id="upgDuration">
@@ -729,7 +725,7 @@ function upgradeLicense(oldKey, customerName, email, org, currentTier) {
     document.getElementById('upgEmail').value = email || '';
     document.getElementById('upgOrg').value = org || '';
     // Pre-select the next tier up
-    const tierOrder = ['solo', 'solo_cases', 'solo_voices', 'professional', 'agency', 'enterprise'];
+    const tierOrder = ['trial', 'solo', 'professional', 'agency', 'enterprise', 'academic'];
     const idx = tierOrder.indexOf(currentTier);
     if (idx >= 0 && idx < tierOrder.length - 1) {
         document.getElementById('upgNewTier').value = tierOrder[idx + 1];
