@@ -132,6 +132,69 @@ async def validate_key(key: str = ""):
     return JSONResponse({"valid": False, "reason": "invalid_key"})
 
 
+# ---------------------------------------------------------------------------
+# Support ticket relay
+# ---------------------------------------------------------------------------
+
+_pending_tickets = []
+
+@app.post("/api/support/submit")
+async def submit_support_ticket(request: Request):
+    """Receive a support ticket from a client installation."""
+    try:
+        data = await request.json()
+        _pending_tickets.append(data)
+        return JSONResponse({"ok": True})
+    except Exception:
+        return JSONResponse({"error": "Invalid request"}, status_code=400)
+
+@app.get("/api/support/pending")
+async def get_pending_tickets(request: Request):
+    """Support users poll this for new tickets."""
+    return JSONResponse({"tickets": _pending_tickets})
+
+@app.post("/api/support/claim")
+async def claim_ticket(request: Request):
+    """Mark a ticket as claimed."""
+    try:
+        data = await request.json()
+        ticket_id = data.get("ticket_id")
+        _pending_tickets[:] = [t for t in _pending_tickets if t.get("id") != ticket_id]
+        return JSONResponse({"ok": True})
+    except Exception:
+        return JSONResponse({"error": "Invalid request"}, status_code=400)
+
+@app.post("/api/notify")
+async def receive_notification(request: Request):
+    """Receive contact form and help request notifications."""
+    try:
+        data = await request.json()
+        _pending_tickets.append(data)
+        return JSONResponse({"ok": True})
+    except Exception:
+        return JSONResponse({"error": "Invalid request"}, status_code=400)
+
+@app.get("/api/notifications")
+async def get_notifications(request: Request):
+    """Support users poll for notifications."""
+    return JSONResponse({"notifications": _pending_tickets})
+
+
+@app.post("/api/admin/sync")
+async def sync_admin_data(request: Request):
+    """Receive synced admin_data from the master installation."""
+    auth = request.headers.get("Authorization", "")
+    if auth != "notare-admin-sync":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        data = await request.json()
+        admin_file = BASE_DIR / "admin_data.json"
+        admin_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        return JSONResponse({"ok": True, "licenses": len(data.get("licenses", []))})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 @app.get("/api/download-installer")
 async def download_installer():
     """Redirect to the installer download. User sees notarelegal.com URL, gets the file from GitHub."""
