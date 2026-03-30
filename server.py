@@ -100,6 +100,38 @@ async def download_update(version: str):
     return JSONResponse({"error": "Package not found"}, status_code=404)
 
 
+@app.get("/api/validate-key")
+async def validate_key(key: str = ""):
+    """Server-side license validation. Fallback when local admin_data doesn't have the key."""
+    if not key:
+        return JSONResponse({"valid": False, "reason": "no_key"})
+
+    # Load admin data from the server's copy
+    admin_file = BASE_DIR / "admin_data.json"
+    if not admin_file.exists():
+        return JSONResponse({"valid": False, "reason": "no_database"})
+
+    try:
+        admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
+        for lic in admin_data.get("licenses", []):
+            if lic.get("key") == key and lic.get("status") == "active":
+                exp = lic.get("expires", "")
+                if exp and exp != "":
+                    from datetime import datetime
+                    if exp < datetime.now().strftime("%Y-%m-%d"):
+                        return JSONResponse({"valid": False, "reason": "expired"})
+                return JSONResponse({
+                    "valid": True,
+                    "tier": lic.get("tier", "solo"),
+                    "expires": lic.get("expires", ""),
+                    "customer": lic.get("customer_name", ""),
+                })
+    except Exception:
+        pass
+
+    return JSONResponse({"valid": False, "reason": "invalid_key"})
+
+
 @app.get("/api/download-installer")
 async def download_installer():
     """Redirect to the installer download. User sees notarelegal.com URL, gets the file from GitHub."""

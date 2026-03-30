@@ -1,0 +1,94 @@
+{
+  "admins": [
+    {
+      "username": "admin",
+      "password_hash": "8c53c5f862b5c799fad991c14a7ead36037a5e5f33ecfc904946e2f4996fdc7d",
+      "role": "admin"
+    },
+    {
+      "username": "elizabeth",
+      "password_hash": "26cf1e3fdea91ebba98e4911bdd698639e06f6455c38eb661eb9b5e598cbb813",
+      "role": "admin"
+    }
+  ],
+  "licenses": [
+    {
+      "key": "NOTARE-MASTER-ADMIN-0001",
+      "customer_name": "Terry Taylor",
+      "email": "",
+      "org": "Legacy Transcription Services, LLC",
+      "tier": "enterprise",
+      "status": "active",
+      "created": "2026-03-27",
+      "expires": "",
+      "master": true,
+      "support": true
+    },
+    {
+      "key": "NOTARE-LEGACY-ADMIN-0001",
+      "customer_name": "Elizabeth Knittle",
+      "email": "",
+      "org": "Legacy Transcription Services, LLC",
+      "tier": "enterprise",
+      "status": "active",
+      "created": "2026-03-27",
+      "expires": "",
+      "master": true
+    },
+    {
+      "key": "NOTARE-ALLY-BETA-0001",
+      "customer_name": "Allyson",
+      "email": "",
+      "org": "Legacy Transcription Services, LLC",
+      "tier": "enterprise",
+      "status": "active",
+      "created": "2026-03-27",
+      "expires": "",
+      "master": true
+    },
+    {
+      "key": "NOTARE-GRACE-BETA-0001",
+      "customer_name": "Grace",
+      "email": "",
+      "org": "Legacy Transcription Services, LLC",
+      "tier": "enterprise",
+      "status": "active",
+      "created": "2026-03-27",
+      "expires": "",
+      "master": true
+    },
+    {
+      "key": "NOTARE-9C1AD6DF-F13DE4F0-2988B865",
+      "customer_name": "Lori Howell",
+      "email": "Lorena.oneil@outlook.com",
+      "org": "",
+      "tier": "professional",
+      "status": "active",
+      "created": "2026-03-29",
+      "expires": "",
+      "tester": true
+    },
+    {
+      "key": "NOTARE-KEVIN-BETA-0001",
+      "customer_name": "Kevin",
+      "email": "",
+      "org": "Legacy Transcription Services, LLC",
+      "tier": "professional",
+      "status": "active",
+      "created": "2026-03-27",
+      "expires": "2027-03-27"
+    }
+  ],
+  "tokens": {
+    "d2746ad0ff7fcc6922c9c5e50e58acb4a8da8fe5e132a16a6fb98c9678bbdb7c": "admin",
+    "fd85040e441119c24d1e43b4287687ebfc0675152156702ad527b0f87dc5a198": "admin",
+    "fab2ee52c1aeed488c9569a0f478e1bff7c172651324c65ee964c57d68e536cc": "admin",
+    "ee0c92e67a9282a2ff4f099e0cec972b6c6b5e00ec17fa1466fd5d4b0f32d4f6": "admin",
+    "124302a21ba244889f2f3e3447c91a26422cbaad848b4f02bca5e723d61660d0": "admin",
+    "baa642db2f237645ec2a022b40c03aabc71fde71ee2c924789c5ff05f8d0f45f": "admin",
+    "5ea158e617a6a8c484581ac07b96ba8e9ff812597426ae858fce8a89bd64b16e": "admin",
+    "537a56ed2277a5df598142689319ecf480975780d5d3eaf21a49e57cc3ebd61c": "admin",
+    "44efc199396b9f62caed66d7f0828d45ac0888ded0e2ebbaf9ac36cdb52d4697": "admin",
+    "b6e6c370275c992be3b6ac49a7e58d9b3618d8f91f83592fce957baed34cd7cf": "admin"
+  }
+}
