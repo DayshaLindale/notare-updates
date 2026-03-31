@@ -50,14 +50,15 @@
                 <div class="form-group">
                     <label>Whisper Model Size</label>
                     <select id="whisperModel">
-                        <option value="tiny.en">Tiny (fastest, least accurate)</option>
-                        <option value="base.en">Base</option>
-                        <option value="small.en" selected>Small (recommended)</option>
-                        <option value="medium.en">Medium (slower, more accurate)</option>
-                        <option value="large-v3">Large v3 (slowest, most accurate)</option>
+                        <option value="tiny.en">Tiny (75MB — fastest, basic accuracy, any PC)</option>
+                        <option value="base.en">Base (142MB — fast, decent accuracy, any PC)</option>
+                        <option value="small.en" selected>Small (464MB — balanced speed and accuracy)</option>
+                        <option value="medium.en">Medium (1.5GB — high accuracy, GPU recommended)</option>
+                        <option value="large-v3-turbo">Large v3 Turbo (1.6GB — best value, GPU required)</option>
+                        <option value="large-v3">Large v3 (2.9GB — highest accuracy, 8GB+ GPU)</option>
                     </select>
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted);">Local Whisper runs entirely on your machine. No API key needed, no per-minute costs. Requires an NVIDIA GPU with 4GB+ VRAM for reasonable speed.</p>
+                <p style="font-size: 12px; color: var(--text-muted);">Tiny and Small are bundled with Notare. Larger models download automatically on first use (~1-3GB). GPU users: try Large v3 Turbo for the best speed-to-accuracy ratio. CPU only: stick with Tiny or Small.</p>
             </div>
         </div>
 
