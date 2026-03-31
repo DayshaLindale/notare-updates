@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Voice Profiles</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html">Help</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="page-title" style="margin-bottom: 0;">Voice Profiles</h2>
+            <button class="btn btn-primary" onclick="showNewVoice()">+ New Profile</button>
+        </div>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            Speaker directory for regular participants. Register attorneys, judges, and other frequent speakers with their details.
+            Profiles are used during speaker assignment and auto-suggested in the editor.
+            <span style="color: var(--amber); font-size: 12px;"><br>Automatic voice recognition from audio is on the roadmap — currently profiles are used for manual reference and speaker assignment.</span>
+        </p>
+        <div id="voiceList"></div>
+    </div>
+
+    <div class="modal-overlay" id="voiceModal">
+        <div class="modal">
+            <h3>New Voice Profile</h3>
+            <div class="form-group"><label>Name</label><input type="text" id="vName" placeholder="e.g., Judge Christopher Marshall"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Firm / Court</label><input type="text" id="vFirm" placeholder="e.g., Example County Superior Court"></div>
+                <div class="form-group"><label>Role</label>
+                    <select id="vRole">
+                        <option value="judge">Judge</option>
+                        <option value="attorney">Attorney</option>
+                        <option value="clerk">Clerk</option>
+                        <option value="witness">Witness</option>
+                        <option value="reporter">Reporter</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label>Notes</label><textarea id="vNotes" rows="2" placeholder="Courtroom 3A, speaks quickly, deep voice"></textarea></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="document.getElementById('voiceModal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveVoice()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function loadVoices() {
+        const r = await fetch('/api/voice-profiles');
+        const voices = await r.json();
+        const list = document.getElementById('voiceList');
+        if (!voices || Object.keys(voices).length === 0) {
+            list.innerHTML = `<div class="empty-state">
+                <div class="icon">&#127908;</div>
+                <h3>No voice profiles yet</h3>
+                <p>Voice profiles allow Notare to recognize regular participants across sessions automatically.</p>
+            </div>`;
+            return;
+        }
+        let html = '';
+        const roleIcons = { judge: '&#9878;', attorney: '&#9881;', clerk: '&#128221;', witness: '&#128100;', reporter: '&#127908;', other: '&#128101;' };
+        for (const [name, v] of Object.entries(voices)) {
+            html += `<div class="card" style="margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 20px; margin-right: 8px;">${roleIcons[v.role] || ''}</span>
+                        <strong>${v.name}</strong>
+                        <span style="color: var(--text-muted); font-size: 13px; margin-left: 8px;">${v.firm || ''} | ${(v.role || '').toUpperCase()}</span>
+                        ${v.notes ? `<p style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">${v.notes}</p>` : ''}
+                    </div>
+                    <button class="btn btn-sm btn-icon" onclick="deleteVoice('${name}')">X</button>
+                </div>
+            </div>`;
+        }
+        list.innerHTML = html;
+    }
+
+    function showNewVoice() {
+        document.getElementById('vName').value = '';
+        document.getElementById('vFirm').value = '';
+        document.getElementById('vRole').value = 'judge';
+        document.getElementById('vNotes').value = '';
+        document.getElementById('voiceModal').classList.add('active');
+        document.getElementById('vName').focus();
+    }
+
+    async function saveVoice() {
+        await fetch('/api/voice-profile/save', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: document.getElementById('vName').value,
+                firm: document.getElementById('vFirm').value,
+                role: document.getElementById('vRole').value,
+                notes: document.getElementById('vNotes').value,
+            }),
+        });
+        document.getElementById('voiceModal').classList.remove('active');
+        loadVoices();
+    }
+
+    async function deleteVoice(name) {
+        if (!confirm(`Delete voice profile for "${name}"?`)) return;
+        await fetch(`/api/voice-profile/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        loadVoices();
+    }
+
+    loadVoices();
+    </script>
+<script src="/static/theme.js"></script>
+</body>
+</html>

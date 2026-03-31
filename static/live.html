@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Live Capture</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html">Help</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="page-title" style="margin-bottom: 0;">Live Capture</h2>
+            <span id="modeLabel" style="font-size: 13px; color: var(--text-muted);"></span>
+        </div>
+
+        <!-- Mode A: Remote setup -->
+        <div class="card" id="modeASetup" style="display: none;">
+            <h3>Remote Capture Setup</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                Notare captures two audio streams simultaneously: your microphone and the platform audio (Zoom/Teams/WebEx).
+                When you click Start, your browser will ask you to share a screen or window — select the Zoom/Teams window and check <strong>"Share audio"</strong>.
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 6px;">&#127908;</div>
+                    <div style="font-size: 13px; font-weight: 600;">Your Microphone</div>
+                    <div style="font-size: 12px; color: var(--text-dim);">Reporter's audio stream</div>
+                    <div id="micStatus" style="font-size: 11px; color: var(--green); margin-top: 4px;">Ready</div>
+                </div>
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 6px;">&#128187;</div>
+                    <div style="font-size: 13px; font-weight: 600;">Platform Audio</div>
+                    <div style="font-size: 12px; color: var(--text-dim);">Zoom / Teams loopback</div>
+                    <div id="platformStatus" style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Click Start to connect</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode B: Multi-Mic Channel Mapping -->
+        <div class="card" id="modeBSetup" style="display: none;">
+            <h3>Multi-Mic Channel Mapping</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                Assign each microphone input to a speaker. Notare will use these labels instead of generic "Speaker A/B" tags.
+                Select your mixer or USB audio interface above, then map each channel.
+            </p>
+            <div id="channelMap" style="display: grid; gap: 8px;"></div>
+            <button class="btn btn-sm btn-secondary" style="margin-top: 12px;" onclick="detectChannels()">Detect Channels</button>
+            <p style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">
+                Tip: If your mixer outputs a single stereo/multi-channel stream, channels map to the physical inputs on your device.
+                For separate USB mics, each appears as its own input above.
+            </p>
+        </div>
+
+        <!-- Recording controls -->
+        <div class="card" style="text-align: center; padding: 32px;">
+            <div id="recordingStatus" style="margin-bottom: 20px;">
+                <div style="font-size: 48px; margin-bottom: 8px;" id="recIcon">&#127908;</div>
+                <div style="font-size: 14px; color: var(--text-muted);" id="recText">Ready to record</div>
+                <div style="font-size: 32px; font-family: monospace; margin-top: 8px;" id="recTimer">00:00:00</div>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button class="btn btn-primary" id="btnRecord" onclick="startRecording()" style="font-size: 16px; padding: 14px 32px;">
+                    Start Recording
+                </button>
+                <button class="btn btn-secondary" id="btnStop" onclick="stopRecording()" style="font-size: 16px; padding: 14px 32px; display: none;">
+                    Stop & Process
+                </button>
+                <button class="btn btn-secondary" id="btnPause" onclick="pauseRecording()" style="font-size: 16px; padding: 14px 32px; display: none;">
+                    Pause
+                </button>
+                <button class="btn btn-secondary" id="btnShare" onclick="toggleLiveShare()" style="font-size: 14px; padding: 12px 24px; display: none; background: var(--gold); color: white; border: none;">
+                    Share Live
+                </button>
+            </div>
+            <!-- Live share info -->
+            <div id="shareInfo" style="display: none; margin-top: 16px; padding: 16px; background: var(--bg); border: 1px solid var(--gold); border-radius: 8px; text-align: left;">
+                <p style="font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 8px;">Live Share Active</p>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Attorneys can view the transcript in real-time at this link:</p>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="shareUrl" readonly style="flex: 1; font-size: 12px; font-family: monospace; padding: 8px; background: white; border: 1px solid var(--border); border-radius: 4px;">
+                    <button class="btn btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('shareUrl').value); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy',2000);">Copy</button>
+                </div>
+                <button class="btn btn-sm" onclick="toggleLiveShare()" style="margin-top: 8px; color: var(--red);">Stop Sharing</button>
+            </div>
+            <div id="audioInputSelect" style="margin-top: 16px;">
+                <label style="font-size: 12px; color: var(--text-muted);">Audio Input: </label>
+                <select id="micSelect" style="background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 4px; font-size: 13px;"></select>
+            </div>
+            <!-- Audio level meters -->
+            <div style="margin-top: 12px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span style="font-size: 11px; color: var(--text-dim); width: 60px;">Mic</span>
+                    <div style="flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;">
+                        <div id="levelMeter" style="height: 100%; width: 0%; background: var(--green); border-radius: 3px; transition: width 0.1s;"></div>
+                    </div>
+                </div>
+                <div id="platformMeterRow" style="display: none; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; color: var(--text-dim); width: 60px;">Platform</span>
+                    <div style="flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;">
+                        <div id="levelMeter2" style="height: 100%; width: 0%; background: var(--blue); border-radius: 3px; transition: width 0.1s;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live transcript — CC style -->
+        <div class="card" id="liveTranscript" style="display: none;">
+            <h3 style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Live Transcript</span>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <span id="streamStatus" style="font-size: 11px; color: var(--green); display: none;">LIVE</span>
+                    <span style="font-size: 12px; color: var(--text-dim);" id="wordCount">0 words</span>
+                </div>
+            </h3>
+            <div id="transcriptArea" style="max-height: 500px; overflow-y: auto; margin-top: 12px; font-size: 15px; line-height: 1.8;">
+            </div>
+            <!-- CC-style current line — words appear here as spoken -->
+            <div id="ccLine" style="display: none; margin-top: 8px; padding: 12px 16px; background: var(--bg); border-left: 3px solid var(--gold); border-radius: 0 4px 4px 0; font-size: 16px; line-height: 1.8; min-height: 28px; color: var(--text); font-style: italic; opacity: 0.8;">
+            </div>
+        </div>
+
+        <!-- Live Flag Queue -->
+        <div class="card" id="liveFlagPanel" style="display: none;">
+            <h3 style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Flags</span>
+                <span style="font-size: 12px; color: var(--text-dim);" id="flagCount">0</span>
+            </h3>
+            <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 8px;">Press <kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;font-size:10px;">Alt+F</kbd> to flag. Click a flag to replay audio.</p>
+            <div id="liveFlagQueue" style="max-height: 200px; overflow-y: auto; font-size: 12px;"></div>
+        </div>
+
+        <!-- Audio snippet player (hidden, for flag playback) -->
+        <audio id="snippetPlayer" preload="none" style="display:none;"></audio>
+
+        <!-- Hotkey Reference (always visible during recording) -->
+        <div class="card" id="hotkeyPanel">
+            <h3 style="font-size: 13px; margin-bottom: 8px;">Quick Controls</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 11px; color: var(--text-muted); line-height: 2;">
+                <div style="font-weight:600;color:var(--text);grid-column:span 2;">Speakers</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+U</kbd> THE COURT</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+W</kbd> THE WITNESS</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+D</kbd> DEFENDANT</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+K</kbd> THE CLERK</div>
+                <div style="font-weight:600;color:var(--text);grid-column:span 2;margin-top:4px;">Style</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+C</kbd> Colloquy</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+X</kbd> Q (Question)</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+Z</kbd> A (Answer)</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+P</kbd> Parenthetical</div>
+                <div style="font-weight:600;color:var(--text);grid-column:span 2;margin-top:4px;">Actions</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+F</kbd> Flag</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">Alt+N</kbd> Indiscernible</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">F5</kbd> Pause/Resume</div>
+                <div><kbd style="background:var(--bg);padding:1px 4px;border-radius:2px;">F7/F8</kbd> Skip -5s/+5s</div>
+            </div>
+        </div>
+
+        <!-- Speakers detected -->
+        <div class="card" id="speakersDetected" style="display: none;">
+            <h3>Speakers Detected</h3>
+            <div id="speakersList" style="font-size: 13px;"></div>
+        </div>
+    </div>
+
+    <script>
+    const params = new URLSearchParams(window.location.search);
+    const JOB_ID = params.get('id');
+    const MODE = params.get('mode') || 'C';
+
+    // Show Mode A setup panel
+    if (MODE === 'A') {
+        document.getElementById('modeASetup').style.display = '';
+        document.getElementById('platformMeterRow').style.display = 'flex';
+    }
+
+    // Show Mode B channel mapping panel
+    if (MODE === 'B') {
+        document.getElementById('modeBSetup').style.display = '';
+    }
+
+    document.getElementById('modeLabel').textContent = {
+        'A': 'Mode A: Remote (Zoom / Teams)',
+        'B': 'Mode B: Multi-Mic (Mixer / USB)',
+        'C': 'Mode C: Room Audio (Single Mic)',
+    }[MODE] || 'Live Capture';
+
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingStart = null;
+    let timerInterval = null;
+    let audioContext = null;
+    let analyser = null;
+    let isRecording = false;
+    let isPaused = false;
+    let liveText = '';
+    let wordTotal = 0;
+
+    // Server-side capture state
+    let serverCapture = false;
+    let pollInterval = null;
+    let segmentIndex = 0;
+    let useStreaming = true;  // WebSocket streaming fallback flag
+    let streamWs = null;
+    let streamWorklet = null;
+
+    // Enumerate audio devices from SERVER (no browser permissions needed)
+    async function loadMics() {
+        try {
+            const resp = await fetch('/api/audio-devices');
+            const data = await resp.json();
+            const devices = data.devices || [];
+            const select = document.getElementById('micSelect');
+            select.innerHTML = '';
+            devices.filter(d => !d.is_loopback).forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.name;
+                select.appendChild(opt);
+            });
+
+            // For Mode B, show all channels
+            if (MODE === 'B' && mics.length > 1) {
+                const info = document.createElement('p');
+                info.style.cssText = 'font-size: 11px; color: var(--amber); margin-top: 6px;';
+                info.textContent = `${mics.length} audio inputs detected. For multi-channel, select your mixer/USB interface.`;
+                document.getElementById('audioInputSelect').appendChild(info);
+            }
+        } catch(e) {
+            document.getElementById('recText').textContent = 'Microphone access denied. Please allow microphone access.';
+            document.getElementById('recText').style.color = 'var(--red)';
+        }
+    }
+
+    let platformAnalyser = null;
+    let platformRecorder = null;
+    let platformChunks = [];
+
+    async function startRecording() {
+        const deviceId = document.getElementById('micSelect').value;
+
+        // Try server-side capture first (works in pywebview, no browser permissions needed)
+        if (deviceId && JOB_ID) {
+            try {
+                const startResp = await fetch('/api/live/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        job_id: JOB_ID,
+                        mode: MODE,
+                        device_id: parseInt(deviceId),
+                        device_name: document.getElementById('micSelect').selectedOptions[0]?.textContent || '',
+                    }),
+                });
+                const startData = await startResp.json();
+                if (startData.ok && startData.server_capture) {
+                    // Server is capturing audio — just poll for results
+                    serverCapture = true;
+                    isRecording = true;
+                    segmentIndex = 0;
+                    document.getElementById('btnRecord').style.display = 'none';
+                    document.getElementById('btnStop').style.display = '';
+                    document.getElementById('btnPause').style.display = '';
+                    document.getElementById('btnShare').style.display = '';
+                    document.getElementById('liveTranscript').style.display = '';
+                    document.getElementById('streamStatus').style.display = '';
+                    document.getElementById('streamStatus').textContent = 'LIVE';
+                    document.getElementById('ccLine').style.display = '';
+                    document.getElementById('recText').textContent = 'Recording...';
+                    document.getElementById('recText').style.color = 'var(--green)';
+
+                    // Start polling for live segments
+                    pollInterval = setInterval(async () => {
+                        try {
+                            const resp = await fetch(`/api/live/segments/${JOB_ID}?since=${segmentIndex}`);
+                            const data = await resp.json();
+                            const area = document.getElementById('transcriptArea');
+                            const ccLine = document.getElementById('ccLine');
+
+                            if (data.segments && data.segments.length > 0) {
+                                for (const seg of data.segments) {
+                                    const div = document.createElement('div');
+                                    div.style.cssText = 'margin-bottom: 8px; padding: 4px 0; border-bottom: 1px solid var(--border);';
+                                    const speaker = seg.speaker ? `<strong style="color: var(--navy);">${seg.speaker}:</strong> ` : '';
+                                    div.innerHTML = speaker + seg.text;
+                                    area.appendChild(div);
+                                    area.scrollTop = area.scrollHeight;
+                                    // Update CC line with latest
+                                    ccLine.textContent = seg.text;
+                                }
+                                segmentIndex = data.total;
+                                document.getElementById('wordCount').textContent =
+                                    area.textContent.split(/\s+/).filter(w => w).length + ' words';
+                            }
+
+                            if (!data.recording) {
+                                clearInterval(pollInterval);
+                                document.getElementById('streamStatus').style.display = 'none';
+                                ccLine.style.display = 'none';
+                            }
+                        } catch(e) { console.error('Poll error:', e); }
+                    }, 1000);
+
+                    // Timer
+                    const timerEl = document.getElementById('recTimer');
+                    let seconds = 0;
+                    timerInterval = setInterval(() => {
+                        seconds++;
+                        const h = Math.floor(seconds / 3600);
+                        const m = Math.floor((seconds % 3600) / 60);
+                        const s = seconds % 60;
+                        timerEl.textContent =
+                            `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    }, 1000);
+                    return;
+                }
+            } catch(e) {
+                console.warn('Server-side capture failed, trying browser capture:', e);
+            }
+        }
+
+        // Fallback: browser-based capture (needs getUserMedia permission)
+        const constraints = {
+            audio: {
+                deviceId: deviceId ? { exact: deviceId } : undefined,
+                channelCount: MODE === 'B' ? { ideal: 8 } : 1,
+                sampleRate: { ideal: 16000 },
+                echoCancellation: MODE === 'A' ? true : false,
+                noiseSuppression: false,
+                autoGainControl: false,
+            }
+        };
+
+        try {
+            // Get mic stream
+            const micStream = await navigator.mediaDevices.getUserMedia(constraints);
+            document.getElementById('micStatus') && (document.getElementById('micStatus').textContent = 'Connected');
+
+            let stream = micStream;
+
+            // Mode A: Also capture platform audio via screen share
+            if (MODE === 'A') {
+                try {
+                    document.getElementById('platformStatus').textContent = 'Requesting...';
+                    const displayStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: true,  // Required by API even though we only want audio
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
+                        }
+                    });
+
+                    // Check if audio track was shared
+                    const audioTracks = displayStream.getAudioTracks();
+                    if (audioTracks.length > 0) {
+                        document.getElementById('platformStatus').textContent = 'Connected';
+                        document.getElementById('platformStatus').style.color = 'var(--green)';
+
+                        // Record platform audio separately
+                        const platformAudioStream = new MediaStream(audioTracks);
+                        platformRecorder = new MediaRecorder(platformAudioStream, { mimeType: 'audio/webm;codecs=opus' });
+                        platformChunks = [];
+                        platformRecorder.ondataavailable = (e) => {
+                            if (e.data.size > 0) platformChunks.push(e.data);
+                        };
+                        platformRecorder.start(1000);
+
+                        // Platform level meter
+                        const platformSource = audioContext || new AudioContext();
+                        audioContext = platformSource;
+                        const pSource = audioContext.createMediaStreamSource(platformAudioStream);
+                        platformAnalyser = audioContext.createAnalyser();
+                        platformAnalyser.fftSize = 256;
+                        pSource.connect(platformAnalyser);
+
+                        // Stop video track — we only need audio
+                        displayStream.getVideoTracks().forEach(t => t.stop());
+                    } else {
+                        document.getElementById('platformStatus').textContent = 'No audio shared — check "Share audio"';
+                        document.getElementById('platformStatus').style.color = 'var(--amber)';
+                    }
+                } catch(e) {
+                    document.getElementById('platformStatus').textContent = 'Cancelled — recording mic only';
+                    document.getElementById('platformStatus').style.color = 'var(--amber)';
+                }
+            }
+
+            // Audio level meter for mic
+            if (!audioContext) audioContext = new AudioContext();
+            const source = audioContext.createMediaStreamSource(micStream);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            updateLevelMeter();
+
+            // MediaRecorder — mic stream
+            mediaRecorder = new MediaRecorder(micStream, { mimeType: 'audio/webm;codecs=opus' });
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                uploadRecording(blob);
+            };
+
+            mediaRecorder.start(1000); // Collect in 1-second chunks for final upload
+            isRecording = true;
+            recordingStart = Date.now();
+
+            // --- CC-Style WebSocket Streaming ---
+            if (useStreaming && JOB_ID) {
+                try {
+                    const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    streamWs = new WebSocket(`${wsProto}//${location.host}/ws/live/stream/${JOB_ID}`);
+                    streamWs.binaryType = 'arraybuffer';
+
+                    streamWs.onopen = () => {
+                        document.getElementById('streamStatus').style.display = '';
+                        document.getElementById('ccLine').style.display = '';
+                        console.log('CC stream connected');
+
+                        // Use ScriptProcessor to capture raw PCM and send via WS
+                        // (AudioWorklet is ideal but ScriptProcessor has broader support)
+                        const streamSource = audioContext.createMediaStreamSource(micStream);
+                        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+                        processor.onaudioprocess = (e) => {
+                            if (!isRecording || isPaused || !streamWs || streamWs.readyState !== WebSocket.OPEN) return;
+
+                            // Get float32 audio data, convert to int16 PCM
+                            const float32 = e.inputBuffer.getChannelData(0);
+
+                            // Resample to 16kHz if needed (audioContext is usually 44.1/48kHz)
+                            const inputRate = audioContext.sampleRate;
+                            const outputRate = 16000;
+                            let pcmData;
+
+                            if (inputRate !== outputRate) {
+                                const ratio = inputRate / outputRate;
+                                const newLength = Math.floor(float32.length / ratio);
+                                const resampled = new Int16Array(newLength);
+                                for (let i = 0; i < newLength; i++) {
+                                    const srcIdx = Math.floor(i * ratio);
+                                    const sample = Math.max(-1, Math.min(1, float32[srcIdx]));
+                                    resampled[i] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                                }
+                                pcmData = resampled;
+                            } else {
+                                pcmData = new Int16Array(float32.length);
+                                for (let i = 0; i < float32.length; i++) {
+                                    const sample = Math.max(-1, Math.min(1, float32[i]));
+                                    pcmData[i] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                                }
+                            }
+
+                            streamWs.send(pcmData.buffer);
+                        };
+
+                        streamSource.connect(processor);
+                        // Connect through a silent gain node — required for processing to fire,
+                        // but must NOT play mic audio back through speakers (causes feedback)
+                        const silencer = audioContext.createGain();
+                        silencer.gain.value = 0;
+                        processor.connect(silencer);
+                        silencer.connect(audioContext.destination);
+                        streamWorklet = { source: streamSource, processor: processor };
+                    };
+
+                    streamWs.onmessage = (evt) => {
+                        try {
+                            const msg = JSON.parse(evt.data);
+                            const area = document.getElementById('transcriptArea');
+                            const ccLine = document.getElementById('ccLine');
+
+                            if (msg.type === 'partial') {
+                                // Show typing indicator
+                                ccLine.innerHTML = '<span style="opacity: 0.5;">listening...</span>';
+                            } else if (msg.type === 'final') {
+                                msg._recordTime = Math.floor((Date.now() - recordingStart) / 1000);
+                                liveSegments.push(msg);
+                                const segIdx = liveSegments.length - 1;
+
+                                // Build editable segment
+                                const div = document.createElement('div');
+                                div.className = 'live-segment';
+                                div.dataset.segIdx = segIdx;
+                                div.dataset.start = msg.start || 0;
+                                div.dataset.end = msg.end || 0;
+                                div.style.cssText = 'margin-bottom: 6px; padding: 4px 8px; border-radius: 4px; display: flex; align-items: flex-start; gap: 6px; animation: fadeIn 0.3s ease-in;';
+
+                                // Timestamp
+                                const elapsed = Math.floor((Date.now() - recordingStart) / 1000);
+                                const ts = `${String(Math.floor(elapsed/3600)).padStart(2,'0')}:${String(Math.floor((elapsed%3600)/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`;
+
+                                const tsSpan = document.createElement('span');
+                                tsSpan.style.cssText = 'font-size: 10px; color: var(--text-dim); font-family: monospace; min-width: 55px; padding-top: 3px; cursor: pointer;';
+                                tsSpan.textContent = ts;
+                                tsSpan.title = 'Click to replay this section';
+                                tsSpan.onclick = () => replaySnippet(segIdx);
+
+                                // Editable text
+                                const textDiv = document.createElement('div');
+                                textDiv.style.cssText = 'flex: 1; outline: none; border-bottom: 1px solid transparent; padding: 1px 2px;';
+                                textDiv.contentEditable = 'true';
+                                textDiv.dataset.segIdx = segIdx;
+
+                                // Build content
+                                const speaker = msg.speaker ? `<strong style="color:var(--navy);">${msg.speaker}:</strong> ` : '';
+                                if (msg.words && msg.words.length > 0) {
+                                    let wordHtml = speaker;
+                                    msg.words.forEach(w => {
+                                        const conf = w.probability || 0.9;
+                                        const style = conf < 0.7 ? 'color: var(--amber); text-decoration: underline dotted;' : '';
+                                        wordHtml += `<span style="${style}" title="conf: ${Math.round(conf*100)}%">${w.word}</span>`;
+                                    });
+                                    textDiv.innerHTML = wordHtml;
+                                } else {
+                                    textDiv.innerHTML = speaker + msg.text;
+                                }
+
+                                // Save edits on blur
+                                textDiv.onblur = () => {
+                                    const newText = textDiv.innerText.trim();
+                                    if (liveSegments[segIdx]) {
+                                        liveSegments[segIdx]._edited = newText;
+                                        if (JOB_ID) {
+                                            fetch(`/api/job/${JOB_ID}/update-segment`, {
+                                                method: 'POST', headers: {'Content-Type': 'application/json'},
+                                                body: JSON.stringify({ index: segIdx, text: newText }),
+                                            }).catch(() => {});
+                                        }
+                                    }
+                                };
+                                // Visual feedback on focus
+                                textDiv.onfocus = () => { textDiv.style.borderBottomColor = 'var(--gold)'; };
+                                textDiv.addEventListener('blur', () => { textDiv.style.borderBottomColor = 'transparent'; });
+
+                                // Flag button
+                                const flagBtn = document.createElement('button');
+                                flagBtn.style.cssText = 'background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px 4px; opacity: 0.4; color: var(--text);';
+                                flagBtn.innerHTML = '&#9873;';
+                                flagBtn.title = 'Flag this segment (Alt+F)';
+                                flagBtn.onclick = () => flagLiveSegment(segIdx);
+                                flagBtn.onmouseenter = () => { flagBtn.style.opacity = '1'; };
+                                flagBtn.onmouseleave = () => { flagBtn.style.opacity = '0.4'; };
+
+                                div.appendChild(tsSpan);
+                                div.appendChild(textDiv);
+                                div.appendChild(flagBtn);
+
+                                // Context flags
+                                if (msg.context_flags && msg.context_flags.length > 0) {
+                                    const flagDiv = document.createElement('div');
+                                    flagDiv.style.cssText = 'font-size: 11px; color: var(--amber); margin: 2px 0 4px 61px; border-left: 2px solid var(--amber); padding-left: 8px;';
+                                    flagDiv.innerHTML = msg.context_flags.map(f =>
+                                        `<span title="${f.type}">&#9888; ${f.detail}${f.suggestion ? ' → <strong>' + f.suggestion + '</strong>' : ''}</span>`
+                                    ).join('<br>');
+                                    area.appendChild(div);
+                                    area.appendChild(flagDiv);
+                                } else {
+                                    area.appendChild(div);
+                                }
+
+                                area.scrollTop = area.scrollHeight;
+                                ccLine.innerHTML = '';
+
+                                const wc = area.textContent.split(/\s+/).filter(w => w).length;
+                                document.getElementById('wordCount').textContent = wc + ' words';
+
+                            } else if (msg.type === 'status') {
+                                console.log('Stream status:', msg.message);
+                            } else if (msg.type === 'error') {
+                                console.error('Stream error:', msg.message);
+                                // Fall back to chunk mode
+                                useStreaming = false;
+                                startChunkFallback(micStream);
+                            }
+                        } catch(e) { console.error('WS message parse error:', e); }
+                    };
+
+                    streamWs.onerror = () => {
+                        console.warn('WebSocket stream failed — falling back to 30s chunks');
+                        useStreaming = false;
+                        document.getElementById('streamStatus').style.display = 'none';
+                        document.getElementById('ccLine').style.display = 'none';
+                        startChunkFallback(micStream);
+                    };
+
+                    streamWs.onclose = () => {
+                        document.getElementById('streamStatus').style.display = 'none';
+                    };
+
+                } catch(e) {
+                    console.warn('WS setup failed, using chunk fallback:', e);
+                    useStreaming = false;
+                    startChunkFallback(micStream);
+                }
+            } else if (JOB_ID) {
+                // No streaming — use 30-second chunk fallback
+                startChunkFallback(micStream);
+            }
+
+            // Keep MediaRecorder collecting for final upload regardless
+            const origOnData = mediaRecorder.ondataavailable;
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            // UI updates
+            document.getElementById('btnRecord').style.display = 'none';
+            document.getElementById('btnStop').style.display = '';
+            document.getElementById('btnPause').style.display = '';
+            document.getElementById('btnShare').style.display = '';
+            document.getElementById('recIcon').innerHTML = '<span style="color: var(--red); animation: pulse 1.5s infinite;">&#9899;</span>';
+            document.getElementById('recText').textContent = 'Recording...';
+            document.getElementById('recText').style.color = 'var(--red)';
+            document.getElementById('liveTranscript').style.display = '';
+
+            // Timer
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - recordingStart) / 1000);
+                const h = Math.floor(elapsed / 3600);
+                const m = Math.floor((elapsed % 3600) / 60);
+                const s = elapsed % 60;
+                document.getElementById('recTimer').textContent =
+                    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            }, 1000);
+
+            // Notify server — include channel labels for Mode B
+            if (JOB_ID) {
+                const payload = { job_id: JOB_ID, mode: MODE };
+                if (MODE === 'B' && Object.keys(channelLabels).length > 0) {
+                    payload.channel_labels = channelLabels;
+                }
+                fetch('/api/live/start', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload),
+                });
+            }
+
+        } catch(e) {
+            document.getElementById('recText').textContent = 'Error: ' + e.message;
+            document.getElementById('recText').style.color = 'var(--red)';
+        }
+    }
+
+    // 30-second chunk fallback (used when WebSocket is unavailable)
+    function startChunkFallback(micStream) {
+        let chunkCounter = 0;
+        let rollingChunks = [];
+        const CHUNK_INTERVAL = 30;
+
+        // Override ondataavailable to add chunking
+        const prevHandler = mediaRecorder.ondataavailable;
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                audioChunks.push(e.data);
+                rollingChunks.push(e.data);
+                chunkCounter++;
+
+                if (chunkCounter >= CHUNK_INTERVAL && JOB_ID) {
+                    const chunkBlob = new Blob(rollingChunks, { type: 'audio/webm' });
+                    rollingChunks = [];
+                    chunkCounter = 0;
+
+                    const chunkForm = new FormData();
+                    chunkForm.append('file', chunkBlob, `chunk_${Date.now()}.webm`);
+                    chunkForm.append('job_id', JOB_ID);
+                    fetch('/api/live/chunk', { method: 'POST', body: chunkForm })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.segments) {
+                                const area = document.getElementById('transcriptArea');
+                                data.segments.forEach(seg => {
+                                    const div = document.createElement('div');
+                                    div.style.marginBottom = '8px';
+                                    const speaker = seg.speaker ? `<strong style="color:var(--navy);">${seg.speaker}:</strong> ` : '';
+                                    div.innerHTML = speaker + seg.text;
+                                    area.appendChild(div);
+                                });
+                                area.scrollTop = area.scrollHeight;
+                                const wc = area.textContent.split(/\s+/).filter(w => w).length;
+                                document.getElementById('wordCount').textContent = wc + ' words';
+                            }
+                        })
+                        .catch(() => {});
+                }
+            }
+        };
+    }
+
+    function pauseRecording() {
+        if (!mediaRecorder) return;
+        if (isPaused) {
+            mediaRecorder.resume();
+            document.getElementById('btnPause').textContent = 'Pause';
+            document.getElementById('recText').textContent = 'Recording...';
+            isPaused = false;
+        } else {
+            mediaRecorder.pause();
+            document.getElementById('btnPause').textContent = 'Resume';
+            document.getElementById('recText').textContent = 'Paused';
+            isPaused = true;
+        }
+    }
+
+    function stopRecording() {
+        if (!confirm('Stop recording and process the transcript?\n\nThis will end the recording session. The full audio is preserved for editing.')) return;
+        isRecording = false;
+        clearInterval(timerInterval);
+
+        // Server-side capture: tell server to stop
+        if (serverCapture) {
+            clearInterval(pollInterval);
+            fetch('/api/live/stop', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ job_id: JOB_ID }),
+            }).then(() => {
+                document.getElementById('streamStatus').style.display = 'none';
+                document.getElementById('ccLine').style.display = 'none';
+                document.getElementById('recText').textContent = 'Processing complete';
+                document.getElementById('btnStop').style.display = 'none';
+                document.getElementById('btnPause').style.display = 'none';
+                // Redirect to editor
+                window.location = `/static/editor.html?id=${JOB_ID}`;
+            });
+            return;
+        }
+
+        if (!mediaRecorder) return;
+
+        // Close WebSocket streaming — send stop signal first
+        if (streamWs && streamWs.readyState === WebSocket.OPEN) {
+            streamWs.send(JSON.stringify({ action: 'stop' }));
+            setTimeout(() => {
+                if (streamWs.readyState === WebSocket.OPEN) streamWs.close();
+            }, 2000);
+        }
+
+        // Disconnect audio processor
+        if (streamWorklet) {
+            try {
+                streamWorklet.processor.disconnect();
+                streamWorklet.source.disconnect();
+            } catch(e) {}
+            streamWorklet = null;
+        }
+
+        // Stop platform recorder first if Mode A
+        if (platformRecorder && platformRecorder.state !== 'inactive') {
+            platformRecorder.stop();
+        }
+
+        mediaRecorder.stop();
+
+        // Stop all tracks
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        if (audioContext) audioContext.close();
+
+        document.getElementById('btnRecord').style.display = '';
+        document.getElementById('btnStop').style.display = 'none';
+        document.getElementById('btnPause').style.display = 'none';
+        document.getElementById('recIcon').innerHTML = '&#9989;';
+        document.getElementById('recText').textContent = 'Processing recording...';
+        document.getElementById('recText').style.color = 'var(--amber)';
+    }
+
+    async function uploadRecording(blob) {
+        // Create job if we don't have one
+        let jobId = JOB_ID;
+        if (!jobId) {
+            const form = new FormData();
+            form.set('capture_mode', MODE);
+            form.set('proceeding_type', 'Hearing');
+            form.set('date', new Date().toISOString().split('T')[0]);
+            form.set('speakers', '[]');
+            const r = await fetch('/api/job/create', { method: 'POST', body: form });
+            const data = await r.json();
+            jobId = data.job_id;
+        }
+
+        // Upload mic recording
+        document.getElementById('recText').textContent = 'Uploading recordings...';
+
+        const micForm = new FormData();
+        const micFilename = MODE === 'A' ? `reporter_mic_${Date.now()}.webm` : `live_recording_${Date.now()}.webm`;
+        micForm.append('file', blob, micFilename);
+        await fetch(`/api/job/${jobId}/upload-audio`, { method: 'POST', body: micForm });
+
+        // Upload platform audio if Mode A
+        if (MODE === 'A' && platformChunks.length > 0) {
+            const platformBlob = new Blob(platformChunks, { type: 'audio/webm' });
+            const platForm = new FormData();
+            platForm.append('file', platformBlob, `platform_audio_${Date.now()}.webm`);
+            await fetch(`/api/job/${jobId}/upload-audio`, { method: 'POST', body: platForm });
+        }
+
+        // Process
+        await fetch(`/api/job/${jobId}/process`, { method: 'POST' });
+
+        document.getElementById('recText').textContent = 'Transcription started. Redirecting...';
+        document.getElementById('recText').style.color = 'var(--green)';
+
+        // Redirect to editor
+        setTimeout(() => {
+            window.location = `/static/editor.html?id=${jobId}`;
+        }, 1500);
+    }
+
+    function updateLevelMeter() {
+        if (!isRecording) return;
+
+        // Mic meter
+        if (analyser) {
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(data);
+            const avg = data.reduce((a, b) => a + b, 0) / data.length;
+            const pct = Math.min(100, (avg / 128) * 100);
+            document.getElementById('levelMeter').style.width = pct + '%';
+            document.getElementById('levelMeter').style.background =
+                pct > 70 ? 'var(--red)' : pct > 40 ? 'var(--amber)' : 'var(--green)';
+        }
+
+        // Platform meter (Mode A)
+        if (platformAnalyser) {
+            const data2 = new Uint8Array(platformAnalyser.frequencyBinCount);
+            platformAnalyser.getByteFrequencyData(data2);
+            const avg2 = data2.reduce((a, b) => a + b, 0) / data2.length;
+            const pct2 = Math.min(100, (avg2 / 128) * 100);
+            document.getElementById('levelMeter2').style.width = pct2 + '%';
+            document.getElementById('levelMeter2').style.background =
+                pct2 > 70 ? 'var(--red)' : pct2 > 40 ? 'var(--amber)' : 'var(--blue)';
+        }
+
+        requestAnimationFrame(updateLevelMeter);
+    }
+
+    loadMics();
+
+    // --- Live editing + flagging system ---
+    let liveSegments = [];       // All segments received during recording
+    let liveFlags = [];          // Flagged segments with timestamps
+    let audioSnippets = {};      // segIdx -> {blob, startTime} for snippet playback
+    let _audioChunkTimestamps = []; // timestamps for each MediaRecorder chunk
+
+    function flagLiveSegment(segIdx) {
+        const seg = liveSegments[segIdx];
+        if (!seg) return;
+
+        // Toggle: if already flagged, unflag it
+        const existingIdx = liveFlags.findIndex(f => f.segIdx === segIdx);
+        if (existingIdx >= 0) {
+            liveFlags.splice(existingIdx, 1);
+            const segDiv = document.querySelector(`.live-segment[data-seg-idx="${segIdx}"]`);
+            if (segDiv) { segDiv.style.background = ''; segDiv.style.borderLeft = ''; }
+            if (JOB_ID) {
+                fetch(`/api/job/${JOB_ID}/flag/remove`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({segment_index: segIdx}),
+                }).catch(() => {});
+            }
+            renderFlagQueue();
+            return;
+        }
+
+        const elapsed = seg._recordTime || Math.floor((Date.now() - recordingStart) / 1000);
+        const flag = {
+            segIdx,
+            text: seg._edited || seg.text,
+            speaker: seg.speaker || '',
+            timestamp: elapsed,
+            time: `${String(Math.floor(elapsed/3600)).padStart(2,'0')}:${String(Math.floor((elapsed%3600)/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`,
+            created: Date.now(),
+        };
+        liveFlags.push(flag);
+
+        // Visual feedback on the segment
+        const segDiv = document.querySelector(`.live-segment[data-seg-idx="${segIdx}"]`);
+        if (segDiv) {
+            segDiv.style.background = 'rgba(200,165,92,0.1)';
+            segDiv.style.borderLeft = '3px solid var(--amber)';
+        }
+
+        // Update flag queue
+        renderFlagQueue();
+
+        // Show flag panel
+        document.getElementById('liveFlagPanel').style.display = '';
+
+        // Save to server
+        if (JOB_ID) {
+            fetch(`/api/job/${JOB_ID}/flag`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    index: segIdx,
+                    type: 'live_flag',
+                    text: flag.text.substring(0, 80),
+                    timestamp: elapsed * 1000,
+                }),
+            }).catch(() => {});
+        }
+    }
+
+    let lastClickedLiveFlag = -1;
+
+    function renderFlagQueue() {
+        const queue = document.getElementById('liveFlagQueue');
+        document.getElementById('flagCount').textContent = liveFlags.length;
+
+        queue.innerHTML = liveFlags.map((f, i) => `
+            <div style="padding: 6px 0; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; gap: 8px; align-items: flex-start;"
+                 onclick="toggleLiveFlag(${i}, ${f.segIdx})" title="Click to replay. Click again to remove.">
+                <span style="font-family: monospace; font-size: 10px; color: var(--gold); min-width: 50px;">${f.time}</span>
+                <span style="color: var(--text-muted); flex: 1;">${f.speaker ? '<strong>' + f.speaker + ':</strong> ' : ''}${f.text.substring(0, 60)}${f.text.length > 60 ? '...' : ''}</span>
+                <span style="font-size: 16px; opacity: 0.5;" title="Replay">&#9654;</span>
+            </div>
+        `).join('');
+    }
+
+    function toggleLiveFlag(flagIndex, segIdx) {
+        if (lastClickedLiveFlag === flagIndex) {
+            // Second click — remove the flag
+            lastClickedLiveFlag = -1;
+            liveFlags.splice(flagIndex, 1);
+
+            // Remove visual indicator from segment
+            const segDiv = document.querySelector(`.live-segment[data-seg-idx="${segIdx}"]`);
+            if (segDiv) {
+                segDiv.style.background = '';
+                segDiv.style.borderLeft = '';
+            }
+
+            // Remove from server
+            if (JOB_ID) {
+                fetch(`/api/job/${JOB_ID}/flag/remove`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({segment_index: segIdx}),
+                }).catch(() => {});
+            }
+
+            renderFlagQueue();
+        } else {
+            // First click — replay audio
+            lastClickedLiveFlag = flagIndex;
+            replaySnippet(segIdx);
+        }
+    }
+
+    function replaySnippet(segIdx) {
+        if (!isRecording && !audioChunks.length) return;
+
+        const seg = liveSegments[segIdx];
+        if (!seg) return;
+
+        // Calculate which audio chunk range covers this segment
+        // Each chunk is ~1 second (MediaRecorder collects at 1000ms intervals)
+        const segStartSec = seg._recordTime || segIdx * 3; // rough estimate
+        const snippetStart = Math.max(0, segStartSec - 10); // 10 seconds before
+        const snippetEnd = segStartSec + 10; // 10 seconds after (20 second window)
+
+        // Extract the relevant audio chunks
+        const startChunk = Math.max(0, Math.floor(snippetStart));
+        const endChunk = Math.min(audioChunks.length, Math.ceil(snippetEnd));
+
+        if (startChunk >= audioChunks.length) return;
+
+        const snippetChunks = audioChunks.slice(startChunk, endChunk);
+        if (snippetChunks.length === 0) return;
+
+        const snippetBlob = new Blob(snippetChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(snippetBlob);
+
+        const player = document.getElementById('snippetPlayer');
+        player.src = url;
+        player.style.display = 'block';
+        player.style.cssText = 'width: 100%; margin-top: 8px; height: 32px;';
+
+        // Move player next to the flag panel
+        document.getElementById('liveFlagPanel').appendChild(player);
+
+        player.play().catch(() => {});
+
+        // Highlight the segment being replayed
+        document.querySelectorAll('.live-segment').forEach(s => s.style.outline = '');
+        const segDiv = document.querySelector(`.live-segment[data-seg-idx="${segIdx}"]`);
+        if (segDiv) {
+            segDiv.style.outline = '2px solid var(--gold)';
+            segDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Clean up highlight when done
+        player.onended = () => {
+            if (segDiv) segDiv.style.outline = '';
+            URL.revokeObjectURL(url);
+        };
+    }
+
+    // Hotkeys for live recording — speakers, styles, flags, audio
+    document.addEventListener('keydown', (e) => {
+        if (!isRecording && !isPaused) return;
+
+        const lastIdx = liveSegments.length - 1;
+        if (lastIdx < 0) return;
+
+        // Flags
+        if (e.altKey && e.key.toLowerCase() === 'f') {
+            e.preventDefault();
+            flagLiveSegment(lastIdx);
+            return;
+        }
+
+        // Indiscernible
+        if (e.altKey && e.key.toLowerCase() === 'n') {
+            e.preventDefault();
+            if (JOB_ID) {
+                fetch(`/api/job/${JOB_ID}/update-segment`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ index: lastIdx, text: '(indiscernible)' }),
+                });
+                const area = document.getElementById('transcriptArea');
+                const lastSeg = area.querySelector('.live-segment:last-child .seg-text');
+                if (lastSeg) lastSeg.textContent = '(indiscernible)';
+            }
+            return;
+        }
+
+        // Speaker labels
+        const speakerMap = {
+            'u': 'THE COURT', 'w': 'THE WITNESS', 'k': 'THE CLERK', 'd': 'THE DEFENDANT',
+        };
+        if (e.altKey && speakerMap[e.key.toLowerCase()]) {
+            e.preventDefault();
+            const name = speakerMap[e.key.toLowerCase()];
+            if (JOB_ID) {
+                fetch(`/api/job/${JOB_ID}/update-speaker`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ index: lastIdx, speaker: name }),
+                });
+                const area = document.getElementById('transcriptArea');
+                const lastLabel = area.querySelector('.live-segment:last-child .seg-speaker');
+                if (lastLabel) lastLabel.textContent = name + ':';
+            }
+            return;
+        }
+
+        // Style switching
+        const styleMap = {
+            'c': { style: 'colloquy' },
+            'x': { style: 'qa', qa_role: 'Q' },
+            'z': { style: 'qa', qa_role: 'A' },
+            'p': { style: 'parenthetical' },
+        };
+        if (e.altKey && styleMap[e.key.toLowerCase()]) {
+            e.preventDefault();
+            const s = styleMap[e.key.toLowerCase()];
+            if (JOB_ID) {
+                fetch(`/api/job/${JOB_ID}/update-segment`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ index: lastIdx, style: s.style, qa_role: s.qa_role || '' }),
+                });
+                // Visual feedback
+                const area = document.getElementById('transcriptArea');
+                const lastSeg = area.querySelector('.live-segment:last-child');
+                if (lastSeg) {
+                    lastSeg.style.borderLeftColor = s.style === 'qa' ? 'var(--green)' :
+                        s.style === 'parenthetical' ? 'var(--gold)' : 'var(--blue)';
+                }
+            }
+            return;
+        }
+
+        // Audio controls (work even when not in a text field)
+        if (e.key === 'F5') { e.preventDefault(); /* pause/resume handled by capture */ }
+    });
+
+    // Track recording timestamp for each segment
+    const _origPushSegment = liveSegments.push;
+
+    // Prevent accidental tab close during recording
+    window.addEventListener('beforeunload', (e) => {
+        if (isRecording) {
+            e.preventDefault();
+            e.returnValue = 'Recording is in progress. If you leave, the recording will be lost.';
+        }
+    });
+
+    // Mode B: channel mapping
+    let channelLabels = {};  // channel index -> speaker name
+
+    async function detectChannels() {
+        const deviceId = document.getElementById('micSelect').value;
+        const container = document.getElementById('channelMap');
+
+        // Try to get a multi-channel stream to detect channel count
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    deviceId: deviceId ? { exact: deviceId } : undefined,
+                    channelCount: { ideal: 8 },
+                }
+            });
+            const ctx = new AudioContext();
+            const source = ctx.createMediaStreamSource(stream);
+            const channelCount = source.channelCount || 2;
+            stream.getTracks().forEach(t => t.stop());
+            ctx.close();
+
+            container.innerHTML = '';
+            for (let i = 0; i < channelCount; i++) {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+                row.innerHTML = `
+                    <span style="font-size: 13px; font-weight: 600; min-width: 80px; color: var(--navy);">Channel ${i + 1}</span>
+                    <input type="text" placeholder="Speaker name (e.g., THE COURT)" data-channel="${i}"
+                           style="flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; background: var(--bg);"
+                           onchange="channelLabels[${i}] = this.value">
+                    <div style="width: 60px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;">
+                        <div class="ch-meter-${i}" style="height: 100%; width: 0%; background: var(--green); border-radius: 3px;"></div>
+                    </div>
+                `;
+                container.appendChild(row);
+            }
+
+            // Load any existing labels from the job
+            if (JOB_ID) {
+                try {
+                    const r = await fetch(`/api/job/${JOB_ID}/status`);
+                    const data = await r.json();
+                    if (data.channel_labels) {
+                        for (const [ch, name] of Object.entries(data.channel_labels)) {
+                            channelLabels[ch] = name;
+                            const input = container.querySelector(`input[data-channel="${ch}"]`);
+                            if (input) input.value = name;
+                        }
+                    }
+                } catch(e) {}
+            }
+
+        } catch(e) {
+            container.innerHTML = `<p style="font-size: 12px; color: var(--amber);">Could not detect channels: ${e.message}. Your device may appear as a single stereo input.</p>`;
+        }
+    }
+
+    // Auto-detect channels on Mode B
+    if (MODE === 'B') {
+        setTimeout(detectChannels, 1000);  // Wait for mic permissions
+    }
+
+    // Live Share — attorney real-time view
+    let _shareActive = false;
+    let _shareToken = '';
+
+    async function toggleLiveShare() {
+        if (_shareActive) {
+            // Stop sharing
+            await fetch('/api/live/share/stop', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ job_id: JOB_ID }),
+            });
+            _shareActive = false;
+            _shareToken = '';
+            document.getElementById('shareInfo').style.display = 'none';
+            document.getElementById('btnShare').textContent = 'Share Live';
+            document.getElementById('btnShare').style.background = 'var(--gold)';
+        } else {
+            // Start sharing
+            if (!JOB_ID) { alert('Start recording first'); return; }
+            const r = await fetch('/api/live/share/create', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ job_id: JOB_ID }),
+            });
+            const data = await r.json();
+            if (data.ok) {
+                _shareActive = true;
+                _shareToken = data.token;
+                const fullUrl = window.location.origin + data.url;
+                document.getElementById('shareUrl').value = fullUrl;
+                document.getElementById('shareInfo').style.display = '';
+                document.getElementById('btnShare').textContent = 'Sharing...';
+                document.getElementById('btnShare').style.background = 'var(--green)';
+            }
+        }
+    }
+    </script>
+<script src="/static/theme.js"></script>
+<script src="/static/support_widget.js"></script>
+</body>
+</html>

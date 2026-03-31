@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notare — Admin Panel</title>
-    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -129,7 +129,7 @@
                             <td style="font-family: monospace;">solo</td>
                             <td>$59/mo ($590/yr)</td>
                             <td>1</td>
-                            <td>All capture modes, unlimited local transcription, live CC-style rolling transcript, 13 export formats, Word template with macros, condensed PDF and video sync, jurisdiction profiles and proofing rules, voice-based speaker detection, intelligent document extraction, context-aware accuracy review, email support</td>
+                            <td>All capture modes, unlimited local transcription, live CC-style rolling transcript, 15 export formats with preview, branded cover pages, signatures and digital signing, exhibit uploads with bidirectional hyperlinks, jurisdiction profiles and proofing rules, voice-based speaker detection, intelligent document extraction, sign any document, context-aware accuracy review, email support</td>
                         </tr>
                         <tr>
                             <td><strong>Professional</strong></td>
@@ -179,7 +179,7 @@
                     <tbody>
                         <tr><td>All capture modes (A/B/C/D)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td>Unlimited local transcription</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>13 export formats</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>15 export formats</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td>Word template export with macros</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td>Condensed PDF and video sync</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td>Standard deposition export</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
@@ -187,10 +187,21 @@
                         <tr><td>Voice-based speaker detection</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td>Document extraction</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td>Context-aware accuracy review</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Branded cover pages (logo, stamps, watermark)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Signature management (image or stylized)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Digital PDF signing (cryptographic)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Bidirectional exhibit hyperlinks</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Header/footer graphics</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Cover letter &amp; disc label export</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Auto-optimized line spacing</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Errata comparison (auto-populated)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Sign any PDF from toolbar</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Exhibit file uploads (docs, photos, video, audio)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td>Export preview before saving</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr style="border-top: 2px solid #e0ddd8;"><td><strong>Case management</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td><strong>Voice profiles</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Collaborative editing</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Live attorney sharing</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td><strong>Local network live sharing (view &amp; edit)</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                        <tr><td><strong>Multi-volume consolidation &amp; master index</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr style="border-top: 2px solid #e0ddd8;"><td>Multi-seat (5 users)</td><td>—</td><td>—</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td>Shared profiles and speaker DB</td><td>—</td><td>—</td><td>&#10003;</td><td>&#10003;</td></tr>
                         <tr><td>Offline annual licensing</td><td>—</td><td>—</td><td>—</td><td>&#10003;</td></tr>
@@ -865,7 +876,7 @@ async function loadSupportTickets() {
                     </td>
                     <td>
                         ${t.status === 'open' ? '<button class="btn btn-sm btn-primary" onclick="claimTicket(\'' + t.id + '\')">Claim</button>' : ''}
-                        <button class="btn btn-sm btn-secondary" onclick="resolveTicket('" + t.id + "')">Resolve</button>
+                        <button class="btn btn-sm btn-secondary" onclick="resolveTicket('${t.id}')">Resolve</button>
                     </td>
                 </tr>
             `).join('');

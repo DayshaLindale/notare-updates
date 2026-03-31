@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Live Transcript</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <style>
+        :root { --navy: #1a2744; --gold: #c8a55c; --text: #1a1a1a; --muted: #888; --bg: #faf8f5; --border: #e8e4de; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+        .header { background: var(--navy); color: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; }
+        .header h1 span { color: var(--gold); }
+        .header .badge { font-size: 11px; background: var(--gold); color: white; padding: 3px 10px; border-radius: 3px; font-weight: 600; letter-spacing: 1px; }
+        .case-info { padding: 16px 32px; background: white; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+        .transcript { max-width: 800px; margin: 32px auto; padding: 0 24px; }
+        .segment { margin-bottom: 16px; padding: 12px 16px; background: white; border-radius: 6px; border-left: 3px solid var(--border); font-size: 15px; line-height: 1.8; }
+        .segment .speaker { font-weight: 700; color: var(--navy); font-size: 13px; margin-bottom: 4px; }
+        .segment .time { font-size: 11px; color: var(--muted); float: right; }
+        .segment.updated { border-left-color: var(--gold); transition: border-color 0.5s; }
+        .ended { text-align: center; padding: 40px; color: var(--muted); font-size: 16px; }
+        .live-dot { display: inline-block; width: 8px; height: 8px; background: #e74c3c; border-radius: 50%; margin-right: 8px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @media print { .header { background: white; color: var(--navy); border-bottom: 2px solid var(--navy); } .segment { border: none; padding: 4px 0; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>N</span>OTARE — Live Transcript</h1>
+        <span class="badge" id="statusBadge"><span class="live-dot"></span>LIVE</span>
+    </div>
+    <div class="case-info" id="caseInfo"></div>
+    <div class="transcript" id="transcriptArea"></div>
+
+    <script>
+    const params = new URLSearchParams(window.location.search);
+    const TOKEN = params.get('token');
+    const JOB_ID = params.get('job');
+
+    if (!TOKEN) {
+        document.getElementById('transcriptArea').innerHTML = '<div class="ended">Invalid link. This transcript is not available.</div>';
+    } else {
+        init();
+    }
+
+    async function init() {
+        // Load current state
+        try {
+            const r = await fetch(`/api/live/share/${TOKEN}/state`);
+            if (r.status === 403) {
+                document.getElementById('transcriptArea').innerHTML = '<div class="ended">This link has expired or is no longer active.</div>';
+                document.getElementById('statusBadge').innerHTML = 'ENDED';
+                return;
+            }
+            const data = await r.json();
+
+            // Show case info
+            const info = data.job_info || {};
+            const parts = [info.court_name, info.case_number, info.proceeding_type, info.date].filter(Boolean);
+            document.getElementById('caseInfo').textContent = parts.join(' | ') || 'Live Proceeding';
+
+            // Render existing segments
+            (data.segments || []).forEach(addSegment);
+
+            // Subscribe to live updates via SSE
+            const source = new EventSource(`/api/stream/${JOB_ID}?token=${TOKEN}`);
+
+            source.addEventListener('new_segment', (e) => {
+                const seg = JSON.parse(e.data);
+                addSegment(seg);
+            });
+
+            source.addEventListener('segment_update', (e) => {
+                const update = JSON.parse(e.data);
+                updateSegment(update);
+            });
+
+            source.addEventListener('session_ended', (e) => {
+                document.getElementById('statusBadge').innerHTML = 'SESSION ENDED';
+                document.getElementById('statusBadge').style.background = 'var(--muted)';
+                const div = document.createElement('div');
+                div.className = 'ended';
+                div.textContent = 'The live session has ended. This transcript is now final.';
+                document.getElementById('transcriptArea').appendChild(div);
+                source.close();
+            });
+
+            source.onerror = () => {
+                // Reconnect silently — SSE auto-reconnects
+            };
+
+        } catch(e) {
+            document.getElementById('transcriptArea').innerHTML = '<div class="ended">Unable to connect to the live session.</div>';
+        }
+    }
+
+    function formatTime(ms) {
+        if (!ms && ms !== 0) return '';
+        const s = Math.floor(ms / 1000);
+        const m = Math.floor(s / 60);
+        const h = Math.floor(m / 60);
+        return h > 0
+            ? `${h}:${String(m % 60).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`
+            : `${m}:${String(s % 60).padStart(2,'0')}`;
+    }
+
+    let segIndex = 0;
+
+    function addSegment(seg) {
+        const area = document.getElementById('transcriptArea');
+        const div = document.createElement('div');
+        div.className = 'segment';
+        div.id = `seg-${segIndex}`;
+        div.setAttribute('data-index', segIndex);
+        segIndex++;
+
+        const time = seg.start ? `<span class="time">${formatTime(seg.start)}</span>` : '';
+        const speaker = seg.speaker ? `<div class="speaker">${seg.speaker} ${time}</div>` : (time ? `<div class="speaker">${time}</div>` : '');
+        div.innerHTML = `${speaker}<div class="text">${seg.text || ''}</div>`;
+
+        area.appendChild(div);
+        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+
+    function updateSegment(update) {
+        // Find and update an existing segment by index
+        const idx = update.index;
+        const el = document.querySelector(`[data-index="${idx}"]`);
+        if (el) {
+            const textEl = el.querySelector('.text');
+            if (textEl && update.text) textEl.textContent = update.text;
+            if (update.speaker) {
+                const speakerEl = el.querySelector('.speaker');
+                if (speakerEl) speakerEl.textContent = update.speaker;
+            }
+            el.classList.add('updated');
+            setTimeout(() => el.classList.remove('updated'), 3000);
+        }
+    }
+    </script>
+</body>
+</html>

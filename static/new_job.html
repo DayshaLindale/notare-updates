@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — New Job</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html">Help</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <h2 class="page-title">Job Setup Wizard</h2>
+
+        <form id="jobForm" enctype="multipart/form-data">
+
+        <!-- Capture Mode -->
+        <div class="card">
+            <h3>1. Capture Mode</h3>
+            <div class="mode-grid">
+                <div class="mode-card" data-mode="A" onclick="selectMode('A')">
+                    <h4>Mode A: Remote (Zoom / Teams)</h4>
+                    <p>Video conferencing with SDK speaker identification</p>
+                    <span class="accuracy excellent">Excellent accuracy</span>
+                </div>
+                <div class="mode-card" data-mode="B" onclick="selectMode('B')">
+                    <h4>Mode B: Multi-Mic (Mixer / USB)</h4>
+                    <p>In-person with dedicated mics per participant</p>
+                    <span class="accuracy excellent">Best accuracy</span>
+                </div>
+                <div class="mode-card" data-mode="C" onclick="selectMode('C')">
+                    <h4>Mode C: Room Audio (Single Mic)</h4>
+                    <p>Single room mic — AI diarization</p>
+                    <span class="accuracy reduced">Reduced accuracy</span>
+                </div>
+                <div class="mode-card selected" data-mode="D" onclick="selectMode('D')">
+                    <h4>Mode D: File / Batch</h4>
+                    <p>Pre-recorded audio files</p>
+                    <span class="accuracy good">Depends on source</span>
+                </div>
+            </div>
+            <input type="hidden" name="capture_mode" id="captureMode" value="D">
+        </div>
+
+        <!-- Jurisdiction -->
+        <div class="card">
+            <h3>2. Jurisdiction / Agency Profile</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Load Saved Profile</label>
+                    <select name="jurisdiction_profile" id="profileSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>Proceeding Type</label>
+                    <select name="proceeding_type">
+                        <option value="Deposition">Deposition</option>
+                        <option value="Hearing" selected>Hearing</option>
+                        <option value="Trial - Jury">Trial — Jury</option>
+                        <option value="Trial - Bench">Trial — Bench</option>
+                        <option value="Arbitration">Arbitration</option>
+                        <option value="Motion">Motion</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Placeholder — uploads moved to combined section below -->
+
+        <!-- Title & Caption -->
+        <div class="card">
+            <h3>3. Title & Caption</h3>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label>Document Title <span style="font-size:11px; color:var(--text-dim); font-weight:normal;">(this is how your exports will be saved)</span></label>
+                <input type="text" name="title" id="jobTitle" placeholder="e.g., Smith v. Johnson — Hearing 01.15.2025" style="font-size: 15px; padding: 10px 12px;">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Venue Name</label>
+                    <input type="text" name="court_name" placeholder="e.g., Superior Court of Example County">
+                </div>
+                <div class="form-group">
+                    <label>Case Number</label>
+                    <input type="text" name="case_number" placeholder="e.g., 25CV00123">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Case Caption</label>
+                    <input type="text" name="case_caption" placeholder="e.g., Smith v. Johnson">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" name="date" id="jobDate">
+                </div>
+                <div class="form-group">
+                    <label>Time In</label>
+                    <input type="time" name="time_in">
+                </div>
+                <div class="form-group">
+                    <label>Time Out</label>
+                    <input type="time" name="time_out">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" name="location" placeholder="e.g., Courtroom 3A / Zoom">
+                </div>
+                <div class="form-group">
+                    <label>Job Number</label>
+                    <input type="text" name="job_number" placeholder="Agency-assigned or auto">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Reporter Name</label>
+                    <input type="text" name="reporter_name">
+                </div>
+                <div class="form-group">
+                    <label>Credential</label>
+                    <input type="text" name="reporter_credential" placeholder="e.g., CSR, RPR">
+                </div>
+            </div>
+        </div>
+
+        <!-- Speakers -->
+        <div class="card">
+            <h3>4. Speakers</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                Add participants. Hotkeys are customizable — click the hotkey field and press your desired key combination.
+            </p>
+            <table class="speaker-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; font-size: 12px; color: var(--text-muted); padding: 6px 8px; border-bottom: 1px solid var(--border);">Name / Designation</th>
+                        <th style="text-align: left; font-size: 12px; color: var(--text-muted); padding: 6px 8px; border-bottom: 1px solid var(--border);">Firm / Title</th>
+                        <th style="text-align: left; font-size: 12px; color: var(--text-muted); padding: 6px 8px; border-bottom: 1px solid var(--border);">Representing</th>
+                        <th style="text-align: left; font-size: 12px; color: var(--text-muted); padding: 6px 8px; border-bottom: 1px solid var(--border); width: 90px;">Hotkey</th>
+                        <th style="width: 36px; border-bottom: 1px solid var(--border);"></th>
+                    </tr>
+                </thead>
+                <tbody id="speakerRows">
+                    <tr class="spk-row">
+                        <td style="padding: 4px;"><input type="text" placeholder="e.g., THE COURT" class="spk-name" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" placeholder="e.g., Example County" class="spk-firm" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" placeholder="e.g., The Court" class="spk-rep" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" class="spk-hotkey" value="Alt+U" style="width:100%; font-family:monospace; text-align:center;"></td>
+                        <td style="padding: 4px;"></td>
+                    </tr>
+                    <tr class="spk-row">
+                        <td style="padding: 4px;"><input type="text" placeholder="Attorney name" class="spk-name" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" placeholder="Firm name" class="spk-firm" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" placeholder="Plaintiff" class="spk-rep" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" class="spk-hotkey" value="Alt+1" style="width:100%; font-family:monospace; text-align:center;"></td>
+                        <td style="padding: 4px;"><button type="button" class="btn btn-sm btn-icon" onclick="this.closest('tr').remove()" style="padding:4px 8px;">X</button></td>
+                    </tr>
+                    <tr class="spk-row">
+                        <td style="padding: 4px;"><input type="text" placeholder="Attorney name" class="spk-name" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" placeholder="Firm name" class="spk-firm" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" placeholder="Defendant" class="spk-rep" style="width:100%;"></td>
+                        <td style="padding: 4px;"><input type="text" class="spk-hotkey" value="Alt+2" style="width:100%; font-family:monospace; text-align:center;"></td>
+                        <td style="padding: 4px;"><button type="button" class="btn btn-sm btn-icon" onclick="this.closest('tr').remove()" style="padding:4px 8px;">X</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm btn-secondary" style="margin-top: 10px;" onclick="addSpeaker()">+ Add Speaker</button>
+            <input type="hidden" name="speakers" id="speakersJson" value="[]">
+        </div>
+
+        <!-- File Uploads — side by side -->
+        <div class="card">
+            <h3>5. Files</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" style="padding: 24px;">
+                        <div class="icon" style="font-size: 28px;">&#127908;</div>
+                        <p><strong>Audio Files</strong></p>
+                        <p style="font-size: 11px; color: var(--text-dim);">WAV, MP3, M4A, FLAC, TRM</p>
+                    </div>
+                    <input type="file" id="fileInput" name="files" multiple accept=".wav,.mp3,.m4a,.aac,.flac,.trm,.mp4,.webm" style="display: none;" onchange="handleFiles(this.files)">
+                    <div id="fileList"></div>
+                </div>
+                <div>
+                    <div class="upload-zone" id="docDropZone" onclick="document.getElementById('caseDocInput').click()" style="padding: 24px;">
+                        <div class="icon" style="font-size: 28px;">&#128196;</div>
+                        <p><strong>Case Documents</strong></p>
+                        <p style="font-size: 11px; color: var(--text-dim);">PDF, DOCX — auto-fills caption & parties</p>
+                    </div>
+                    <input type="file" id="caseDocInput" accept=".pdf,.docx,.doc,.txt,.htm,.html" multiple style="display: none;" onchange="uploadCaseDocs(this.files)">
+                    <div id="caseDocStatus" style="font-size: 12px; color: var(--text-muted); margin-top: 6px; text-align: center;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+            <a href="/static/index.html" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create Job & Process</button>
+        </div>
+        </form>
+    </div>
+
+    <script>
+    document.getElementById('jobDate').valueAsDate = new Date();
+
+    // Track all accumulated case documents for merging
+    let _allCaseDocs = [];
+    let _accumulatedSpeakers = [];
+
+    async function uploadCaseDocs(files) {
+        if (!files || files.length === 0) return;
+
+        // Add new files to the accumulated list
+        for (const file of files) {
+            _allCaseDocs.push(file);
+        }
+
+        document.getElementById('caseDocStatus').textContent = `Reading ${_allCaseDocs.length} document(s)...`;
+
+        // Send ALL accumulated documents in one call
+        const form = new FormData();
+        for (const file of _allCaseDocs) {
+            form.append('files', file);
+        }
+
+        try {
+            const r = await fetch('/api/extract-case-info', { method: 'POST', body: form });
+            const data = await r.json();
+            if (data.error) {
+                document.getElementById('caseDocStatus').textContent = data.error;
+                return;
+            }
+
+            // Merge fields — only fill if the field is currently empty OR the new value is more complete
+            const fields = [
+                {name: 'court_name', key: 'court_name'},
+                {name: 'case_number', key: 'case_number'},
+                {name: 'case_caption', key: 'case_caption'},
+                {name: 'location', key: 'location'},
+            ];
+            for (const f of fields) {
+                const el = document.querySelector(`[name="${f.name}"]`);
+                const current = el.value.trim();
+                const incoming = (data[f.key] || '').trim();
+                // Fill if empty, or replace if incoming is longer (more complete)
+                if (incoming && (!current || incoming.length > current.length)) {
+                    el.value = incoming;
+                }
+            }
+
+            // Proceeding type — only fill if empty
+            if (data.proceeding_type && !document.querySelector('[name="proceeding_type"]').value) {
+                const sel = document.querySelector('[name="proceeding_type"]');
+                for (const opt of sel.options) {
+                    if (opt.value.toLowerCase().includes(data.proceeding_type.toLowerCase())) {
+                        sel.value = opt.value; break;
+                    }
+                }
+            }
+
+            // Date/time — fill if empty
+            if (data.date && !document.querySelector('[name="date"]').value) {
+                // Try to parse into date input format (YYYY-MM-DD)
+                const dateEl = document.querySelector('[name="date"]');
+                const parsed = new Date(data.date);
+                if (!isNaN(parsed)) {
+                    dateEl.value = parsed.toISOString().split('T')[0];
+                }
+            }
+            if (data.time_in && document.querySelector('[name="time_in"]')) {
+                const timeEl = document.querySelector('[name="time_in"]');
+                if (!timeEl.value) timeEl.value = data.time_in;
+            }
+            if (data.time_out && document.querySelector('[name="time_out"]')) {
+                const timeEl = document.querySelector('[name="time_out"]');
+                if (!timeEl.value) timeEl.value = data.time_out;
+            }
+
+            // Speakers — fill empty rows first, then add new ones. Deduplicate.
+            if (data.speakers && data.speakers.length > 0) {
+                const rows = document.getElementById('speakerRows');
+                const existingRows = rows.querySelectorAll('tr.spk-row');
+                const existingNames = new Set();
+
+                // Collect names already filled in
+                existingRows.forEach(row => {
+                    const name = row.querySelector('.spk-name').value.trim();
+                    if (name) existingNames.add(name.toLowerCase());
+                });
+
+                // Find empty rows we can fill
+                const emptyRows = [];
+                existingRows.forEach(row => {
+                    if (!row.querySelector('.spk-name').value.trim()) {
+                        emptyRows.push(row);
+                    }
+                });
+
+                let emptyIdx = 0;
+                for (const s of data.speakers) {
+                    const nameKey = (s.name || '').trim().toLowerCase();
+                    if (!nameKey || existingNames.has(nameKey)) continue;
+                    existingNames.add(nameKey);
+
+                    // Fill an empty row if available
+                    if (emptyIdx < emptyRows.length) {
+                        const row = emptyRows[emptyIdx];
+                        row.querySelector('.spk-name').value = s.name || '';
+                        row.querySelector('.spk-firm').value = s.firm || '';
+                        row.querySelector('.spk-rep').value = s.representing || '';
+                        if (s.hotkey) row.querySelector('.spk-hotkey').value = s.hotkey;
+                        emptyIdx++;
+                    } else {
+                        // Add a new row
+                        const tr = document.createElement('tr');
+                        tr.className = 'spk-row';
+                        tr.innerHTML = `
+                            <td style="padding: 4px;"><input type="text" class="spk-name" value="${s.name || ''}" style="width:100%;"></td>
+                            <td style="padding: 4px;"><input type="text" class="spk-firm" value="${s.firm || ''}" style="width:100%;"></td>
+                            <td style="padding: 4px;"><input type="text" class="spk-rep" value="${s.representing || ''}" style="width:100%;"></td>
+                            <td style="padding: 4px;"><input type="text" class="spk-hotkey" value="${s.hotkey || ''}" style="width:100%; font-family:monospace; text-align:center;"></td>
+                            <td style="padding: 4px;"><button type="button" class="btn btn-sm btn-icon" onclick="this.closest('tr').remove()" style="padding:4px 8px;">X</button></td>
+                        `;
+                        rows.appendChild(tr);
+                        newCount++;
+                    }
+                }
+            }
+
+            // Auto-fill document title if empty
+            const titleEl = document.getElementById('jobTitle');
+            if (!titleEl.value.trim()) {
+                const caption = document.querySelector('[name="case_caption"]').value.trim();
+                const dateVal = document.querySelector('[name="date"]').value;
+                const procType = document.querySelector('[name="proceeding_type"]').value;
+                let autoTitle = caption || '';
+                if (procType) autoTitle += (autoTitle ? ' — ' : '') + procType;
+                if (dateVal) autoTitle += (autoTitle ? ' ' : '') + dateVal;
+                if (autoTitle) titleEl.value = autoTitle;
+            }
+
+            // Status
+            const totalSpeakers = document.querySelectorAll('#speakerRows .spk-name').length;
+            const filledFields = fields.filter(f => document.querySelector(`[name="${f.name}"]`).value.trim()).length;
+            document.getElementById('caseDocStatus').textContent =
+                `${_allCaseDocs.length} documents processed — ${filledFields} fields, ${totalSpeakers} speakers`;
+
+        } catch(e) {
+            document.getElementById('caseDocStatus').textContent = 'Error: ' + e.message;
+        }
+    }
+
+    function selectMode(mode) {
+        document.getElementById('captureMode').value = mode;
+        document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+        document.querySelector(`.mode-card[data-mode="${mode}"]`).classList.add('selected');
+    }
+
+    function addSpeaker() {
+        const tr = document.createElement('tr');
+        tr.className = 'spk-row';
+        tr.innerHTML = `
+            <td style="padding: 4px;"><input type="text" placeholder="Name" class="spk-name" style="width:100%;"></td>
+            <td style="padding: 4px;"><input type="text" placeholder="Firm" class="spk-firm" style="width:100%;"></td>
+            <td style="padding: 4px;"><input type="text" placeholder="Representing" class="spk-rep" style="width:100%;"></td>
+            <td style="padding: 4px;"><input type="text" class="spk-hotkey" style="width:100%; font-family:monospace; text-align:center;" placeholder="Click to set"></td>
+            <td style="padding: 4px;"><button type="button" class="btn btn-sm btn-icon" onclick="this.closest('tr').remove()" style="padding:4px 8px;">X</button></td>
+        `;
+        document.getElementById('speakerRows').appendChild(tr);
+    }
+
+    let uploadedFiles = [];
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+
+    const docDropZone = document.getElementById('docDropZone');
+    docDropZone.addEventListener('dragover', e => { e.preventDefault(); docDropZone.classList.add('dragover'); });
+    docDropZone.addEventListener('dragleave', () => docDropZone.classList.remove('dragover'));
+    docDropZone.addEventListener('drop', e => { e.preventDefault(); docDropZone.classList.remove('dragover'); uploadCaseDocs(e.dataTransfer.files); });
+
+    function handleFiles(files) {
+        const dt = new DataTransfer();
+        for (const f of uploadedFiles) dt.items.add(f);
+        for (const f of files) { uploadedFiles.push(f); dt.items.add(f); }
+        document.getElementById('fileInput').files = dt.files;
+        document.getElementById('fileList').innerHTML = uploadedFiles.map((f, i) =>
+            `<div class="file-item"><span>${f.name} (${(f.size/1024/1024).toFixed(1)} MB)</span></div>`
+        ).join('');
+    }
+
+    // Load profiles and wire up selection
+    let _allProfiles = {};
+    fetch('/api/profiles').then(r => r.json()).then(profiles => {
+        _allProfiles = profiles;
+        const sel = document.getElementById('profileSelect');
+        sel.innerHTML = '<option value="">— Select or create new —</option>';
+        for (const name of Object.keys(profiles)) {
+            sel.innerHTML += `<option value="${name}">${name}</option>`;
+        }
+    });
+
+    document.getElementById('profileSelect').addEventListener('change', function() {
+        const profile = _allProfiles[this.value];
+        if (!profile) return;
+        // Auto-fill fields from profile
+        if (profile.court_name) document.querySelector('[name="court_name"]').value = profile.court_name;
+        if (profile.reporter_name) document.querySelector('[name="reporter_name"]').value = profile.reporter_name;
+        if (profile.reporter_credential) document.querySelector('[name="reporter_credential"]').value = profile.reporter_credential;
+        if (profile.location) document.querySelector('[name="location"]').value = profile.location;
+        if (profile.proceeding_type) {
+            const sel = document.querySelector('[name="proceeding_type"]');
+            for (const opt of sel.options) {
+                if (opt.value.toLowerCase().includes(profile.proceeding_type.toLowerCase())) {
+                    sel.value = opt.value; break;
+                }
+            }
+        }
+    });
+
+    document.getElementById('jobForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const speakers = [];
+        document.querySelectorAll('#speakerRows tr.spk-row').forEach(row => {
+            const name = row.querySelector('.spk-name').value.trim();
+            if (name) speakers.push({
+                name,
+                firm: row.querySelector('.spk-firm').value.trim(),
+                representing: row.querySelector('.spk-rep').value.trim(),
+                hotkey: row.querySelector('.spk-hotkey').value.trim(),
+            });
+        });
+
+        const mode = document.getElementById('captureMode').value;
+
+        // Validate: Mode D requires at least one audio file
+        if (mode === 'D' && uploadedFiles.length === 0) {
+            alert('Please add at least one audio file before processing.\n\nDrag files into the Audio Files zone or click to browse.');
+            return;
+        }
+
+        const form = new FormData(e.target);
+        form.set('speakers', JSON.stringify(speakers));
+
+        const resp = await fetch('/api/job/create', { method: 'POST', body: form });
+        const data = await resp.json();
+        if (data.job_id) {
+            if (mode === 'A' || mode === 'B' || mode === 'C') {
+                // Live modes — go to live capture page
+                window.location = `/static/live.html?id=${data.job_id}&mode=${mode}`;
+            } else {
+                // Batch mode — process and go to editor
+                await fetch(`/api/job/${data.job_id}/process`, { method: 'POST' });
+                window.location = `/static/editor.html?id=${data.job_id}`;
+            }
+        }
+    });
+    </script>
+<script src="/static/theme.js"></script>
+<script src="/static/support_widget.js"></script>
+</body>
+</html>

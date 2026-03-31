@@ -196,12 +196,100 @@ async def sync_admin_data(request: Request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+# ---------------------------------------------------------------------------
+# Share Code Relay — Pure transport, nothing persisted. Data exists in RAM
+# only while actively needed, then is burned immediately.
+# ---------------------------------------------------------------------------
+
+_shared_transcripts = {}  # code -> payload (RAM only, never written to disk)
+
+@app.post("/api/share/relay")
+async def share_relay(request: Request):
+    """Reporter pushes a shared transcript to the server with a short code."""
+    auth = request.headers.get("Authorization", "")
+    if auth != "notare-admin-sync":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        data = await request.json()
+        code = data.get("code", "")
+        if not code:
+            return JSONResponse({"error": "No code"}, status_code=400)
+        data["_pull_count"] = 0  # track if recipient has pulled
+        _shared_transcripts[code] = data
+        return JSONResponse({"ok": True, "code": code})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.post("/api/share/relay-update")
+async def share_relay_update(request: Request):
+    """Reporter pushes updated segments for a live share."""
+    auth = request.headers.get("Authorization", "")
+    if auth != "notare-admin-sync":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        data = await request.json()
+        code = data.get("code", "")
+        if code in _shared_transcripts:
+            _shared_transcripts[code]["segments"] = data.get("segments", [])
+            return JSONResponse({"ok": True})
+        return JSONResponse({"error": "Code not found"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.delete("/api/share/burn/{code}")
+async def share_burn(code: str, request: Request):
+    """Reporter explicitly burns a share code. Data is deleted immediately."""
+    auth = request.headers.get("Authorization", "")
+    if auth != "notare-admin-sync":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    if code in _shared_transcripts:
+        del _shared_transcripts[code]
+        return JSONResponse({"ok": True, "burned": True})
+    return JSONResponse({"ok": True, "burned": False})
+
+
+@app.get("/api/share/pull/{code}")
+async def share_pull(code: str):
+    """Recipient pulls a shared transcript by entering the code."""
+    payload = _shared_transcripts.get(code)
+    if not payload:
+        return JSONResponse({"error": "Code not found or burned"}, status_code=404)
+
+    is_live = payload.get("live", False)
+
+    # For non-live (snapshot) shares: burn after first pull
+    # The recipient gets it once, then it's gone
+    if not is_live:
+        payload["_pull_count"] = payload.get("_pull_count", 0) + 1
+        if payload["_pull_count"] > 1:
+            # Already pulled once — burn it
+            del _shared_transcripts[code]
+            return JSONResponse({"error": "This share code has already been used"}, status_code=410)
+
+    # Return transcript data (strip internal fields)
+    return JSONResponse({
+        "code": code,
+        "case_caption": payload.get("case_caption", ""),
+        "case_number": payload.get("case_number", ""),
+        "court_name": payload.get("court_name", ""),
+        "date": payload.get("date", ""),
+        "proceeding_type": payload.get("proceeding_type", ""),
+        "reporter_name": payload.get("reporter_name", ""),
+        "speakers": payload.get("speakers", []),
+        "segments": payload.get("segments", []),
+        "permissions": payload.get("permissions", ["view"]),
+        "live": is_live,
+    })
+
+
 @app.get("/api/download-installer")
 async def download_installer():
     """Redirect to the installer download. User sees notarelegal.com URL, gets the file from GitHub."""
     from fastapi.responses import RedirectResponse
     return RedirectResponse(
-        "https://github.com/DayshaLindale/notare-updates/releases/download/v0.3.0/NotareSetup_v0.3.0.exe",
+        "https://github.com/DayshaLindale/notare-updates/releases/download/v0.5.0/NotareSetup_v0.5.0.exe",
         status_code=302,
     )
 

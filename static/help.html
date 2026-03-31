@@ -19,7 +19,7 @@
 </head>
 <body>
     <div class="header">
-        <a href="/static/site.html" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
         <nav>
             <a href="/static/index.html">Dashboard</a>
             <a href="/static/new_job.html">New Job</a>
@@ -38,7 +38,7 @@
             <div class="section-label">Getting Started</div>
 
             <details><summary>How do I start Notare?</summary>
-                <div class="answer">Double-click the Notare shortcut on your desktop, or run <code>Notare.exe</code> from the install folder. The app will open in its own window.</div>
+                <div class="answer">Double-click the Notare shortcut on your desktop, or run <code>Notare.exe</code> from the install folder. The app will open in its own window. Updates are applied automatically on launch.</div>
             </details>
 
             <details><summary>Where do I enter my license key?</summary>
@@ -55,116 +55,215 @@
 
             <div class="section-label">Audio & Transcription</div>
 
+            <details><summary>What audio formats are supported?</summary>
+                <div class="answer">WAV, MP3, M4A, AAC, FLAC, OGG, WMA, and FTR .TRM files. WAV provides the best quality. FTR .TRM files from For The Record court systems are converted automatically. You can upload multiple files per job and Notare concatenates them in order.</div>
+            </details>
+
             <details><summary>My .trm files aren't being recognized</summary>
                 <div class="answer">FTR .trm files are converted automatically using the bundled ffmpeg. If conversion fails, check that <code>ffmpeg.exe</code> is in the Notare install folder. If it's missing, reinstall Notare.</div>
             </details>
 
-            <details><summary>Transcription shows "no audio files found"</summary>
-                <div class="answer">Check that your audio files are a supported format: WAV, MP3, M4A, AAC, FLAC, or TRM. If uploading multiple .trm segments, make sure all files are selected. Notare concatenates them automatically.</div>
+            <details><summary>Which transcription engine should I use?</summary>
+                <div class="answer">
+                    <ul>
+                        <li><strong>Whisper (Local)</strong> — Free, 100% private, no data leaves your machine. Best with an NVIDIA GPU. Models range from tiny.en (fast, less accurate) to large-v3-turbo (best accuracy).</li>
+                        <li><strong>AssemblyAI (Cloud)</strong> — Excellent accuracy, fast processing, good speaker detection.</li>
+                        <li><strong>Deepgram (Cloud)</strong> — Fastest cloud engine, real-time capable.</li>
+                        <li><strong>Rev.ai (Cloud)</strong> — Trained specifically on legal and professional audio.</li>
+                    </ul>
+                    Cloud engines require an API key (enter in Settings) and internet connection. All engines produce the same output format.
+                </div>
             </details>
 
             <details><summary>Transcription accuracy is poor</summary>
-                <div class="answer">Accuracy depends on audio quality. Common causes:
+                <div class="answer">Audio quality is the biggest factor. Common causes of poor accuracy:
                     <ul>
                         <li>Background noise (HVAC, room echo, traffic)</li>
                         <li>Speakers far from microphone</li>
                         <li>Multiple speakers talking simultaneously</li>
                         <li>Low recording volume</li>
                     </ul>
-                    For best results, use multi-channel audio (Mode B) with dedicated microphones. Single-mic room capture (Mode C) will always have reduced accuracy with multiple speakers. Segments flagged below 90% confidence are highlighted for your review.
+                    Improve results by using a larger Whisper model, adding Word Boost terms in your profile, or using a cloud engine like Rev.ai which is trained on legal audio. Multi-mic setups (Mode B) provide the best speaker separation.
                 </div>
             </details>
 
             <details><summary>Speaker names are wrong or showing as "Speaker A"</summary>
-                <div class="answer">Notare identifies speakers from court appearances at the start of proceedings. If appearances aren't captured in the audio, speakers get generic labels. To fix:
+                <div class="answer">To fix speaker labels:
                     <ul>
                         <li>Click any speaker label in the editor to reassign it</li>
+                        <li>Use speaker hotkeys: Alt+U (THE COURT), Alt+W (THE WITNESS), Alt+K (THE CLERK), Alt+D (THE DEFENDANT)</li>
+                        <li>Speaker hotkeys apply from the current segment forward until the next speaker change</li>
                         <li>Use Find/Replace to rename a speaker throughout the entire transcript</li>
-                        <li>Hotkeys (Alt+U for THE COURT, etc.) let you assign with one keystroke</li>
                     </ul>
                 </div>
             </details>
 
             <details><summary>Processing seems stuck or is taking very long</summary>
-                <div class="answer">Long recordings take time. a 3-hour hearing may take 5-15 minutes to process depending on your hardware. Check the progress bar. If it's been more than 20 minutes with no progress, close and restart the app. Your job data is saved and you can reprocess from the dashboard.</div>
+                <div class="answer">Processing time depends on recording length and hardware. With an NVIDIA GPU, a 1-hour recording typically takes 5-10 minutes. On CPU only, it may take 30-60 minutes. If no progress after 20 minutes, close and restart the app. Your job data is saved and you can reprocess from the dashboard.</div>
             </details>
 
-            <div class="section-label">Templates & Export</div>
+            <div class="section-label">Editor & Hotkeys</div>
+
+            <details><summary>What keyboard shortcuts are available?</summary>
+                <div class="answer">
+                    <ul>
+                        <li><strong>Speaker Labels:</strong> Alt+U (THE COURT), Alt+W (THE WITNESS), Alt+K (THE CLERK), Alt+D (THE DEFENDANT)</li>
+                        <li><strong>Formatting:</strong> Alt+C (Colloquy), Alt+X (Question), Alt+Z (Answer), Alt+P (Parenthetical)</li>
+                        <li><strong>Flagging:</strong> Alt+F (Flag segment), Alt+N (Mark indiscernible)</li>
+                        <li><strong>Audio:</strong> F5 (Play/Pause), F7 (Back 5s), F8 (Forward 5s), F9 (Slow down), F10 (Speed up)</li>
+                    </ul>
+                    All hotkeys show a brief visual flash when activated. Customize hotkeys in your jurisdiction profile.
+                </div>
+            </details>
+
+            <details><summary>What do the flag colors mean?</summary>
+                <div class="answer">
+                    <ul>
+                        <li><strong style="color:#b84040;">Red (Confidence)</strong> — Engine was uncertain about the text. Review and correct.</li>
+                        <li><strong style="color:#7b61c4;">Purple (Context)</strong> — Potential grammar or structural issues.</li>
+                        <li><strong style="color:#3d8a6e;">Green (Speaker)</strong> — Missing, unresolved, or ambiguous speaker label.</li>
+                        <li><strong style="color:#c8a55c;">Gold (Manual)</strong> — Flags you placed with Alt+F or during live recording.</li>
+                    </ul>
+                    Click a flag in the sidebar to jump to it. Click again to dismiss.
+                </div>
+            </details>
+
+            <details><summary>How do I add exhibits?</summary>
+                <div class="answer">In the editor sidebar under Exhibits, click "+ Add". Enter an Exhibit ID, description, and optionally upload the exhibit file (PDFs, photos, video, audio, documents — all accepted). Uploaded exhibits are embedded in the Standard Deposition PDF with bidirectional hyperlinks: click a reference in the transcript to jump to the exhibit, click the exhibit to jump back.</div>
+            </details>
+
+            <div class="section-label">Export & Document Production</div>
+
+            <details><summary>What export formats are available?</summary>
+                <div class="answer">Notare supports 15 export formats:
+                    <ul>
+                        <li><strong>Standard Deposition</strong> — Complete court format with branded cover, caption, appearances, index, certificates with signature, errata, hyperlinked word index, and embedded exhibits</li>
+                        <li><strong>Word</strong> (.docx/.docm) — Your template with styles, bookmarks, and working macros</li>
+                        <li><strong>PDF</strong> — Full-size, line-numbered, court-compliant</li>
+                        <li><strong>Condensed PDF</strong> — 4 pages per sheet, standard review format</li>
+                        <li><strong>ASCII</strong> — Line-numbered, page-delimited plain text</li>
+                        <li><strong>LEF</strong> — LiveNote/CaseView compatible</li>
+                        <li><strong>PTX</strong> — Sanction/trial presentation XML</li>
+                        <li><strong>Video Sync</strong> (.dvt) — Page:line to timecode mapping</li>
+                        <li><strong>Word Index</strong> — Every word with page:line references</li>
+                        <li><strong>Cover Letter</strong> (.docx) — Customizable transmittal letter</li>
+                        <li><strong>Disc Label</strong> (PDF) — Printable CD/DVD label</li>
+                        <li><strong>Reference Doc</strong> — Summary with case info</li>
+                        <li><strong>Raw ASR</strong> — Unedited engine output</li>
+                        <li><strong>Plain Text</strong> — Simple text file</li>
+                        <li><strong>JSON</strong> — Structured data for integration</li>
+                    </ul>
+                    PDF formats can be previewed before saving. All exports save locally — no browser downloads.
+                </div>
+            </details>
+
+            <details><summary>How do I brand my transcripts with a logo?</summary>
+                <div class="answer">Go to Profiles, edit your jurisdiction profile, scroll to <strong>Branding & Graphics</strong>. Upload your cover logo and choose its position. Add watermarks (text or image) and stamps (e.g., CONFIDENTIAL). Upload header and footer images for page branding. All settings apply automatically to Standard Deposition exports.</div>
+            </details>
+
+            <details><summary>How do I add my signature to transcripts?</summary>
+                <div class="answer">In your profile under <strong>Signature & Certification</strong>: upload a scanned signature image (PNG, JPG) or enter your name for a stylized signature. It appears on the Certificate of Reporter page. For cryptographic PDF signing, upload your .p12/.pfx digital certificate — this adds court-compliant modification detection.</div>
+            </details>
+
+            <details><summary>How do I sign any document?</summary>
+                <div class="answer">Click <strong>Sign Document</strong> in the editor toolbar. Select any PDF from your computer. Notare applies your signature (from your profile settings) and downloads the signed copy. Works on court filings, affidavits, certificates — any PDF.</div>
+            </details>
+
+            <details><summary>How does the errata comparison work?</summary>
+                <div class="answer">In the Export dropdown under Delivery, click <strong>Errata Sheet (auto-populated)</strong>. Notare compares your original transcription against your edited version and fills in the errata sheet with every change — page, line, original text, corrected text, and reason code. Much faster than filling blanks by hand.</div>
+            </details>
 
             <details><summary>Word export doesn't use my template formatting</summary>
                 <div class="answer">Check your jurisdiction profile:
                     <ul>
-                        <li>The template path must be the full file path to your .dotm file</li>
+                        <li>Upload your .dotm file in the Word Template section</li>
                         <li>Style names must match exactly what's in your Word template</li>
-                        <li>Use "Detect Bookmarks" in the profile to auto-map your template's fields</li>
+                        <li>Use "Detect Bookmarks" to auto-map your template's fields</li>
                     </ul>
-                    Open your template in Word and check the Styles panel for the exact names.
                 </div>
             </details>
 
-            <details><summary>Macros are missing or not working in the exported document</summary>
-                <div class="answer">Your source template must be a .dotm file (macro-enabled template). Notare exports as .docm to preserve macros. The original template's VBA project is re-injected into the export with the correct content types so macros function as intended. If macros still don't run, check your Office Trust Center settings under File > Options > Trust Center.</div>
+            <details><summary>Macros are missing or not working</summary>
+                <div class="answer">Your source template must be a .dotm file (macro-enabled template). Notare exports as .docm to preserve macros. If macros still don't run, check your Office Trust Center settings under File > Options > Trust Center.</div>
             </details>
 
-            <details><summary>Bookmarks aren't being filled in the exported document</summary>
-                <div class="answer">Go to your jurisdiction profile, scroll to Bookmark Mapping, and click "Detect Bookmarks from Template." This scans your template and maps each bookmark to the correct data field. Review the mapping and correct any that show "?" as these are bookmarks Notare could not auto-identify.</div>
+            <div class="section-label">Sharing & Collaboration</div>
+
+            <details><summary>How do I share a live transcript view?</summary>
+                <div class="answer">In the editor sidebar under Share, click <strong>Share View</strong>. Notare generates a local network URL. Anyone on your network can open it in any browser to see the transcript updating in real time. No internet required — everything stays on your machine. Click <strong>Stop</strong> to end the share instantly.</div>
             </details>
 
-            <details><summary>What export formats are available?</summary>
-                <div class="answer">Notare exports to 12 formats:
-                    <ul>
-                        <li><strong>Word</strong> (.docx/.docm): your template with styles, bookmarks, and working macros</li>
-                        <li><strong>PDF</strong>: full-size, line-numbered, court-compliant</li>
-                        <li><strong>Condensed PDF</strong>: 4 pages per sheet, standard depo review format</li>
-                        <li><strong>ASCII</strong>: line-numbered, page-delimited plain text for review tools</li>
-                        <li><strong>LEF</strong>: LiveNote/CaseView compatible format</li>
-                        <li><strong>PTX</strong>: Sanction/trial presentation XML with timestamps</li>
-                        <li><strong>Video Sync</strong> (.dvt): page:line to timecode mapping</li>
-                        <li><strong>Word Index</strong>: every word with page:line references</li>
-                        <li><strong>Reference Doc</strong>: flag report with case info</li>
-                        <li><strong>Raw ASR</strong>: unedited engine output</li>
-                        <li><strong>TXT</strong>: simple plain text</li>
-                        <li><strong>JSON</strong>: structured data for integration</li>
-                    </ul>
-                    All exports save to your local Notare/exports folder. No browser downloads, no security flags.
+            <details><summary>Can someone else edit my transcript remotely?</summary>
+                <div class="answer">Click <strong>Share Edit</strong> instead of Share View. This grants the recipient edit access — they can click any segment text to make corrections, which save back to your transcript. Only share edit links with authorized editors. You can stop the share at any time.</div>
+            </details>
+
+            <details><summary>How do I collaborate with a remote proofreader?</summary>
+                <div class="answer">
+                    Notare's sharing and collaboration features work on your local network by design — no transcript data ever touches an external server. For remote collaboration (e.g., a proofreader working from home), you can use a third-party VPN tool to connect both machines as if they were on the same network. <strong>Notare does not include or bundle any remote access tools</strong> — this is your choice and your responsibility.
+                    <br><br>
+                    <strong>Option: Tailscale (recommended for simplicity)</strong>
+                    <ol style="margin:8px 0 8px 20px;">
+                        <li>Both you and your proofreader create a free account at <strong>tailscale.com</strong></li>
+                        <li>Both download and install Tailscale (small, lightweight app)</li>
+                        <li>You invite your proofreader to your Tailscale network (or they share their device with you)</li>
+                        <li>Once connected, Tailscale assigns each machine a private IP (e.g., 100.x.x.x)</li>
+                        <li>Your proofreader opens <code>http://YOUR_TAILSCALE_IP:8080/static/editor.html?id=JOB_ID</code></li>
+                        <li>They click <strong>Collaborate</strong>, enter their name, and you're both editing live with segment locking</li>
+                    </ol>
+                    <strong>Alternative: ngrok</strong>
+                    <ol style="margin:8px 0 8px 20px;">
+                        <li>Install ngrok from <strong>ngrok.com</strong> (free tier available)</li>
+                        <li>Run <code>ngrok http 8080</code> from your command line</li>
+                        <li>ngrok gives you a public URL (e.g., https://abc123.ngrok.io)</li>
+                        <li>Send that URL to your proofreader — they open it in any browser</li>
+                        <li>Close ngrok when you're done to cut off access immediately</li>
+                    </ol>
+                    <p style="margin-top:8px; font-size:11px; color:var(--text-dim);">
+                        <strong>Important:</strong> When using any remote access method, your transcript data travels over that tool's network. Tailscale uses encrypted peer-to-peer connections (data doesn't pass through their servers). ngrok routes through their servers (encrypted in transit). Evaluate the privacy implications for your use case. Notare has no control over third-party tools and makes no guarantees about their security.
+                    </p>
                 </div>
+            </details>
+
+            <details><summary>How do I consolidate multiple volumes?</summary>
+                <div class="answer">Go to the Cases page, open a case with 2 or more linked jobs. Two buttons appear: <strong>Consolidate Volumes</strong> merges all volumes into one continuous PDF with a master index. <strong>Generate Master Index</strong> creates a standalone CRC 8.144-compliant cross-volume index. Both are Professional tier and above.</div>
             </details>
 
             <div class="section-label">Live Capture</div>
 
-            <details><summary>Microphone isn't detected</summary>
-                <div class="answer">Your browser needs permission to access the microphone. When prompted, click "Allow." If you previously denied permission, click the lock icon in the address bar and reset microphone permissions. Chrome and Edge work best for live capture.</div>
+            <details><summary>How does live recording work?</summary>
+                <div class="answer">Create a Mode C job, select your microphone, and click Record. Notare captures audio through the server and transcribes in real-time. Use hotkeys during the session to flag segments, assign speakers, and switch formatting styles. The full recording is saved for later reprocessing if needed.</div>
             </details>
 
-            <details><summary>Mode A: No platform audio captured from Zoom/Teams</summary>
-                <div class="answer">When sharing your screen for platform audio capture, you must check "Share audio" in the browser's share dialog. If you missed it, stop recording and start again. Select the Zoom or Teams window specifically, not the entire screen.</div>
+            <details><summary>Microphone isn't detected</summary>
+                <div class="answer">Make sure your microphone is connected before opening the job. Check Windows Sound settings to confirm the mic is recognized. Try unplugging and reconnecting USB microphones. The dropdown shows all audio input devices Windows recognizes.</div>
             </details>
 
             <div class="section-label">Account & License</div>
 
             <details><summary>My license key is rejected</summary>
-                <div class="answer">Check that you're entering the key exactly as provided, including dashes (e.g., NOTARE-XXXX-XXXX-XXXX). Keys are case-sensitive. If you've copy-pasted, make sure there are no extra spaces. Contact your administrator if the issue persists.</div>
+                <div class="answer">Check that you're entering the key exactly as provided, including dashes (e.g., NOTARE-XXXX-XXXX-XXXX). Keys are case-sensitive. If you've copy-pasted, make sure there are no extra spaces. Contact support if the issue persists.</div>
             </details>
 
             <details><summary>My license expired</summary>
-                <div class="answer">Contact your administrator to renew. Your data is never deleted; all transcripts, profiles, and jobs are preserved locally. Only processing features pause until the license is renewed.</div>
+                <div class="answer">Contact support to renew. Your data is never deleted — all transcripts, profiles, and jobs are preserved locally. Processing features pause until the license is renewed.</div>
             </details>
 
-            <details><summary>How do I change my plan?</summary>
-                <div class="answer">Contact your administrator. They'll generate a new license key for your upgraded tier. Enter the new key in Settings to activate the upgrade. Your existing data and profiles are preserved.</div>
+            <details><summary>What are the different plans?</summary>
+                <div class="answer">
+                    <ul>
+                        <li><strong>Solo ($59/mo)</strong> — All capture modes, 15 export formats with preview, branded covers, signatures, digital signing, exhibit hyperlinks, sign any document, jurisdiction profiles, speaker detection, document extraction, proofing.</li>
+                        <li><strong>Professional ($89/mo)</strong> — Everything in Solo plus case management, voice profiles, local network live sharing (view & edit), multi-volume consolidation & master index.</li>
+                        <li><strong>Agency ($119/mo)</strong> — Everything in Professional plus 5 seats, shared profiles & speaker database.</li>
+                        <li><strong>Enterprise</strong> — Everything, unlimited seats, offline licensing, admin panel.</li>
+                        <li><strong>Trial</strong> — Full Professional access free for 7 days.</li>
+                    </ul>
+                </div>
             </details>
 
             <div class="section-label">Still Need Help?</div>
 
             <details open><summary>How do I contact support?</summary>
-                <div class="answer">Email us or use the contact form on the Notare website. When reporting an issue, please include:
-                    <ul>
-                        <li>What you were doing when the issue occurred</li>
-                        <li>Any error messages you saw</li>
-                        <li>The type of audio file you were processing</li>
-                        <li>Your Notare version (shown in Settings)</li>
-                    </ul>
-                </div>
+                <div class="answer">Click the <strong>?</strong> button in the bottom-right corner of any screen for instant answers. If the chatbot can't help, click "Contact Support Team" to send a message directly to our team. You can also reach us through the contact form at notarelegal.com.</div>
             </details>
         </div>
     </div>

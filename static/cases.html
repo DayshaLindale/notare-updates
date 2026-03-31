@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Case Management</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html">Help</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="page-title" style="margin-bottom: 0;">Case Management</h2>
+            <button class="btn btn-primary" onclick="showNewCase()">+ New Case</button>
+        </div>
+
+        <div id="caseList">
+            <div class="empty-state">
+                <div class="icon">&#128218;</div>
+                <h3>No cases yet</h3>
+                <p>Cases organize your jobs by case number. Create a case to group related hearings and depositions.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- New/Edit Case Modal -->
+    <div class="modal-overlay" id="caseModal">
+        <div class="modal" style="min-width: 550px;">
+            <h3 id="caseModalTitle">New Case</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Case Number</label><input type="text" id="caseNumber" placeholder="e.g., 20CR55526"></div>
+                <div class="form-group"><label>Case Caption</label><input type="text" id="caseCaption" placeholder="e.g., Smith v. Johnson"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Court / Venue</label><input type="text" id="caseCourt" placeholder="e.g., Example County Superior Court"></div>
+                <div class="form-group"><label>Judge</label><input type="text" id="caseJudge" placeholder="e.g., Judge Marshall"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Plaintiff / State Attorney</label><input type="text" id="casePltAtty"></div>
+                <div class="form-group"><label>Defense Attorney</label><input type="text" id="caseDefAtty"></div>
+            </div>
+            <div class="form-group"><label>Status</label>
+                <select id="caseStatus">
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="closed">Closed</option>
+                    <option value="on_appeal">On Appeal</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Notes</label>
+                <textarea id="caseNotes" rows="3" placeholder="Deadlines, special instructions, etc."></textarea>
+            </div>
+            <input type="hidden" id="caseEditId" value="">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="document.getElementById('caseModal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCase()">Save Case</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Case Detail Modal -->
+    <div class="modal-overlay" id="caseDetailModal">
+        <div class="modal" style="min-width: 700px; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <h3 id="detailCaption"></h3>
+                    <p id="detailCaseNo" style="color: var(--text-muted); font-size: 14px;"></p>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="document.getElementById('caseDetailModal').classList.remove('active')">Close</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0;">
+                <div style="font-size: 13px; line-height: 1.8;" id="detailInfo"></div>
+                <div style="font-size: 13px; line-height: 1.8;" id="detailAttorneys"></div>
+            </div>
+            <div id="detailNotes" style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;"></div>
+
+            <h4 style="font-size: 14px; margin-bottom: 12px; border-top: 1px solid var(--border); padding-top: 12px;">Related Jobs</h4>
+            <div id="detailJobs"></div>
+
+            <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 16px; display: flex; gap: 8px;">
+                <button class="btn btn-sm btn-primary" onclick="consolidateVolumes()" id="consolidateBtn" style="display:none;">Consolidate Volumes</button>
+                <button class="btn btn-sm btn-secondary" onclick="generateMasterIndex()" id="masterIndexBtn" style="display:none;">Generate Master Index</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function loadCases() {
+        const r = await fetch('/api/cases');
+        const cases = await r.json();
+        const list = document.getElementById('caseList');
+
+        if (!cases || Object.keys(cases).length === 0) {
+            list.innerHTML = `<div class="empty-state">
+                <div class="icon">&#128218;</div>
+                <h3>No cases yet</h3>
+                <p>Cases organize your jobs by case number. Create a case to group related hearings.</p>
+            </div>`;
+            return;
+        }
+
+        let html = '';
+        for (const [id, c] of Object.entries(cases)) {
+            const statusColors = { active: 'var(--green)', pending: 'var(--amber)', closed: 'var(--text-dim)', on_appeal: 'var(--blue)' };
+            const statusColor = statusColors[c.status] || 'var(--text-dim)';
+            html += `
+            <div class="card" style="cursor: pointer; margin-bottom: 12px;" onclick="showCaseDetail('${id}')">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="width: 10px; height: 10px; border-radius: 50%; background: ${statusColor}; display: inline-block;"></span>
+                            <h3 style="margin: 0; font-size: 16px;">${c.caption || 'Untitled'}</h3>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                            ${c.case_number || ''} | ${c.court || ''} | ${c.judge || ''} |
+                            <span style="color: ${statusColor};">${(c.status || 'active').replace('_', ' ').toUpperCase()}</span>
+                            ${c.job_count ? ' | ' + c.job_count + ' job(s)' : ''}
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); editCase('${id}')">Edit</button>
+                        <button class="btn btn-sm btn-icon" onclick="event.stopPropagation(); deleteCase('${id}')">X</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+        list.innerHTML = html;
+    }
+
+    function showNewCase() {
+        document.getElementById('caseEditId').value = '';
+        document.getElementById('caseNumber').value = '';
+        document.getElementById('caseCaption').value = '';
+        document.getElementById('caseCourt').value = '';
+        document.getElementById('caseJudge').value = '';
+        document.getElementById('casePltAtty').value = '';
+        document.getElementById('caseDefAtty').value = '';
+        document.getElementById('caseStatus').value = 'active';
+        document.getElementById('caseNotes').value = '';
+        document.getElementById('caseModalTitle').textContent = 'New Case';
+        document.getElementById('caseModal').classList.add('active');
+    }
+
+    async function editCase(id) {
+        const r = await fetch('/api/cases');
+        const cases = await r.json();
+        const c = cases[id];
+        if (!c) return;
+        document.getElementById('caseEditId').value = id;
+        document.getElementById('caseNumber').value = c.case_number || '';
+        document.getElementById('caseCaption').value = c.caption || '';
+        document.getElementById('caseCourt').value = c.court || '';
+        document.getElementById('caseJudge').value = c.judge || '';
+        document.getElementById('casePltAtty').value = c.plt_attorney || '';
+        document.getElementById('caseDefAtty').value = c.def_attorney || '';
+        document.getElementById('caseStatus').value = c.status || 'active';
+        document.getElementById('caseNotes').value = c.notes || '';
+        document.getElementById('caseModalTitle').textContent = 'Edit Case';
+        document.getElementById('caseModal').classList.add('active');
+    }
+
+    async function saveCase() {
+        const editId = document.getElementById('caseEditId').value;
+        await fetch('/api/case/save', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                id: editId || undefined,
+                case_number: document.getElementById('caseNumber').value,
+                caption: document.getElementById('caseCaption').value,
+                court: document.getElementById('caseCourt').value,
+                judge: document.getElementById('caseJudge').value,
+                plt_attorney: document.getElementById('casePltAtty').value,
+                def_attorney: document.getElementById('caseDefAtty').value,
+                status: document.getElementById('caseStatus').value,
+                notes: document.getElementById('caseNotes').value,
+            }),
+        });
+        document.getElementById('caseModal').classList.remove('active');
+        loadCases();
+    }
+
+    async function deleteCase(id) {
+        if (!confirm('Delete this case?')) return;
+        await fetch(`/api/case/${id}`, { method: 'DELETE' });
+        loadCases();
+    }
+
+    async function showCaseDetail(id) {
+        const r = await fetch(`/api/case/${id}/detail`);
+        const data = await r.json();
+        const c = data.case_info;
+        document.getElementById('detailCaption').textContent = c.caption || 'Untitled';
+        document.getElementById('detailCaseNo').textContent = `Case No. ${c.case_number || ''} | ${(c.status || '').replace('_', ' ').toUpperCase()}`;
+        document.getElementById('detailInfo').innerHTML = `
+            <div><strong>Court:</strong> ${c.court || '—'}</div>
+            <div><strong>Judge:</strong> ${c.judge || '—'}</div>
+            <div><strong>Created:</strong> ${c.created_at || '—'}</div>
+        `;
+        document.getElementById('detailAttorneys').innerHTML = `
+            <div><strong>Plaintiff/State:</strong> ${c.plt_attorney || '—'}</div>
+            <div><strong>Defense:</strong> ${c.def_attorney || '—'}</div>
+        `;
+        document.getElementById('detailNotes').textContent = c.notes || '';
+
+        const jobs = data.related_jobs || [];
+        window._caseJobIds = jobs.map(j => j.id);
+        if (jobs.length > 0) {
+            let jhtml = '';
+            for (const j of jobs) {
+                jhtml += `<div class="card" style="padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="window.location='/static/editor.html?id=${j.id}'">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>${j.proceeding_type || 'Job'} — ${j.date || ''}</span>
+                        <span style="font-size: 12px; color: var(--text-muted);">${j.status || ''}</span>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('detailJobs').innerHTML = jhtml;
+            // Show multi-volume buttons if 2+ jobs
+            document.getElementById('consolidateBtn').style.display = jobs.length >= 2 ? '' : 'none';
+            document.getElementById('masterIndexBtn').style.display = jobs.length >= 2 ? '' : 'none';
+        } else {
+            document.getElementById('detailJobs').innerHTML = '<p style="color: var(--text-dim); font-size: 13px;">No jobs linked to this case yet. Jobs are linked automatically when the case number matches.</p>';
+            document.getElementById('consolidateBtn').style.display = 'none';
+            document.getElementById('masterIndexBtn').style.display = 'none';
+        }
+
+        document.getElementById('caseDetailModal').classList.add('active');
+    }
+
+    async function consolidateVolumes() {
+        if (!window._caseJobIds || window._caseJobIds.length < 2) return;
+        try {
+            const r = await fetch('/api/consolidate-volumes', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ job_ids: window._caseJobIds }),
+            });
+            const data = await r.json();
+            if (data.ok && data.path) {
+                alert(`Consolidated PDF saved: ${data.path}`);
+            } else if (data.error) {
+                alert(data.error);
+            }
+        } catch(e) {
+            alert('Consolidation failed: ' + e.message);
+        }
+    }
+
+    async function generateMasterIndex() {
+        if (!window._caseJobIds || window._caseJobIds.length < 1) return;
+        try {
+            const r = await fetch('/api/master-index', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ job_ids: window._caseJobIds }),
+            });
+            const data = await r.json();
+            if (data.ok && data.path) {
+                alert(`Master index saved: ${data.path}`);
+            } else if (data.error) {
+                alert(data.error);
+            }
+        } catch(e) {
+            alert('Master index generation failed: ' + e.message);
+        }
+    }
+
+    loadCases();
+    </script>
+<script src="/static/theme.js"></script>
+<script src="/static/support_widget.js"></script>
+</body>
+</html>

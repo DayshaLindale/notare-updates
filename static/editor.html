@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Editor</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html">Help</a>
+        </nav>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="jobTitle" style="font-size: 13px; color: var(--text-dark); border: 1px solid transparent; border-radius: 4px; padding: 4px 8px; min-width: 200px; background: transparent;"
+                   onfocus="this.style.borderColor='var(--gold)'; this.style.background='var(--bg)'"
+                   onblur="this.style.borderColor='transparent'; this.style.background='transparent'; saveTitle(this.value)"
+                   title="Document title — used as the filename for all exports">
+            <button class="btn btn-sm btn-secondary" onclick="showGlobalReplace()">Find/Replace</button>
+            <button class="btn btn-sm" onclick="runProofing()" style="background: #2d8a6e; color: white;">Run Proofing</button>
+            <button class="btn btn-sm" onclick="importTranscript()" style="background: var(--accent-soft); color: var(--text);">Import Transcript</button>
+            <button class="btn btn-sm" onclick="signDocument()" style="background: var(--accent-soft); color: var(--text);">Sign Document</button>
+            <button class="btn btn-sm" id="collabBtn" onclick="toggleCollaboration()" style="background: var(--accent-soft); color: var(--text);">Collaborate</button>
+
+            <!-- Export dropdown -->
+            <div style="position: relative; display: inline-block;">
+                <button class="btn btn-sm btn-primary" id="exportToggle" onclick="toggleExportMenu()">
+                    Export &#9662;
+                </button>
+                <div id="exportMenu" style="display:none; position:absolute; right:0; top:100%; margin-top:4px; background:var(--surface, white); border:1px solid var(--border); border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.12); z-index:50; min-width:220px; padding:6px 0;">
+                    <div style="padding:4px 12px; font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Full Package</div>
+                    <a onclick="exportJob('package'); closeExportMenu()" style="display:block; padding:8px 16px; font-size:13px; cursor:pointer; color:var(--text-dark); font-weight:600; background:var(--gold-soft, rgba(200,165,92,0.1));">Generate Package (all formats)</a>
+                    <div style="height:1px; background:var(--border); margin:4px 0;"></div>
+                    <div style="padding:4px 12px; font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Individual Exports</div>
+                    <a style="display:flex; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body); justify-content:space-between; align-items:center;">
+                        <span onclick="exportJob('deposition'); closeExportMenu()" style="flex:1;">Standard Deposition</span>
+                        <span onclick="previewExport('deposition'); closeExportMenu()" style="font-size:10px; color:var(--gold); cursor:pointer; padding:2px 6px;" title="Preview before saving">preview</span>
+                    </a>
+                    <a onclick="exportJob('docx'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">Word (.docx/.docm)</a>
+                    <a style="display:flex; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body); justify-content:space-between; align-items:center;">
+                        <span onclick="exportJob('pdf'); closeExportMenu()" style="flex:1;">PDF</span>
+                        <span onclick="previewExport('pdf'); closeExportMenu()" style="font-size:10px; color:var(--gold); cursor:pointer; padding:2px 6px;" title="Preview before saving">preview</span>
+                    </a>
+                    <a style="display:flex; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body); justify-content:space-between; align-items:center;">
+                        <span onclick="exportJob('condensed'); closeExportMenu()" style="flex:1;">Condensed PDF (4-on-1)</span>
+                        <span onclick="previewExport('condensed'); closeExportMenu()" style="font-size:10px; color:var(--gold); cursor:pointer; padding:2px 6px;" title="Preview before saving">preview</span>
+                    </a>
+                    <a onclick="exportJob('ascii'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">ASCII Transcript</a>
+                    <a onclick="exportJob('word_index'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">Word Index</a>
+                    <div style="height:1px; background:var(--border); margin:4px 0;"></div>
+                    <div style="padding:4px 12px; font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Interchange Formats</div>
+                    <a onclick="exportJob('lef'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">LEF (LiveNote)</a>
+                    <a onclick="exportJob('ptx'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">PTX (Sanction)</a>
+                    <a onclick="exportJob('sync'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">Video Sync (.dvt)</a>
+                    <div style="height:1px; background:var(--border); margin:4px 0;"></div>
+                    <div style="padding:4px 12px; font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Delivery</div>
+                    <a onclick="exportJob('cover_letter'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">Cover Letter (.docx)</a>
+                    <a style="display:flex; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body); justify-content:space-between; align-items:center;">
+                        <span onclick="exportJob('disc_label'); closeExportMenu()" style="flex:1;">Disc Label (PDF)</span>
+                        <span onclick="previewExport('disc_label'); closeExportMenu()" style="font-size:10px; color:var(--gold); cursor:pointer; padding:2px 6px;" title="Preview before saving">preview</span>
+                    </a>
+                    <a onclick="generateErrata(); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">Errata Sheet (auto-populated)</a>
+                    <div style="height:1px; background:var(--border); margin:4px 0;"></div>
+                    <div style="padding:4px 12px; font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Other</div>
+                    <a onclick="exportJob('reference'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">Reference Doc</a>
+                    <a onclick="exportJob('txt'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">Plain Text</a>
+                    <a onclick="exportJob('json'); closeExportMenu()" style="display:block; padding:6px 16px; font-size:13px; cursor:pointer; color:var(--text-body);">JSON</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="processingOverlay" style="display:none;">
+        <div class="container" style="text-align: center; padding-top: 100px;">
+            <h2 class="page-title">Processing...</h2>
+            <div class="progress-container" style="max-width: 400px; margin: 0 auto;">
+                <div class="progress-bar"><div class="fill" id="progressFill" style="width: 0%"></div></div>
+                <div class="progress-message" id="progressMessage">Preparing...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="editor-layout" id="editorLayout" style="display:none;">
+        <div class="editor-audio">
+            <div class="audio-player">
+                <button class="btn btn-sm btn-icon" id="playBtn" onclick="togglePlay()">&#9654;</button>
+                <audio id="audioPlayer" preload="auto"></audio>
+                <span id="audioTime" style="font-family: monospace; font-size: 13px; color: var(--text-muted); min-width: 140px;">00:00:00 / 00:00:00</span>
+                <div class="speed-control">
+                    <label>Speed:</label>
+                    <select id="speedSelect" onchange="audio.playbackRate=parseFloat(this.value)">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.5">0.50x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1.0x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.50x</option>
+                        <option value="2">2.0x</option>
+                    </select>
+                </div>
+                <button class="btn btn-sm btn-icon" onclick="audio.currentTime=Math.max(0,audio.currentTime-5)">-5s</button>
+                <button class="btn btn-sm btn-icon" onclick="audio.currentTime+=5">+5s</button>
+            </div>
+        </div>
+
+        <div id="collabBar" style="display:none; padding: 6px 16px; background: var(--cream); border-bottom: 1px solid var(--border); font-size: 12px; justify-content: space-between; align-items: center;">
+            <div><span style="color: var(--green);">&#9679;</span> Collaborative editing active — <span id="collabEditors">1 editor</span></div>
+            <button class="btn btn-sm btn-secondary" onclick="toggleCollaboration()">Leave</button>
+        </div>
+
+        <div class="editor-transcript" id="transcriptPanel"></div>
+
+        <div class="editor-sidebar">
+            <div class="sidebar-panel">
+                <h4>Job Info</h4>
+                <div id="jobInfo" style="font-size: 13px; line-height: 1.8;"></div>
+            </div>
+            <div class="sidebar-panel">
+                <h4>Statistics</h4>
+                <div class="stats-grid">
+                    <div class="stat"><div class="value" id="segCount">0</div><div class="label">Segments</div></div>
+                    <div class="stat"><div class="value" id="wordCount">0</div><div class="label">Words</div></div>
+                    <div class="stat"><div class="value" id="duration">00:00</div><div class="label">Duration</div></div>
+                    <div class="stat"><div class="value" id="flagCount">0</div><div class="label">Flags</div></div>
+                </div>
+            </div>
+            <div class="sidebar-panel">
+                <h4>Flag Queue</h4>
+                <div id="flagQueue"><p style="font-size: 12px; color: var(--text-dim);">No flags. Alt+F to flag.</p></div>
+            </div>
+            <div class="sidebar-panel">
+                <h4 style="display:flex; justify-content:space-between; align-items:center;">
+                    Exhibits
+                    <button class="btn btn-sm btn-secondary" onclick="showAddExhibit()" style="padding:2px 8px; font-size:10px;">+ Add</button>
+                </h4>
+                <div id="exhibitList"><p style="font-size: 12px; color: var(--text-dim);">No exhibits linked.</p></div>
+            </div>
+            <div class="sidebar-panel">
+                <h4 style="display:flex; justify-content:space-between; align-items:center;">
+                    Share (Local Network)
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn btn-sm btn-secondary" onclick="startLocalShare('view')" style="padding:2px 8px; font-size:10px;" title="View-only live window">Share View</button>
+                        <button class="btn btn-sm btn-secondary" onclick="startLocalShare('edit')" style="padding:2px 8px; font-size:10px;" title="Allow editing (authorized only)">Share Edit</button>
+                        <button class="btn btn-sm btn-secondary" id="stopShareBtn" onclick="stopLocalShare()" style="padding:2px 8px; font-size:10px; display:none;">Stop</button>
+                    </div>
+                </h4>
+                <div id="shareInfo" style="font-size: 12px; color: var(--text-dim);">Share a live view of this transcript on your local network. No internet needed — recipient opens the link in any browser.</div>
+            </div>
+            <div class="sidebar-panel">
+                <h4>Hotkeys</h4>
+                <div style="font-size: 11px; color: var(--text-muted); line-height: 2;">
+                    <div><kbd>Alt+F</kbd> Flag segment</div>
+                    <div><kbd>Alt+N</kbd> Indiscernible</div>
+                    <div><kbd>Space</kbd> Play/Pause</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Replace Modal -->
+    <!-- Exhibit Modal -->
+    <div class="modal-overlay" id="exhibitModal">
+        <div class="modal" style="max-width: 440px;">
+            <h3>Add Exhibit</h3>
+            <div class="form-group">
+                <label>Exhibit ID</label>
+                <input type="text" id="exhibitId" placeholder="e.g., Exhibit A, Plaintiff's 1">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" id="exhibitDesc" placeholder="Document description (optional)">
+            </div>
+            <div class="form-group">
+                <label>Exhibit File (documents, photos, video, audio)</label>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <input type="text" id="exhibitFileName" placeholder="No file selected" readonly style="flex:1; font-size:12px;">
+                    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('exhibitFileInput').click()" style="font-size:11px;">Choose File</button>
+                    <input type="file" id="exhibitFileInput" accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.tiff,.bmp,.gif,.svg,.webp,.mp4,.mov,.avi,.wmv,.mkv,.webm,.mp3,.wav,.m4a,.aac,.flac,.ogg,.wma,.zip,.txt,.rtf,.html" style="display:none;" onchange="document.getElementById('exhibitFileName').value = this.files[0]?.name || ''">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="document.getElementById('exhibitModal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitExhibit()">Add Exhibit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Preview Modal -->
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal" style="max-width: 90vw; max-height: 90vh; width: 900px; display: flex; flex-direction: column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0;" id="previewTitle">Export Preview</h3>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-sm btn-primary" id="previewSaveBtn" onclick="savePreviewedExport()">Save Export</button>
+                    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('previewModal').classList.remove('active')">Close</button>
+                </div>
+            </div>
+            <iframe id="previewFrame" style="flex:1; border:1px solid var(--border); border-radius:6px; min-height:500px; background:white;"></iframe>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="replaceModal">
+        <div class="modal">
+            <h3>Global Find & Replace</h3>
+            <div class="form-group">
+                <label>Field</label>
+                <select id="replaceField">
+                    <option value="text">Transcript Text</option>
+                    <option value="speaker">Speaker Name</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Find</label>
+                <input type="text" id="replaceFind" placeholder="e.g., Speaker A">
+            </div>
+            <div class="form-group">
+                <label>Replace With</label>
+                <input type="text" id="replaceWith" placeholder="e.g., MR. JONES">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="document.getElementById('replaceModal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="doGlobalReplace()">Replace All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Ripple messages — cycle through during processing to show activity
+    const _rippleMessages = [
+        'Preparing audio...',
+        'Converting audio formats...',
+        'Transcribing...',
+        'Analyzing speech patterns...',
+        'Detecting speakers...',
+        'Identifying participants...',
+        'Applying formatting rules...',
+        'Running accuracy checks...',
+        'Reviewing legal terminology...',
+        'Building transcript segments...',
+        'Processing speaker changes...',
+        'Generating confidence scores...',
+        'Almost there...',
+    ];
+    let _rippleIdx = 0;
+
+    const params = new URLSearchParams(window.location.search);
+    const JOB_ID = params.get('id');
+    const audio = document.getElementById('audioPlayer');
+    let jobData = null;
+
+    function fmtTime(val, isMs) {
+        // If isMs is true or val looks like milliseconds (transcript timestamps), convert
+        const s = isMs ? Math.floor((val || 0) / 1000) : Math.floor(val || 0);
+        return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    }
+
+    function togglePlay() {
+        if (audio.paused) { audio.play(); document.getElementById('playBtn').innerHTML = '&#9646;&#9646;'; }
+        else { audio.pause(); document.getElementById('playBtn').innerHTML = '&#9654;'; }
+    }
+
+    // Keyboard shortcuts for audio control while editing
+    document.addEventListener('keydown', (e) => {
+        // F5 or Ctrl+Space = play/pause (works while editing text)
+        if (e.key === 'F5' || (e.ctrlKey && e.code === 'Space')) {
+            e.preventDefault();
+            togglePlay();
+        }
+        // F7 = skip back 5s
+        if (e.key === 'F7') { e.preventDefault(); audio.currentTime = Math.max(0, audio.currentTime - 5); }
+        // F8 = skip forward 5s
+        if (e.key === 'F8') { e.preventDefault(); audio.currentTime += 5; }
+        // F9 = slow down
+        if (e.key === 'F9') {
+            e.preventDefault();
+            const sel = document.getElementById('speedSelect');
+            if (sel.selectedIndex > 0) { sel.selectedIndex--; audio.playbackRate = parseFloat(sel.value); }
+        }
+        // F10 = speed up
+        if (e.key === 'F10') {
+            e.preventDefault();
+            const sel = document.getElementById('speedSelect');
+            if (sel.selectedIndex < sel.options.length - 1) { sel.selectedIndex++; audio.playbackRate = parseFloat(sel.value); }
+        }
+    });
+
+    function seekTo(ms) {
+        audio.currentTime = ms > 1000 ? ms / 1000 : ms;
+        if (audio.paused) audio.play();
+        document.getElementById('playBtn').innerHTML = '&#9646;&#9646;';
+    }
+
+    audio.addEventListener('timeupdate', () => {
+        document.getElementById('audioTime').textContent = `${fmtTime(audio.currentTime)} / ${fmtTime(audio.duration || 0)}`;
+        const segs = document.querySelectorAll('.segment');
+        const ct = audio.currentTime * 1000;
+        segs.forEach(s => {
+            const start = parseFloat(s.dataset.start);
+            const end = parseFloat(s.dataset.end);
+            if (ct >= start && ct < end) {
+                s.classList.add('active');
+                if (!s.querySelector(':focus')) s.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else s.classList.remove('active');
+        });
+    });
+
+    async function loadJob() {
+        const r = await fetch(`/api/job/${JOB_ID}/status`);
+        const data = await r.json();
+
+        if (data.status === 'created') {
+            // Job exists but hasn't been processed — offer to process or go back
+            document.getElementById('processingOverlay').style.display = '';
+            document.getElementById('editorLayout').style.display = 'none';
+            document.getElementById('progressMessage').innerHTML =
+                'This job hasn\'t been processed yet.<br><br>' +
+                '<button class="btn btn-primary" onclick="fetch(\'/api/job/' + JOB_ID + '/process\',{method:\'POST\'}).then(()=>loadJob())">Process Now</button> ' +
+                '<a href="/static/index.html" class="btn btn-secondary" style="margin-left:8px;">Back to Dashboard</a>';
+            return;
+        }
+
+        if (data.status === 'processing') {
+            document.getElementById('processingOverlay').style.display = '';
+            document.getElementById('editorLayout').style.display = 'none';
+            document.getElementById('progressFill').style.width = (data.progress || 0) + '%';
+
+            // Show server message if specific, otherwise ripple through descriptions
+            const serverMsg = data.progress_message || '';
+            if (serverMsg && serverMsg !== 'Processing...') {
+                document.getElementById('progressMessage').textContent = serverMsg;
+            } else {
+                _rippleIdx = ((_rippleIdx || 0) + 1) % _rippleMessages.length;
+                document.getElementById('progressMessage').textContent = _rippleMessages[_rippleIdx];
+            }
+            setTimeout(loadJob, 1500);
+            return;
+        }
+
+        if (data.status === 'error') {
+            document.getElementById('progressMessage').innerHTML =
+                'Error: ' + (data.error || 'Unknown') +
+                '<br><br><a href="/static/index.html" class="btn btn-secondary">Back to Dashboard</a>';
+            return;
+        }
+
+        // Complete — show editor
+        document.getElementById('processingOverlay').style.display = 'none';
+        document.getElementById('editorLayout').style.display = '';
+        jobData = data;
+
+        // Set audio source — hide player if no audio
+        const audioFile = data.audio_file || '';
+        if (audioFile) {
+            audio.src = `/api/job/${JOB_ID}/audio/${audioFile}`;
+        } else {
+            document.querySelector('.editor-audio').style.display = 'none';
+        }
+
+        renderTranscript(data.transcript);
+        renderJobInfo(data);
+        renderFlagQueue(data);
+    }
+
+    function renderFlagQueue(data) {
+        const queue = document.getElementById('flagQueue');
+        const flags = data.flags || [];
+        const flaggedSegs = (data.transcript?.segments || []).filter(s => s.flagged);
+        const totalFlags = Math.max(flags.length, flaggedSegs.length);
+        document.getElementById('flagCount').textContent = totalFlags;
+
+        if (totalFlags === 0) {
+            queue.innerHTML = '<p style="font-size: 12px; color: var(--text-dim);">No flags. Alt+F to flag.</p>';
+            return;
+        }
+
+        // Flag color system
+        const flagColors = {
+            'confidence_high':    { color: '#b84040', icon: '&#9679;', label: 'Low Confidence' },
+            'confidence_medium':  { color: '#d4913d', icon: '&#9679;', label: 'Med Confidence' },
+            'confidence_low':     { color: '#c8a55c', icon: '&#9679;', label: 'Mild Confidence' },
+            'context_legal_term': { color: '#7b61c4', icon: '&#9670;', label: 'Legal Term' },
+            'context_unlikely':   { color: '#7b61c4', icon: '&#9670;', label: 'Unlikely' },
+            'context_unlikely_word': { color: '#7b61c4', icon: '&#9670;', label: 'Unlikely Word' },
+            'context_name_variant': { color: '#5b8fb9', icon: '&#9670;', label: 'Name Variant' },
+            'context_fragment':   { color: '#7b61c4', icon: '&#9670;', label: 'Fragment' },
+            'context_llm_review': { color: '#7b61c4', icon: '&#9670;', label: 'AI Review' },
+            'speaker_missing':    { color: '#3d8a6e', icon: '&#9673;', label: 'No Speaker' },
+            'speaker_unresolved': { color: '#3d8a6e', icon: '&#9673;', label: 'Unresolved' },
+            'speaker_ambiguous':  { color: '#3d8a6e', icon: '&#9673;', label: 'Ambiguous' },
+            'review':             { color: '#c8a55c', icon: '&#9873;', label: 'Manual Flag' },
+            'live_flag':          { color: '#c8a55c', icon: '&#9873;', label: 'Live Flag' },
+        };
+
+        // Legend
+        let html = '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; padding:6px 0; border-bottom:1px solid var(--border);">';
+        const shownCategories = new Set();
+        const categoryMap = {
+            'confidence': { color: '#b84040', icon: '&#9679;', label: 'Confidence' },
+            'context':    { color: '#7b61c4', icon: '&#9670;', label: 'Context' },
+            'speaker':    { color: '#3d8a6e', icon: '&#9673;', label: 'Speaker' },
+            'manual':     { color: '#c8a55c', icon: '&#9873;', label: 'Manual' },
+        };
+        flags.forEach(f => {
+            const t = f.type || 'review';
+            if (t.startsWith('confidence') && !shownCategories.has('confidence')) {
+                shownCategories.add('confidence');
+            } else if (t.startsWith('context') && !shownCategories.has('context')) {
+                shownCategories.add('context');
+            } else if (t.startsWith('speaker') && !shownCategories.has('speaker')) {
+                shownCategories.add('speaker');
+            } else if ((t === 'review' || t === 'live_flag') && !shownCategories.has('manual')) {
+                shownCategories.add('manual');
+            }
+        });
+        for (const [cat, info] of Object.entries(categoryMap)) {
+            if (shownCategories.has(cat)) {
+                html += `<span style="font-size:10px; color:${info.color};">${info.icon} ${info.label}</span>`;
+            }
+        }
+        html += '</div>';
+
+        html += '<div style="max-height: 400px; overflow-y: auto; font-size: 12px;">';
+        flags.forEach((f, idx) => {
+            const t = f.type || 'review';
+            const fc = flagColors[t] || { color: 'var(--text-muted)', icon: '&#9873;', label: t.replace(/_/g, ' ') };
+            const segIdx = f.segment_index !== undefined ? f.segment_index : -1;
+            html += `<div style="padding: 4px 0; border-bottom: 1px solid var(--border); cursor: pointer; display:flex; align-items:center; gap:6px;" onclick="toggleFlag(${idx}, ${f.timestamp || 0}, ${segIdx})">
+                <span style="color: ${fc.color}; font-weight: 600; font-size:11px;">${fc.icon}</span>
+                <span style="color: ${fc.color}; font-size:10px; min-width:70px;">${fc.label}</span>
+                <span style="color: var(--text-dim); flex:1; font-size:11px;">${f.detail || f.text || ''}</span>
+            </div>`;
+        });
+        html += '</div>';
+        if (totalFlags > 1) {
+            html += `<button onclick="clearAllFlags()" style="margin-top:6px;font-size:11px;background:none;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:4px;cursor:pointer;">Clear All ${totalFlags} Flags</button>`;
+        }
+        queue.innerHTML = html;
+    }
+
+    function renderTranscript(transcript) {
+        if (!transcript || !transcript.segments) return;
+        const panel = document.getElementById('transcriptPanel');
+        // Quality notice
+        const flaggedSegs = transcript.segments.filter(s => s.flagged);
+        const lowConfSegs = transcript.segments.filter(s => (s.confidence || s.avg_word_confidence || 1) < 0.9);
+        const noSpeaker = transcript.segments.filter(s => !s.speaker || s.speaker === '—' || s.speaker.startsWith('Speaker '));
+        const totalSegs = transcript.segments.length;
+        let html = `<div style="background: var(--cream); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+            <strong style="color: var(--text-dark);">Review Notice:</strong> This transcript was generated automatically and requires verification before certification or filing.
+            <div style="display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap;">
+                ${lowConfSegs.length > 0 ? `<span style="color: var(--amber);">&#9888; ${lowConfSegs.length} below 90% confidence</span>` : '<span style="color: var(--green);">&#10003; All segments above 90% confidence</span>'}
+                ${noSpeaker.length > 0 ? `<span style="color: var(--amber);">&#9888; ${noSpeaker.length} unresolved speaker(s)</span>` : '<span style="color: var(--green);">&#10003; All speakers identified</span>'}
+                <span style="color: var(--text-light);">${totalSegs} total segments</span>
+            </div>
+        </div>`;
+        // Build map of flagged segment indices to their flag type for coloring
+        const flagMap = {};
+        (jobData.flags || []).forEach(f => {
+            if (f.segment_index !== undefined) flagMap[f.segment_index] = f.type || 'review';
+        });
+
+        // Flag type to border color
+        const flagBorderColors = {
+            'confidence_high': '#b84040',
+            'confidence_medium': '#d4913d',
+            'confidence_low': '#c8a55c',
+            'context_legal_term': '#7b61c4',
+            'context_unlikely': '#7b61c4',
+            'context_unlikely_word': '#7b61c4',
+            'context_name_variant': '#5b8fb9',
+            'context_fragment': '#7b61c4',
+            'context_llm_review': '#7b61c4',
+            'speaker_missing': '#3d8a6e',
+            'speaker_unresolved': '#3d8a6e',
+            'speaker_ambiguous': '#3d8a6e',
+            'review': '#c8a55c',
+            'live_flag': '#c8a55c',
+        };
+
+        transcript.segments.forEach((seg, i) => {
+            const conf = seg.confidence || seg.avg_word_confidence || 1;
+            const lowConf = conf < 0.9 ? 'low-confidence' : '';
+            const isFlagged = seg.flagged || (i in flagMap);
+            const flagged = isFlagged ? 'flagged' : '';
+            const flagColor = flagBorderColors[flagMap[i]] || '#c8a55c';
+            const ts = fmtTime(seg.start, true);
+            const speaker = seg.speaker || '—';
+            const courtClass = speaker.includes('COURT') ? 'court' : '';
+            const ambiguous = seg.speaker_ambiguous ? 'ambiguous' : '';
+
+            html += `
+            <div class="segment ${lowConf} ${flagged}" data-start="${seg.start}" data-end="${seg.end}" data-index="${i}" onclick="seekTo(${seg.start})" ${isFlagged ? `style="border-left-color:${flagColor};"` : ''}>
+                <div class="timestamp">${ts}</div>
+                <div class="speaker-label ${courtClass} ${ambiguous}" onclick="event.stopPropagation(); editSpeaker(${i})">${speaker}${seg.speaker_ambiguous ? ' &#9888;' : ''}</div>
+                <div class="text" contenteditable="true" onfocus="lockSegment(${i})" onblur="saveSegment(${i}, this.innerText); unlockSegment(${i})">${seg.text}</div>
+                <div class="actions">
+                    <span class="lock-indicator" data-seg-idx="${i}" style="font-size: 11px; color: var(--text-dim);"></span>
+                    <button class="btn btn-sm btn-icon" onclick="event.stopPropagation(); flagSegment(${i})" title="Flag">&#9873;</button>
+                </div>
+            </div>`;
+        });
+        panel.innerHTML = html;
+
+        document.getElementById('segCount').textContent = transcript.segments.length;
+        const fullText = typeof transcript.full_text === 'string' ? transcript.full_text : '';
+        document.getElementById('wordCount').textContent = fullText.split(/\s+/).filter(Boolean).length;
+        document.getElementById('duration').textContent = fmtTime(transcript.duration || 0, true);
+    }
+
+    function renderJobInfo(data) {
+        const caption = data.case_caption || 'Untitled';
+        const caseNum = data.case_number || '';
+        const titleEl = document.getElementById('jobTitle');
+        titleEl.value = data.title || `${caption}${caseNum ? ' — ' + caseNum : ''}`;
+        document.getElementById('jobInfo').innerHTML = `
+            <div><strong>Caption:</strong> ${caption}</div>
+            ${caseNum ? `<div><strong>Case #:</strong> ${caseNum}</div>` : ''}
+            ${data.court_name ? `<div><strong>Court:</strong> ${data.court_name}</div>` : ''}
+            ${data.proceeding_type ? `<div><strong>Type:</strong> ${data.proceeding_type}</div>` : ''}
+            ${data.date ? `<div><strong>Date:</strong> ${data.date}</div>` : ''}
+            ${data.reporter_name ? `<div><strong>Reporter:</strong> ${data.reporter_name}</div>` : ''}
+            <div><strong>Status:</strong> ${data.status}</div>
+            ${data.speakers && data.speakers.length ? `<div><strong>Speakers:</strong> ${data.speakers.map(s => s.name).join(', ')}</div>` : ''}
+        `;
+    }
+
+    async function saveSegment(idx, text) {
+        hasUnsavedEdits = false;
+        await fetch(`/api/job/${JOB_ID}/update-segment`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ index: idx, text: text.trim() }),
+        });
+    }
+
+    function editSpeaker(idx) {
+        const segEl = document.querySelectorAll('.segment')[idx];
+        const oldName = segEl.querySelector('.speaker-label').textContent.replace(' ⚠', '');
+        const name = prompt(`New speaker name for this segment:`, oldName);
+        if (name === null || name === oldName) return;
+
+        // Count how many segments have this speaker
+        const matchCount = document.querySelectorAll('.segment .speaker-label')
+            .length ? [...document.querySelectorAll('.segment .speaker-label')]
+            .filter(l => l.textContent.replace(' ⚠', '') === oldName).length : 0;
+
+        let renameAll = false;
+        if (matchCount > 1) {
+            renameAll = confirm(`"${oldName}" appears in ${matchCount} segments.\n\nYes = rename ALL of them to "${name}"\nNo = rename only THIS segment`);
+        }
+
+        if (renameAll) {
+            // Rename all matching segments
+            fetch(`/api/job/${JOB_ID}/update-speaker`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ index: idx, speaker: name }),
+            }).then(r => r.json()).then(data => {
+                document.querySelectorAll('.segment .speaker-label').forEach(label => {
+                    if (label.textContent.replace(' ⚠', '') === oldName) {
+                        label.textContent = name;
+                    }
+                });
+                showToast(`Renamed ${data.renamed || matchCount} segments from "${oldName}" to "${name}"`);
+            });
+        } else {
+            // Rename only this one segment
+            fetch(`/api/job/${JOB_ID}/update-speaker`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ index: idx, speaker: name, single: true }),
+            }).then(r => r.json()).then(data => {
+                segEl.querySelector('.speaker-label').textContent = name;
+                showToast(`Renamed segment ${idx + 1} to "${name}"`);
+            });
+        }
+    }
+
+    async function flagSegment(idx) {
+        const seg = document.querySelectorAll('.segment')[idx];
+        if (seg.classList.contains('flagged')) {
+            // Already flagged — unflag it
+            await fetch(`/api/job/${JOB_ID}/flag/remove`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({segment_index: idx}),
+            });
+            seg.classList.remove('flagged');
+            loadJob();
+            return;
+        }
+        const text = seg.querySelector('.text').textContent;
+        await fetch(`/api/job/${JOB_ID}/flag`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ index: idx, type: 'review', text, timestamp: parseFloat(seg.dataset.start) }),
+        });
+        seg.classList.add('flagged');
+        loadJob();
+    }
+
+    function toggleExportMenu() {
+        const menu = document.getElementById('exportMenu');
+        if (menu.style.display === 'none' || !menu.style.display) {
+            menu.style.display = 'block';
+        } else {
+            menu.style.display = 'none';
+        }
+    }
+    function closeExportMenu() { document.getElementById('exportMenu').style.display = 'none'; }
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('exportMenu');
+        if (menu && menu.style.display === 'block' &&
+            !e.target.closest('#exportMenu') && !e.target.closest('#exportToggle')) {
+            menu.style.display = 'none';
+        }
+    });
+
+    let lastClickedFlag = -1;
+    async function toggleFlag(flagIndex, timestamp, segIdx) {
+        if (lastClickedFlag === flagIndex) {
+            // Second click — remove it and log correction
+            lastClickedFlag = -1;
+            try {
+                await fetch(`/api/job/${JOB_ID}/flag/remove`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({flag_index: flagIndex, corrected: true}),
+                });
+                loadJob();
+            } catch(e) { console.error('Flag remove error:', e); }
+        } else {
+            // First click — seek to it and highlight the segment
+            lastClickedFlag = flagIndex;
+            seekTo(timestamp);
+            if (segIdx >= 0) {
+                const seg = document.querySelectorAll('.segment')[segIdx];
+                if (seg) seg.style.outline = '2px solid var(--gold)';
+                setTimeout(() => { if (seg) seg.style.outline = ''; }, 3000);
+            }
+        }
+    }
+
+    async function clearAllFlags() {
+        if (!confirm('Clear all flags? This cannot be undone.')) return;
+        try {
+            await fetch(`/api/job/${JOB_ID}/flag/remove`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({clear_all: true}),
+            });
+            loadJob();
+        } catch(e) { console.error('Clear flags error:', e); }
+    }
+
+    async function runProofing() {
+        try {
+            const r = await fetch(`/api/job/${JOB_ID}/run-proofing`, {method: 'POST'});
+            const data = await r.json();
+            if (data.ok) {
+                alert(`Proofing rules applied to ${data.segments} segments.`);
+                location.reload();
+            } else {
+                alert(data.error || 'Proofing failed');
+            }
+        } catch(e) { alert('Error running proofing: ' + e.message); }
+    }
+
+    function signDocument() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.pdf';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            showToast('Applying signature...', 'info');
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const r = await fetch('/api/sign-document', { method: 'POST', body: formData });
+                if (r.ok) {
+                    const blob = await r.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'signed_' + file.name;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('Document signed and downloaded', 'success');
+                } else {
+                    const data = await r.json();
+                    showToast(data.error || 'Signing failed', 'error');
+                }
+            } catch(e) {
+                showToast('Signing failed: ' + e.message, 'error');
+            }
+        };
+        input.click();
+    }
+
+    function importTranscript() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.docx,.txt,.pdf,.doc';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('run_proofing', 'true');
+            try {
+                const r = await fetch(`/api/job/${JOB_ID}/import-transcript`, {
+                    method: 'POST', body: formData
+                });
+                const data = await r.json();
+                if (data.ok) {
+                    alert(`Imported ${data.segments} segments from ${data.imported_from}.\nProofing: ${data.proofing_applied ? 'Applied' : 'Skipped'}`);
+                    location.reload();
+                } else {
+                    alert(data.error || 'Import failed');
+                }
+            } catch(e) { alert('Error importing: ' + e.message); }
+        };
+        input.click();
+    }
+
+    async function exportJob(fmt) {
+        try {
+            const r = await fetch(`/api/job/${JOB_ID}/export?format=${fmt}`);
+            const data = await r.json();
+            if (data.ok && data.path) {
+                showToast(`Saved: ${data.path}`, 'success');
+                // Try to open the folder in Explorer
+                fetch('/api/open-folder', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ path: data.path }),
+                }).catch(() => {});
+            } else if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                // Fallback — old-style download
+                window.open(`/api/job/${JOB_ID}/export?format=${fmt}&save_local=false`);
+            }
+        } catch(e) {
+            // Fallback
+            window.open(`/api/job/${JOB_ID}/export?format=${fmt}&save_local=false`);
+        }
+    }
+
+    function saveTitle(title) {
+        fetch(`/api/job/${JOB_ID}/update-title`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ title }),
+        }).catch(() => {});
+    }
+
+    function showGlobalReplace() {
+        document.getElementById('replaceModal').classList.add('active');
+        document.getElementById('replaceFind').focus();
+    }
+
+    async function doGlobalReplace() {
+        const field = document.getElementById('replaceField').value;
+        const find = document.getElementById('replaceFind').value;
+        const replace = document.getElementById('replaceWith').value;
+        if (!find) return;
+        const r = await fetch(`/api/job/${JOB_ID}/global-replace`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ field, find, replace }),
+        });
+        const data = await r.json();
+        document.getElementById('replaceModal').classList.remove('active');
+        showToast(`Replaced ${data.replacements} occurrence(s). Refreshing...`);
+        hasUnsavedEdits = false;
+        setTimeout(() => location.reload(), 1000);
+    }
+
+    // Hotkey system — loads from profile, falls back to defaults
+    let hotkeys = {
+        court: 'Alt+U', witness: 'Alt+W', clerk: 'Alt+K', defendant: 'Alt+D',
+        question: 'Alt+Q', answer: 'Alt+A', flag: 'Alt+F', indiscernible: 'Alt+N',
+        style_colloquy: 'Alt+C', style_qa_q: 'Alt+X', style_qa_a: 'Alt+Z', style_paren: 'Alt+P',
+    };
+
+    function parseHotkey(combo) {
+        // "Alt+U" -> { alt: true, ctrl: false, shift: false, key: 'u' }
+        if (!combo) return null;
+        const parts = combo.split('+');
+        return {
+            alt: parts.includes('Alt'),
+            ctrl: parts.includes('Ctrl'),
+            shift: parts.includes('Shift'),
+            key: parts[parts.length - 1].toLowerCase(),
+        };
+    }
+
+    function matchesHotkey(e, combo) {
+        const hk = parseHotkey(combo);
+        if (!hk) return false;
+        return e.altKey === hk.alt && e.ctrlKey === hk.ctrl && e.shiftKey === hk.shift
+            && e.key.toLowerCase() === hk.key;
+    }
+
+    function applyHotkeys(profileHotkeys) {
+        if (!profileHotkeys) return;
+        // Profile hotkeys override defaults
+        for (const [k, v] of Object.entries(profileHotkeys)) {
+            if (v) hotkeys[k] = v;
+        }
+        // Update the sidebar display
+        const sidebar = document.querySelector('.sidebar-panel:last-child');
+        if (sidebar) {
+            let html = '<h4>Hotkeys</h4><div style="font-size: 11px; color: var(--text-muted); line-height: 2;">';
+            html += `<div><kbd>${hotkeys.court}</kbd> THE COURT</div>`;
+            html += `<div><kbd>${hotkeys.witness}</kbd> THE WITNESS</div>`;
+            html += `<div><kbd>${hotkeys.clerk}</kbd> THE CLERK</div>`;
+            html += `<div><kbd>${hotkeys.defendant}</kbd> THE DEFENDANT</div>`;
+            html += `<div><kbd>${hotkeys.question}</kbd> Question (Q)</div>`;
+            html += `<div><kbd>${hotkeys.answer}</kbd> Answer (A)</div>`;
+            html += `<div><kbd>${hotkeys.flag}</kbd> Flag segment</div>`;
+            html += `<div><kbd>${hotkeys.indiscernible}</kbd> Indiscernible</div>`;
+            html += '<div style="margin-top:8px;font-weight:600;color:var(--text);">Style</div>';
+            html += `<div><kbd>${hotkeys.style_colloquy}</kbd> Colloquy</div>`;
+            html += `<div><kbd>${hotkeys.style_qa_q}</kbd> Q&A (Question)</div>`;
+            html += `<div><kbd>${hotkeys.style_qa_a}</kbd> Q&A (Answer)</div>`;
+            html += `<div><kbd>${hotkeys.style_paren}</kbd> Parenthetical</div>`;
+            html += '<div style="margin-top:8px;font-weight:600;color:var(--text);">Audio</div>';
+            html += '<div><kbd>F5</kbd> Play/Pause</div>';
+            html += '<div><kbd>F7</kbd> Back 5s</div>';
+            html += '<div><kbd>F8</kbd> Fwd 5s</div></div>';
+            sidebar.innerHTML = html;
+        }
+    }
+
+    document.addEventListener('keydown', e => {
+        // Space for play/pause (not in edit fields)
+        if (e.key === ' ' && !e.target.isContentEditable && e.target.tagName !== 'INPUT') {
+            e.preventDefault(); togglePlay(); return;
+        }
+
+        // Profile hotkeys
+        const active = document.querySelector('.segment.active');
+        const idx = active ? parseInt(active.dataset.index) : -1;
+        if (idx < 0) return;
+
+        if (matchesHotkey(e, hotkeys.court)) { e.preventDefault(); setSpeakerFromHere(idx, 'THE COURT'); flashConfirm(idx, 'COURT', 'rgba(93,109,226,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.witness)) { e.preventDefault(); setSpeakerFromHere(idx, 'THE WITNESS'); flashConfirm(idx, 'WITNESS', 'rgba(45,138,110,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.clerk)) { e.preventDefault(); setSpeakerFromHere(idx, 'THE CLERK'); flashConfirm(idx, 'CLERK', 'rgba(93,109,226,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.defendant)) { e.preventDefault(); setSpeakerFromHere(idx, 'THE DEFENDANT'); flashConfirm(idx, 'DEFENDANT', 'rgba(184,64,64,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.question)) { e.preventDefault(); setSegmentStyle(idx, 'qa', 'Q'); flashConfirm(idx, 'Q', 'rgba(45,138,110,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.answer)) { e.preventDefault(); setSegmentStyle(idx, 'qa', 'A'); flashConfirm(idx, 'A', 'rgba(45,138,110,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.flag)) { e.preventDefault(); flagSegment(idx); flashConfirm(idx, 'FLAG', 'rgba(200,165,92,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.indiscernible)) {
+            e.preventDefault();
+            const seg = document.querySelectorAll('.segment')[idx];
+            seg.querySelector('.text').textContent = '(indiscernible)';
+            saveSegment(idx, '(indiscernible)');
+            flagSegment(idx);
+            flashConfirm(idx, 'INDISCERNIBLE', 'rgba(184,64,64,0.2)');
+        }
+        // Style switching
+        else if (matchesHotkey(e, hotkeys.style_colloquy)) { e.preventDefault(); setSegmentStyle(idx, 'colloquy'); flashConfirm(idx, 'COLLOQUY', 'rgba(93,109,226,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.style_qa_q)) { e.preventDefault(); setSegmentStyle(idx, 'qa', 'Q'); flashConfirm(idx, 'QUESTION', 'rgba(45,138,110,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.style_qa_a)) { e.preventDefault(); setSegmentStyle(idx, 'qa', 'A'); flashConfirm(idx, 'ANSWER', 'rgba(45,138,110,0.2)'); }
+        else if (matchesHotkey(e, hotkeys.style_paren)) { e.preventDefault(); setSegmentStyle(idx, 'parenthetical'); flashConfirm(idx, 'PARENTHETICAL', 'rgba(200,165,92,0.2)'); }
+    });
+
+    function flashConfirm(idx, label, color) {
+        const seg = document.querySelectorAll('.segment')[idx];
+        if (!seg) return;
+        // Subtle background tint that fades
+        const origBg = seg.style.background;
+        seg.style.background = color || 'rgba(200,165,92,0.08)';
+        setTimeout(() => { seg.style.background = origBg || ''; }, 500);
+
+        // Right border indicates style (left border is for flags)
+        const styleColors = {
+            'Q': '#2d8a6e', 'A': '#2d8a6e', 'QUESTION': '#2d8a6e', 'ANSWER': '#2d8a6e',
+            'COLLOQUY': '#3d4db8', 'C': '#3d4db8',
+            'PARENTHETICAL': '#c8a55c', '( )': '#c8a55c',
+        };
+        const borderColor = styleColors[label];
+        if (borderColor) {
+            seg.style.borderRight = `3px solid ${borderColor}`;
+        }
+    }
+
+    async function setSegmentStyle(idx, style, qaRole) {
+        try {
+            await fetch(`/api/job/${JOB_ID}/update-segment`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ index: idx, style: style, qa_role: qaRole || '' }),
+            });
+            // Update visual indicator
+            const seg = document.querySelectorAll('.segment')[idx];
+            if (seg) {
+                // Clean badge that doesn't disrupt layout
+                let badge = seg.querySelector('.style-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'style-badge';
+                    badge.style.cssText = 'font-size:8px;padding:1px 4px;border-radius:2px;position:absolute;top:2px;right:2px;font-weight:600;letter-spacing:0.5px;opacity:0.7;pointer-events:none;';
+                    seg.style.position = 'relative';
+                    seg.appendChild(badge);
+                }
+                if (style === 'qa') {
+                    badge.textContent = qaRole === 'Q' ? 'Q' : 'A';
+                    badge.style.background = 'rgba(45,138,110,0.15)';
+                    badge.style.color = '#2d8a6e';
+                } else if (style === 'parenthetical') {
+                    badge.textContent = '( )';
+                    badge.style.background = 'rgba(200,165,92,0.15)';
+                    badge.style.color = '#c8a55c';
+                } else {
+                    badge.textContent = 'C';
+                    badge.style.background = 'rgba(93,109,226,0.15)';
+                    badge.style.color = '#3d4db8';
+                }
+            }
+        } catch(e) { console.error('Style update error:', e); }
+    }
+
+    function quickSpeaker(idx, name) {
+        fetch(`/api/job/${JOB_ID}/update-speaker`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ index: idx, speaker: name, single: true }),
+        });
+        document.querySelectorAll('.segment')[idx].querySelector('.speaker-label').textContent = name;
+    }
+
+    function setSpeakerFromHere(idx, name) {
+        // Set this segment and all following segments to this speaker
+        // until a DIFFERENT speaker is already assigned (natural speaker change)
+        const segments = document.querySelectorAll('.segment');
+        const currentSpeaker = segments[idx]?.querySelector('.speaker-label')?.textContent.replace(' \u26A0', '') || '';
+        let count = 0;
+
+        for (let i = idx; i < segments.length; i++) {
+            const label = segments[i].querySelector('.speaker-label');
+            if (!label) continue;
+            const existingSpeaker = label.textContent.replace(' \u26A0', '');
+
+            if (i === idx) {
+                // Always change the target segment
+                label.textContent = name;
+                count++;
+            } else if (existingSpeaker === currentSpeaker || existingSpeaker === '\u2014' || existingSpeaker.startsWith('Speaker ')) {
+                // Same as original speaker or unassigned — take ownership
+                label.textContent = name;
+                count++;
+            } else {
+                // Different speaker already assigned — stop here
+                break;
+            }
+        }
+
+        // Send to server — update the range
+        fetch(`/api/job/${JOB_ID}/update-speaker-range`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ start_index: idx, speaker: name, count: count }),
+        });
+
+        if (count > 1) {
+            flashConfirm(idx, `${count}`, 'rgba(93,109,226,0.1)');
+        }
+    }
+
+    // Load job and apply profile hotkeys
+    async function initEditor() {
+        if (!JOB_ID) {
+            document.body.innerHTML = '<div class="container"><h2>No job ID specified</h2><a href="/static/index.html">Back to Dashboard</a></div>';
+            return;
+        }
+        await loadJob();
+        loadExhibits();
+        // Fetch hotkeys from job status (includes profile)
+        const r = await fetch(`/api/job/${JOB_ID}/status`);
+        const data = await r.json();
+        if (data.hotkeys) applyHotkeys(data.hotkeys);
+    }
+
+    initEditor();
+
+    // Track unsaved edits
+    let hasUnsavedEdits = false;
+    document.addEventListener('input', (e) => {
+        if (e.target.isContentEditable) hasUnsavedEdits = true;
+    });
+    window.addEventListener('beforeunload', (e) => {
+        // Clean up collaboration session on page close/refresh
+        if (collabActive && collabToken && JOB_ID) {
+            navigator.sendBeacon(
+                `/api/job/${JOB_ID}/editor/leave`,
+                new Blob([JSON.stringify({ editor_token: collabToken })], { type: 'application/json' })
+            );
+        }
+        if (hasUnsavedEdits) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved edits. Leave anyway?';
+        }
+    });
+
+    // Collaboration system
+    let collabActive = false;
+    let collabToken = null;
+    let collabName = null;
+    let sseSource = null;
+
+    async function toggleCollaboration() {
+        if (collabActive) {
+            // Leave
+            if (collabToken) {
+                await fetch(`/api/job/${JOB_ID}/editor/leave`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ editor_token: collabToken }),
+                });
+            }
+            if (sseSource) { sseSource.close(); sseSource = null; }
+            collabActive = false;
+            collabToken = null;
+            document.getElementById('collabBar').style.display = 'none';
+            document.getElementById('collabBtn').textContent = 'Collaborate';
+            document.getElementById('collabBtn').style.background = 'var(--accent-soft)';
+            document.getElementById('collabBtn').style.color = 'var(--text)';
+            showToast('Left collaborative session');
+        } else {
+            // Join
+            const name = prompt('Your name for this session:', 'Editor');
+            if (!name) return;
+            const r = await fetch(`/api/job/${JOB_ID}/editor/join`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name }),
+            });
+            const data = await r.json();
+            if (data.ok) {
+                collabActive = true;
+                collabToken = data.editor_token;
+                collabName = name;
+                document.getElementById('collabBar').style.display = 'flex';
+                document.getElementById('collabBtn').textContent = 'Leave Session';
+                document.getElementById('collabBtn').style.background = 'var(--green)';
+                document.getElementById('collabBtn').style.color = 'white';
+                showToast('Joined collaborative session as ' + name);
+                startCollabSSE();
+            }
+        }
+    }
+
+    function startCollabSSE() {
+        sseSource = new EventSource(`/api/stream/${JOB_ID}`);
+
+        sseSource.addEventListener('editor_joined', (e) => {
+            const data = JSON.parse(e.data);
+            showToast(data.name + ' joined the session');
+            updateEditorCount();
+        });
+
+        sseSource.addEventListener('editor_left', (e) => {
+            const data = JSON.parse(e.data);
+            showToast(data.name + ' left the session');
+            updateEditorCount();
+        });
+
+        sseSource.addEventListener('segment_locked', (e) => {
+            const data = JSON.parse(e.data);
+            const indicator = document.querySelector(`.lock-indicator[data-seg-idx="${data.index}"]`);
+            if (indicator) {
+                indicator.innerHTML = `\u{1F512} ${data.editor}`;
+                indicator.style.color = 'var(--amber)';
+            }
+            // Disable editing if someone else locked it
+            if (data.editor !== collabName) {
+                const seg = document.querySelector(`.segment[data-index="${data.index}"]`);
+                if (seg) {
+                    const textEl = seg.querySelector('.text');
+                    if (textEl) textEl.contentEditable = 'false';
+                }
+            }
+        });
+
+        sseSource.addEventListener('segment_unlocked', (e) => {
+            const data = JSON.parse(e.data);
+            const indicator = document.querySelector(`.lock-indicator[data-seg-idx="${data.index}"]`);
+            if (indicator) {
+                indicator.innerHTML = '';
+                indicator.style.color = '';
+            }
+            const seg = document.querySelector(`.segment[data-index="${data.index}"]`);
+            if (seg) {
+                const textEl = seg.querySelector('.text');
+                if (textEl) textEl.contentEditable = 'true';
+            }
+        });
+
+        sseSource.addEventListener('segment_update', (e) => {
+            const data = JSON.parse(e.data);
+            const seg = document.querySelector(`.segment[data-index="${data.index}"]`);
+            if (seg) {
+                const textEl = seg.querySelector('.text');
+                if (textEl && !textEl.matches(':focus')) {
+                    textEl.textContent = data.text;
+                }
+                if (data.speaker) {
+                    const spkEl = seg.querySelector('.speaker-label');
+                    if (spkEl) spkEl.textContent = data.speaker;
+                }
+            }
+        });
+
+        sseSource.onerror = () => {
+            console.warn('SSE connection lost, reconnecting...');
+        };
+    }
+
+    async function updateEditorCount() {
+        const r = await fetch(`/api/job/${JOB_ID}/editor/status`);
+        const data = await r.json();
+        const count = (data.editors || []).length;
+        document.getElementById('collabEditors').textContent = count + ' editor' + (count !== 1 ? 's' : '');
+    }
+
+    async function lockSegment(idx) {
+        if (!collabActive || !collabToken) return;
+        await fetch(`/api/job/${JOB_ID}/segment/${idx}/lock`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ editor_token: collabToken }),
+        });
+    }
+
+    async function unlockSegment(idx) {
+        if (!collabActive || !collabToken) return;
+        await fetch(`/api/job/${JOB_ID}/segment/${idx}/unlock`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ editor_token: collabToken }),
+        });
+    }
+
+    // Toast notification helper
+    // --- Exhibits ---
+    async function loadExhibits() {
+        try {
+            const r = await fetch(`/api/job/${JOB_ID}/exhibits`);
+            const data = await r.json();
+            const list = document.getElementById('exhibitList');
+            if (!data.exhibits || data.exhibits.length === 0) {
+                list.innerHTML = '<p style="font-size: 12px; color: var(--text-dim);">No exhibits linked.</p>';
+                return;
+            }
+            list.innerHTML = data.exhibits.map(ex => `
+                <div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;">
+                    <strong style="color:var(--gold);">${ex.exhibit_id}</strong>
+                    <span style="color:var(--text-muted);margin-left:4px;">${ex.description || ''}</span>
+                    ${ex.linked_segments ? `<span style="color:var(--text-dim);margin-left:4px;">(${ex.linked_segments.length} segments)</span>` : ''}
+                </div>
+            `).join('');
+        } catch(e) {}
+    }
+
+    function showAddExhibit() {
+        document.getElementById('exhibitId').value = '';
+        document.getElementById('exhibitDesc').value = '';
+        document.getElementById('exhibitFileName').value = '';
+        document.getElementById('exhibitFileInput').value = '';
+        document.getElementById('exhibitModal').classList.add('active');
+    }
+
+    async function submitExhibit() {
+        const id = document.getElementById('exhibitId').value.trim();
+        if (!id) return alert('Exhibit ID is required');
+        const desc = document.getElementById('exhibitDesc').value.trim();
+        const fileInput = document.getElementById('exhibitFileInput');
+        const activeSegIdx = document.querySelector('.segment.active');
+        const segIdx = activeSegIdx ? parseInt(activeSegIdx.dataset.index) : null;
+
+        // Create exhibit record
+        await fetch(`/api/job/${JOB_ID}/exhibit`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                exhibit_id: id,
+                description: desc,
+                linked_segments: segIdx !== null ? [segIdx] : [],
+            }),
+        });
+
+        // Upload file if selected
+        if (fileInput.files.length > 0) {
+            const form = new FormData();
+            form.append('file', fileInput.files[0]);
+            await fetch(`/api/job/${JOB_ID}/exhibit/upload?exhibit_id=${encodeURIComponent(id)}`, {
+                method: 'POST', body: form,
+            });
+        }
+
+        document.getElementById('exhibitModal').classList.remove('active');
+        loadExhibits();
+        showToast(`Exhibit "${id}" added`);
+    }
+
+    // --- Export Preview ---
+    let _previewFormat = '';
+    async function previewExport(fmt) {
+        _previewFormat = fmt;
+        const names = {
+            deposition: 'Standard Deposition', pdf: 'PDF', condensed: 'Condensed PDF (4-on-1)',
+            disc_label: 'Disc Label',
+        };
+        document.getElementById('previewTitle').textContent = `Preview: ${names[fmt] || fmt}`;
+        document.getElementById('previewFrame').src = `/api/job/${JOB_ID}/export?format=${fmt}&save_local=false`;
+        document.getElementById('previewModal').classList.add('active');
+    }
+
+    function savePreviewedExport() {
+        if (_previewFormat) {
+            exportJob(_previewFormat);
+            document.getElementById('previewModal').classList.remove('active');
+        }
+    }
+
+    // --- Errata Comparison ---
+    async function generateErrata() {
+        try {
+            const r = await fetch(`/api/job/${JOB_ID}/generate-errata`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({}),
+            });
+            const data = await r.json();
+            if (data.ok) {
+                showToast(`Errata: ${data.errata_count} change(s) found`, 'success');
+                // Now export the deposition with auto-populated errata
+                exportJob('deposition');
+            } else {
+                showToast(data.error || 'No original transcript to compare', 'error');
+            }
+        } catch(e) {
+            showToast('Errata comparison failed', 'error');
+        }
+    }
+
+    // --- Share Transcript ---
+    let _localShareActive = false;
+
+    async function startLocalShare(mode) {
+        try {
+            const r = await fetch('/api/local-share/start', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ job_id: JOB_ID, mode: mode }),
+            });
+            const data = await r.json();
+            if (data.ok) {
+                _localShareActive = true;
+                document.getElementById('stopShareBtn').style.display = '';
+                const info = document.getElementById('shareInfo');
+                const modeLabel = mode === 'edit' ? 'EDIT ACCESS' : 'VIEW ONLY';
+                const modeColor = mode === 'edit' ? '#e74c3c' : 'var(--gold)';
+                let linksHtml = data.urls.map(u =>
+                    `<div style="font-size:12px; margin:2px 0;"><a href="${u}" target="_blank" style="color:var(--gold); word-break:break-all;">${u}</a></div>`
+                ).join('');
+                info.innerHTML = `
+                    <div style="background:var(--surface,#fff); border:1px solid var(--border); border-radius:6px; padding:12px;">
+                        <div style="font-size:10px; color:${modeColor}; font-weight:600; margin-bottom:6px;">${modeLabel} — LOCAL NETWORK</div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">Anyone on your network can open this link in their browser:</div>
+                        ${linksHtml}
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:8px;">Live updating. No internet. Nothing stored on their device.</div>
+                    </div>`;
+                showToast(`Local share active (${mode})`, 'success');
+            } else {
+                showToast(data.error || 'Failed to start share', 'error');
+            }
+        } catch(e) {
+            showToast('Could not start local share', 'error');
+        }
+    }
+
+    async function stopLocalShare() {
+        try {
+            await fetch('/api/local-share/stop', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ job_id: JOB_ID }),
+            });
+        } catch(e) {}
+        _localShareActive = false;
+        document.getElementById('stopShareBtn').style.display = 'none';
+        document.getElementById('shareInfo').innerHTML = '<span style="font-size:12px; color:var(--text-dim);">Share stopped.</span>';
+        showToast('Local share stopped', 'success');
+    }
+
+    window.addEventListener('beforeunload', () => {
+        if (_localShareActive) {
+            navigator.sendBeacon(`/api/local-share/stop?job_id=${JOB_ID}`);
+        }
+    });
+
+    async function shareTranscript() {
+        const perms = {
+            can_view: true,
+            can_download: confirm('Allow recipient to download?'),
+            can_print: confirm('Allow recipient to print?'),
+        };
+        const r = await fetch(`/api/job/${JOB_ID}/share`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(perms),
+        });
+        const data = await r.json();
+        if (data.url) {
+            const fullUrl = window.location.origin + data.url;
+            const info = document.getElementById('shareInfo');
+            info.innerHTML = `
+                <div style="margin-bottom:4px;"><strong>Share link active</strong></div>
+                <input type="text" value="${fullUrl}" readonly style="width:100%;font-size:11px;font-family:monospace;padding:4px;">
+                <button class="btn btn-sm" onclick="navigator.clipboard.writeText('${fullUrl}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)" style="margin-top:4px;">Copy</button>
+            `;
+            showToast('Share link generated');
+        }
+    }
+
+    function showToast(msg, type = 'success') {
+        let container = document.getElementById('toasts');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            container.id = 'toasts';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = msg;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
+    </script>
+<script src="/static/theme.js"></script>
+<script src="/static/support_widget.js"></script>
+</body>
+</html>

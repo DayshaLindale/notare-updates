@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Profiles</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html">Help</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="page-title" style="margin-bottom: 0;">Jurisdiction / Agency Profiles</h2>
+            <button class="btn btn-primary" onclick="showNewProfile()">+ New Profile</button>
+        </div>
+        <div id="profileList"></div>
+    </div>
+
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal" style="min-width: 640px; max-width: 720px; max-height: 85vh; overflow-y: auto; padding: 28px 32px;">
+            <h3 id="profileModalTitle" style="margin-bottom: 20px; font-size: 18px;">New Profile</h3>
+
+            <!-- Section: Basic Info -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;">
+                <div class="form-group" style="margin-bottom: 12px;"><label>Profile Name</label><input type="text" id="pName" placeholder="e.g., Example Court Profile"></div>
+                <div class="form-row" style="margin-bottom: 12px;">
+                    <div class="form-group"><label>Court / Venue Name</label><input type="text" id="pCourt" placeholder="e.g., Superior Court of Example County"></div>
+                    <div class="form-group"><label>Location</label><input type="text" id="pLocation" placeholder="e.g., Example County"></div>
+                </div>
+                <div class="form-row" style="margin-bottom: 12px;">
+                    <div class="form-group"><label>Reporter Name</label><input type="text" id="pReporter"></div>
+                    <div class="form-group"><label>Credential</label><input type="text" id="pCred" placeholder="e.g., CSR, RPR"></div>
+                </div>
+                <div class="form-row" style="margin-bottom: 0;">
+                    <div class="form-group">
+                        <label>Default Proceeding Type <span style="font-size:10px;color:var(--text-dim);font-weight:normal;">(optional)</span></label>
+                        <select id="pExam">
+                            <option value="">— Select when creating job —</option>
+                            <option value="Deposition">Deposition</option>
+                            <option value="Trial - Jury">Trial — Jury</option>
+                            <option value="Trial - Bench">Trial — Bench</option>
+                            <option value="Hearing">Hearing</option>
+                            <option value="Arbitration">Arbitration</option>
+                            <option value="Meet and Confer">Meet and Confer / Conferral</option>
+                            <option value="Motion">Motion</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Lines per Page <span style="font-size:10px;color:var(--text-dim);font-weight:normal;">(optional)</span></label>
+                        <input type="number" id="pLines" placeholder="Leave blank for template default" min="1" max="50">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Formatting -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 12px; letter-spacing: 0.5px; text-transform: uppercase;">Formatting</h4>
+                <div class="form-group" style="margin-bottom: 8px;"><label style="font-size:13px;"><input type="checkbox" id="pNoEllipsis"> No ellipsis — substitute double-dash for change of thought</label></div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Certificate Language</label>
+                    <textarea id="pCert" rows="3" style="font-size: 12px;" placeholder="I, [REPORTER_NAME], [CREDENTIAL], do hereby certify that the foregoing transcript is a true and accurate record..."></textarea>
+                </div>
+            </div>
+
+            <!-- Section: Auto-Proofing -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 12px; letter-spacing: 0.5px; text-transform: uppercase;">Auto-Proofing</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                    <div style="position:relative;">
+                        <label style="cursor:help; font-size:12px; display:flex; align-items:center; gap:4px;" onmouseenter="showTip('tipInformal', this)" onmouseleave="hideTip('tipInformal')">
+                            <input type="checkbox" id="pFixInformal" checked> Informal speech <span style="font-size:10px; color:var(--gold);">(?)</span>
+                        </label>
+                        <div id="tipInformal" style="display:none; position:absolute; left:0; z-index:10; background:var(--surface, #fff); border:1px solid var(--border); border-radius:6px; padding:12px 16px; width:320px; box-shadow:0 4px 16px rgba(0,0,0,0.15); font-size:11px; line-height:1.8;">
+                            <strong>Informal Speech Cleanup</strong><br>
+                            <div style="font-family:monospace; margin-top:4px; columns:2; column-gap:12px; font-size:10px; color:var(--text-muted);">
+                                gonna → going to<br>gotta → got to<br>wanna → want to<br>kinda → kind of<br>
+                                sorta → sort of<br>coulda → could have<br>woulda → would have<br>shoulda → should have<br>
+                                lemme → let me<br>gimme → give me<br>dunno → don't know<br>hafta → have to<br>
+                                ain't → is not<br>'cause → because<br>'em → them<br>'til → until
+                            </div>
+                        </div>
+                    </div>
+                    <div style="position:relative;">
+                        <label style="cursor:help; font-size:12px; display:flex; align-items:center; gap:4px;" onmouseenter="showTip('tipCaps', this)" onmouseleave="hideTip('tipCaps')">
+                            <input type="checkbox" id="pFixCaps" checked> Legal titles <span style="font-size:10px; color:var(--gold);">(?)</span>
+                        </label>
+                        <div id="tipCaps" style="display:none; position:absolute; left:0; z-index:10; background:var(--surface, #fff); border:1px solid var(--border); border-radius:6px; padding:12px 16px; width:340px; box-shadow:0 4px 16px rgba(0,0,0,0.15); font-size:11px; line-height:1.8;">
+                            <strong>Title Capitalization (defaults)</strong><br>
+                            <div style="font-family:monospace; margin-top:4px; columns:2; column-gap:12px; font-size:10px; color:var(--text-muted);">
+                                your honor → Your Honor<br>the court → The Court<br>the witness → The Witness<br>
+                                the clerk → The Clerk<br>the defendant → The Defendant<br>the plaintiff → The Plaintiff<br>
+                                judge → Judge<br>justice → Justice<br>counsel → Counsel<br>
+                                objection → Objection<br>sustained → Sustained<br>overruled → Overruled<br>
+                                mr. → Mr.<br>mrs. → Mrs.<br>ms. → Ms.<br>dr. → Dr.
+                            </div>
+                            <p style="margin-top:6px; font-size:10px; color:var(--text-dim);">Customize below.</p>
+                        </div>
+                    </div>
+                    <div style="position:relative;">
+                        <label style="cursor:help; font-size:12px; display:flex; align-items:center; gap:4px;" onmouseenter="showTip('tipPunct', this)" onmouseleave="hideTip('tipPunct')">
+                            <input type="checkbox" id="pFixPunct" checked> Punctuation <span style="font-size:10px; color:var(--gold);">(?)</span>
+                        </label>
+                        <div id="tipPunct" style="display:none; position:absolute; left:0; z-index:10; background:var(--surface, #fff); border:1px solid var(--border); border-radius:6px; padding:12px 16px; width:300px; box-shadow:0 4px 16px rgba(0,0,0,0.15); font-size:11px; line-height:1.8;">
+                            <strong>Punctuation & Spacing</strong><br>
+                            <div style="margin-top:4px; font-size:10px; color:var(--text-muted); line-height:1.8;">
+                                • Space after . ? ! and commas<br>• Remove double spaces<br>• Add missing end punctuation<br>• Fix misplaced spacing
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 0;">
+                    <div class="form-group">
+                        <label style="font-size:12px;">Custom Capitalizations <span style="font-size:10px;color:var(--text-dim);">(find → Replace)</span></label>
+                        <textarea id="pCapitalizations" rows="3" style="font-family: monospace; font-size: 11px;" placeholder="your honor → Your Honor&#10;the court → The Court"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Custom Word Replacements <span style="font-size:10px;color:var(--text-dim);">(find → replace)</span></label>
+                        <textarea id="pProofing" rows="3" style="font-family: monospace; font-size: 11px;" placeholder="ok → okay&#10;alright → all right"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Hotkeys -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase;">Hotkeys</h4>
+                <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px;">Click any field and press your key combination.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px;">
+                    <div class="form-group"><label style="font-size:11px;">The Court</label><input type="text" id="hkCourt" value="Alt+U" class="hk" onfocus="captureHotkey(this)" style="font-family:monospace; font-size:12px; text-align:center;"></div>
+                    <div class="form-group"><label style="font-size:11px;">The Witness</label><input type="text" id="hkWitness" value="Alt+W" class="hk" onfocus="captureHotkey(this)" style="font-family:monospace; font-size:12px; text-align:center;"></div>
+                    <div class="form-group"><label style="font-size:11px;">The Clerk</label><input type="text" id="hkClerk" value="Alt+K" class="hk" onfocus="captureHotkey(this)" style="font-family:monospace; font-size:12px; text-align:center;"></div>
+                    <div class="form-group"><label style="font-size:11px;">The Defendant</label><input type="text" id="hkDefendant" value="Alt+D" class="hk" onfocus="captureHotkey(this)" style="font-family:monospace; font-size:12px; text-align:center;"></div>
+                    <div class="form-group"><label style="font-size:11px;">Question (Q)</label><input type="text" id="hkQuestion" value="Alt+Q" class="hk" onfocus="captureHotkey(this)" style="font-family:monospace; font-size:12px; text-align:center;"></div>
+                    <div class="form-group"><label style="font-size:11px;">Answer (A)</label><input type="text" id="hkAnswer" value="Alt+A" class="hk" onfocus="captureHotkey(this)" style="font-family:monospace; font-size:12px; text-align:center;"></div>
+                    <div class="form-group"><label style="font-size:11px;">Flag</label><input type="text" id="hkFlag" value="Alt+F" class="hk" onfocus="captureHotkey(this)" style="font-family:monospace; font-size:12px; text-align:center;"></div>
+                    <div class="form-group"><label style="font-size:11px;">Indiscernible</label><input type="text" id="hkIndisc" value="Alt+N" class="hk" onfocus="captureHotkey(this)" style="font-family:monospace; font-size:12px; text-align:center;"></div>
+                </div>
+            </div>
+
+            <!-- Section: Word Template -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase;">Word Template</h4>
+                <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px;">Map Notare output to your existing .dotm paragraph styles. Names must match your template exactly.</p>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group"><label style="font-size:12px;">Colloquy / Dialog</label><input type="text" id="styleColloquy" placeholder="Style name"></div>
+                    <div class="form-group"><label style="font-size:12px;">Question & Answer</label><input type="text" id="styleQA" placeholder="Style name"></div>
+                </div>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group"><label style="font-size:12px;">Parenthetical</label><input type="text" id="styleParen" placeholder="Style name"></div>
+                    <div class="form-group"><label style="font-size:12px;">Speaker ID</label><input type="text" id="styleSpeaker" placeholder="Style name"></div>
+                </div>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group"><label style="font-size:12px;">Exam Header</label><input type="text" id="styleExam" placeholder="Style name"></div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Word Template</label>
+                        <div id="templateDropZone" style="display: flex; gap: 6px; align-items: center;">
+                            <input type="text" id="styleTemplate" placeholder="No template uploaded" style="flex: 1; font-size: 12px;" readonly>
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px; white-space:nowrap;" onclick="document.getElementById('templateFileInput').click()">Upload .dotm</button>
+                            <input type="file" id="templateFileInput" accept=".dotm,.dotx,.docx" style="display:none;" onchange="uploadTemplate(this.files[0])">
+                            <span id="templateStatus" style="font-size:11px; color:var(--text-dim);"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Word Boost & Custom Spelling -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase;">Vocabulary Boost</h4>
+                <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 8px;">
+                    Words and phrases the transcription engine should prioritize. Add jurisdiction-specific names, legal terms, and commonly misheard words. One per line.
+                </p>
+                <textarea id="pWordBoost" rows="4" style="font-family: monospace; font-size: 11px;" placeholder="Multnomah County&#10;Clackamas&#10;ORS&#10;ORCP&#10;voir dire&#10;motion in limine"></textarea>
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; margin-top: 16px; letter-spacing: 0.5px; text-transform: uppercase;">Custom Spelling</h4>
+                <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 8px;">
+                    Force correct spelling for words the engine commonly misspells. Format: misspelling → correct (one per line).
+                </p>
+                <textarea id="pCustomSpelling" rows="3" style="font-family: monospace; font-size: 11px;" placeholder="multnomah → Multnomah&#10;ors → ORS&#10;daubert → Daubert"></textarea>
+            </div>
+
+            <!-- Section: Bookmark Mapping -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase;">Bookmark Mapping</h4>
+                <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 8px;">
+                    Map template bookmarks to data fields (bookmark → field). Leave blank for auto-detection.
+                </p>
+                <div style="display: flex; gap: 6px; margin-bottom: 8px; align-items: center;">
+                    <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px;" onclick="detectBookmarks()">Detect from Path</button>
+                    <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px;" onclick="document.getElementById('templateUpload').click()">Upload & Scan</button>
+                    <input type="file" id="templateUpload" accept=".dotm,.docx,.doc" style="display:none;" onchange="detectBookmarksUpload(this.files[0])">
+                    <span id="bookmarkStatus" style="font-size: 11px; color: var(--text-muted);"></span>
+                </div>
+                <textarea id="pBookmarks" rows="5" style="font-family: monospace; font-size: 11px;" placeholder="Division → court_name&#10;docketno → case_number&#10;judgename → judge_name"></textarea>
+            </div>
+
+            <!-- Section: Branding & Graphics -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase;">Branding & Graphics</h4>
+                <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px;">Customize the appearance of your deposition PDFs with logos, headers, footers, and watermarks.</p>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group">
+                        <label style="font-size:12px;">Cover Logo</label>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="text" id="pCoverLogo" placeholder="No logo uploaded" style="flex: 1; font-size: 12px;" readonly>
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px; white-space:nowrap;" onclick="document.getElementById('logoFileInput').click()">Upload</button>
+                            <input type="file" id="logoFileInput" accept=".png,.jpg,.jpeg,.bmp,.svg" style="display:none;" onchange="uploadAsset(this.files[0], 'logo', 'pCoverLogo')">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Logo Position</label>
+                        <select id="pCoverLogoPosition" style="font-size: 12px;">
+                            <option value="top-center">Top Center</option>
+                            <option value="top-left">Top Left</option>
+                            <option value="top-right">Top Right</option>
+                            <option value="center">Center</option>
+                            <option value="bottom-center">Bottom Center</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group"><label style="font-size:12px;">Logo Width (inches)</label><input type="number" id="pCoverLogoWidth" value="2.0" min="0.5" max="6" step="0.25" style="font-size: 12px;"></div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Watermark Text</label>
+                        <input type="text" id="pWatermarkText" placeholder="e.g., CONFIDENTIAL, DRAFT" style="font-size: 12px;">
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group">
+                        <label style="font-size:12px;">Watermark Opacity</label>
+                        <input type="range" id="pWatermarkOpacity" min="0.02" max="0.2" step="0.01" value="0.06" style="width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Watermark Scope</label>
+                        <select id="pWatermarkScope" style="font-size: 12px;">
+                            <option value="all">All Pages</option>
+                            <option value="cover">Cover Only</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group">
+                        <label style="font-size:12px;">Header Image</label>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="text" id="pHeaderImage" placeholder="No header image" style="flex: 1; font-size: 12px;" readonly>
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px; white-space:nowrap;" onclick="document.getElementById('headerFileInput').click()">Upload</button>
+                            <input type="file" id="headerFileInput" accept=".png,.jpg,.jpeg,.bmp" style="display:none;" onchange="uploadAsset(this.files[0], 'header', 'pHeaderImage')">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Footer Image</label>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="text" id="pFooterImage" placeholder="No footer image" style="flex: 1; font-size: 12px;" readonly>
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px; white-space:nowrap;" onclick="document.getElementById('footerFileInput').click()">Upload</button>
+                            <input type="file" id="footerFileInput" accept=".png,.jpg,.jpeg,.bmp" style="display:none;" onchange="uploadAsset(this.files[0], 'footer', 'pFooterImage')">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Signature & Certification -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase;">Signature & Certification</h4>
+                <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px;">Add your signature to certificate pages and optionally apply a cryptographic digital signature to the PDF.</p>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group">
+                        <label style="font-size:12px;">Signature Image</label>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="text" id="pSignatureImage" placeholder="No signature uploaded" style="flex: 1; font-size: 12px;" readonly>
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px; white-space:nowrap;" onclick="document.getElementById('sigFileInput').click()">Upload</button>
+                            <input type="file" id="sigFileInput" accept=".png,.jpg,.jpeg,.bmp" style="display:none;" onchange="uploadAsset(this.files[0], 'signature', 'pSignatureImage')">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Stylized Signature Name</label>
+                        <input type="text" id="pSignatureName" placeholder="Used if no image uploaded" style="font-size: 12px;">
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group">
+                        <label style="font-size:12px;">Digital Certificate (.p12/.pfx)</label>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="text" id="pDigitalCert" placeholder="No certificate uploaded" style="flex: 1; font-size: 12px;" readonly>
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px; white-space:nowrap;" onclick="document.getElementById('certFileInput').click()">Upload</button>
+                            <input type="file" id="certFileInput" accept=".p12,.pfx" style="display:none;" onchange="uploadAsset(this.files[0], 'certificate', 'pDigitalCert')">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Certificate Password</label>
+                        <input type="password" id="pDigitalCertPass" placeholder="Required for signing" style="font-size: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Advanced Production -->
+            <div style="background: var(--bg, #f7f5f2); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px;">
+                <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase;">Advanced Production</h4>
+                <div class="form-row" style="margin-bottom: 8px;">
+                    <div class="form-group" style="position: relative;">
+                        <label style="cursor:help; font-size:12px; display:flex; align-items:center; gap:4px;" onmouseenter="showTip('tipOptimize', this)" onmouseleave="hideTip('tipOptimize')">
+                            <input type="checkbox" id="pAutoOptimize" style="width: auto;"> Auto-optimize line spacing <span style="font-size:10px; color:var(--gold);">(?)</span>
+                        </label>
+                        <div id="tipOptimize" style="display:none; position:absolute; left:0; z-index:10; background:var(--surface, #fff); border:1px solid var(--border); border-radius:6px; padding:12px 16px; width:340px; box-shadow:0 4px 16px rgba(0,0,0,0.15); font-size:11px; line-height:1.8;">
+                            <strong>Auto-Optimize Line Spacing</strong><br>
+                            Adjusts lines per page (23–28) to minimize blank lines on the final page of the transcript body. The standard is 25 lines per page, but if your transcript leaves the last page mostly empty, Notare tries nearby values to fill pages more evenly. Line height adjusts automatically to stay within court-acceptable spacing. Only affects the Standard Deposition export.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:12px;">Cover Letter Template (.docx)</label>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="text" id="pCoverLetterTpl" placeholder="Uses default if blank" style="flex: 1; font-size: 12px;" readonly>
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size:11px; white-space:nowrap;" onclick="document.getElementById('coverLetterInput').click()">Upload</button>
+                            <input type="file" id="coverLetterInput" accept=".docx,.dotm" style="display:none;" onchange="uploadAsset(this.files[0], 'cover_letter_template', 'pCoverLetterTpl')">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions" style="border-top: 1px solid var(--border); padding-top: 16px;">
+                <button class="btn btn-secondary" onclick="document.getElementById('profileModal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function loadProfiles() {
+        const r = await fetch('/api/profiles');
+        const profiles = await r.json();
+        const list = document.getElementById('profileList');
+        if (!profiles || Object.keys(profiles).length === 0) {
+            list.innerHTML = '<div class="card" style="text-align: center; padding: 40px;"><p style="color: var(--text-dim);">No profiles yet.</p></div>';
+            return;
+        }
+        let html = '';
+        for (const [name, p] of Object.entries(profiles)) {
+            html += `<div class="card" style="cursor:pointer;" onclick="editProfile('${name}')">
+                <div style="display:flex;justify-content:space-between;">
+                    <div><h3>${name}</h3><p style="font-size:13px;color:var(--text-muted);">${p.court_name||''}${p.lines_per_page ? ' | ' + p.lines_per_page + ' lines/page' : ''}${p.proceeding_type ? ' | ' + p.proceeding_type : (p.examination_convention ? ' | ' + p.examination_convention : '')}</p></div>
+                    <button class="btn btn-sm btn-icon" onclick="event.stopPropagation();deleteProfile('${name}')">X</button>
+                </div>
+            </div>`;
+        }
+        list.innerHTML = html;
+    }
+
+    function showNewProfile() {
+        document.getElementById('pName').value = '';
+        document.getElementById('pCourt').value = '';
+        document.getElementById('pLocation').value = '';
+        document.getElementById('pLines').value = '';
+        document.getElementById('pExam').value = '';
+        document.getElementById('pReporter').value = '';
+        document.getElementById('pCred').value = '';
+        document.getElementById('pCert').value = '';
+        document.getElementById('pProofing').value = '';
+        document.getElementById('pCapitalizations').value = '';
+        document.getElementById('pFixInformal').checked = true;
+        document.getElementById('pFixCaps').checked = true;
+        document.getElementById('pFixPunct').checked = true;
+        document.getElementById('profileModal').classList.add('active');
+    }
+
+    async function editProfile(name) {
+        const r = await fetch('/api/profiles');
+        const profiles = await r.json();
+        const p = profiles[name] || {};
+
+        document.getElementById('pName').value = name;
+        document.getElementById('pCourt').value = p.court_name || '';
+        document.getElementById('pLocation').value = p.location || '';
+        document.getElementById('pLines').value = p.lines_per_page || '';
+        document.getElementById('pExam').value = p.proceeding_type || p.examination_convention || '';
+        document.getElementById('pReporter').value = p.reporter_name || '';
+        document.getElementById('pCred').value = p.reporter_credential || '';
+        document.getElementById('pNoEllipsis').checked = p.no_ellipsis || false;
+        document.getElementById('pCert').value = p.certificate_template || '';
+
+        // Auto-proofing toggles
+        const rules = p.proofing_rules || {};
+        document.getElementById('pFixInformal').checked = !rules.skip_informal_replacements;
+        document.getElementById('pFixCaps').checked = !rules.skip_capitalization;
+        document.getElementById('pFixPunct').checked = !rules.skip_punctuation_fixes;
+
+        // Custom capitalizations
+        const caps = rules.capitalizations || {};
+        document.getElementById('pCapitalizations').value = Object.entries(caps)
+            .map(([k, v]) => `${k} \u2192 ${v}`).join('\n');
+
+        // Custom word replacements
+        const repls = rules.replacements || {};
+        document.getElementById('pProofing').value = Object.entries(repls)
+            .map(([k, v]) => `${k} \u2192 ${v}`).join('\n');
+
+        // Hotkeys
+        const hk = p.hotkeys || {};
+        document.getElementById('hkCourt').value = hk.court || 'Alt+U';
+        document.getElementById('hkWitness').value = hk.witness || 'Alt+W';
+        document.getElementById('hkClerk').value = hk.clerk || 'Alt+K';
+        document.getElementById('hkDefendant').value = hk.defendant || 'Alt+D';
+        document.getElementById('hkQuestion').value = hk.question || 'Alt+Q';
+        document.getElementById('hkAnswer').value = hk.answer || 'Alt+A';
+        document.getElementById('hkFlag').value = hk.flag || 'Alt+F';
+        document.getElementById('hkIndisc').value = hk.indiscernible || 'Alt+N';
+
+        // Word styles
+        const ws = p.word_styles || {};
+        document.getElementById('styleColloquy').value = ws.colloquy || '';
+        document.getElementById('styleQA').value = ws.qa || '';
+        document.getElementById('styleParen').value = ws.parenthetical || '';
+        document.getElementById('styleSpeaker').value = ws.speaker_id || '';
+        document.getElementById('styleExam').value = ws.exam_header || '';
+        document.getElementById('styleTemplate').value = ws.template_path || '';
+
+        // Word boost
+        const wb = p.word_boost || [];
+        document.getElementById('pWordBoost').value = wb.join('\n');
+
+        // Custom spelling
+        const cs = p.custom_spelling || {};
+        document.getElementById('pCustomSpelling').value = Object.entries(cs)
+            .map(([k, v]) => `${k} \u2192 ${v}`).join('\n');
+
+        // Bookmark mapping
+        const bm = p.bookmark_mapping || {};
+        document.getElementById('pBookmarks').value = Object.entries(bm)
+            .map(([k, v]) => `${k} \u2192 ${v}`).join('\n');
+
+        // Branding & Graphics
+        document.getElementById('pCoverLogo').value = p.cover_logo || '';
+        document.getElementById('pCoverLogoPosition').value = p.cover_logo_position || 'top-center';
+        document.getElementById('pCoverLogoWidth').value = p.cover_logo_width || 2.0;
+        document.getElementById('pWatermarkText').value = p.watermark_text || '';
+        document.getElementById('pWatermarkOpacity').value = p.watermark_opacity || 0.06;
+        document.getElementById('pWatermarkScope').value = p.watermark_scope || 'all';
+        document.getElementById('pHeaderImage').value = p.header_image || '';
+        document.getElementById('pFooterImage').value = p.footer_image || '';
+
+        // Signature & Certification
+        document.getElementById('pSignatureImage').value = p.signature_image || '';
+        document.getElementById('pSignatureName').value = p.signature_name || '';
+        document.getElementById('pDigitalCert').value = p.digital_certificate_path || '';
+        document.getElementById('pDigitalCertPass').value = p.digital_certificate_password || '';
+
+        // Advanced Production
+        document.getElementById('pAutoOptimize').checked = p.auto_optimize_spacing || false;
+        document.getElementById('pCoverLetterTpl').value = p.cover_letter_template || '';
+
+        document.getElementById('profileModalTitle').textContent = `Edit: ${name}`;
+        document.getElementById('profileModal').classList.add('active');
+    }
+
+    async function detectBookmarksUpload(file) {
+        if (!file) return;
+        document.getElementById('bookmarkStatus').textContent = 'Scanning template...';
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const r = await fetch('/api/detect-bookmarks-upload', { method: 'POST', body: form });
+            const data = await r.json();
+            if (data.error) {
+                document.getElementById('bookmarkStatus').textContent = data.error;
+                return;
+            }
+            const mapping = (data.mappings || []).map(m => `${m.bookmark} \u2192 ${m.field}`).join('\n');
+            document.getElementById('pBookmarks').value = mapping;
+            document.getElementById('bookmarkStatus').textContent = `Found ${data.bookmarks.length} bookmarks, mapped ${data.mappings.length}`;
+            // Also set the template path to the filename for reference
+            document.getElementById('styleTemplate').value = file.name;
+        } catch(e) {
+            document.getElementById('bookmarkStatus').textContent = 'Error: ' + e.message;
+        }
+    }
+
+    async function detectBookmarks() {
+        const templatePath = document.getElementById('styleTemplate').value.trim();
+        if (!templatePath) { alert('Enter a template path or drag a .dotm file first'); return; }
+        document.getElementById('bookmarkStatus').textContent = 'Scanning template...';
+
+        // If we have a dropped file object, use upload (works in browser)
+        if (window._droppedTemplate) {
+            detectBookmarksUpload(window._droppedTemplate);
+            return;
+        }
+
+        try {
+            const r = await fetch('/api/detect-bookmarks', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ template_path: templatePath }),
+            });
+            const data = await r.json();
+            if (data.error) {
+                // Path failed — prompt to use upload instead
+                document.getElementById('bookmarkStatus').innerHTML =
+                    data.error + ' <button class="btn btn-sm" onclick="document.getElementById(\'templateUpload\').click()" style="margin-left:8px;">Upload Instead</button>';
+                return;
+            }
+            const mapping = (data.mappings || []).map(m => `${m.bookmark} \u2192 ${m.field}`).join('\n');
+            document.getElementById('pBookmarks').value = mapping;
+            document.getElementById('bookmarkStatus').textContent = `Found ${data.bookmarks.length} bookmarks, mapped ${data.mappings.length}`;
+        } catch(e) {
+            document.getElementById('bookmarkStatus').textContent = 'Error: ' + e.message;
+        }
+    }
+
+    function captureHotkey(input) {
+        input.value = 'Press key combo...';
+        input.style.color = '#f0a500';
+        const handler = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            let combo = [];
+            if (e.altKey) combo.push('Alt');
+            if (e.ctrlKey) combo.push('Ctrl');
+            if (e.shiftKey) combo.push('Shift');
+            const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+            if (!['Alt', 'Control', 'Shift', 'Meta'].includes(e.key)) {
+                combo.push(key);
+                input.value = combo.join('+');
+                input.style.color = '';
+                input.removeEventListener('keydown', handler);
+                input.blur();
+            }
+        };
+        input.addEventListener('keydown', handler);
+    }
+
+    async function saveProfile() {
+        const name = document.getElementById('pName').value.trim();
+        if (!name) return alert('Name required');
+
+        // Parse custom word replacements
+        const replacements = {};
+        document.getElementById('pProofing').value.split('\n').forEach(line => {
+            const parts = line.split(/\u2192|->/).map(s => s.trim());
+            if (parts.length === 2 && parts[0] && parts[1]) replacements[parts[0]] = parts[1];
+        });
+
+        // Parse custom capitalizations
+        const capitalizations = {};
+        document.getElementById('pCapitalizations').value.split('\n').forEach(line => {
+            const parts = line.split(/\u2192|->/).map(s => s.trim());
+            if (parts.length === 2 && parts[0] && parts[1]) capitalizations[parts[0]] = parts[1];
+        });
+
+        await fetch('/api/profile/save', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name,
+                court_name: document.getElementById('pCourt').value,
+                location: document.getElementById('pLocation').value,
+                lines_per_page: document.getElementById('pLines').value ? parseInt(document.getElementById('pLines').value) : null,
+                proceeding_type: document.getElementById('pExam').value,
+                reporter_name: document.getElementById('pReporter').value,
+                reporter_credential: document.getElementById('pCred').value,
+                no_ellipsis: document.getElementById('pNoEllipsis').checked,
+                certificate_template: document.getElementById('pCert').value,
+                proofing_rules: {
+                    replacements,
+                    capitalizations: Object.keys(capitalizations).length ? capitalizations : undefined,
+                    skip_informal_replacements: !document.getElementById('pFixInformal').checked,
+                    skip_capitalization: !document.getElementById('pFixCaps').checked,
+                    skip_punctuation_fixes: !document.getElementById('pFixPunct').checked,
+                },
+                hotkeys: {
+                    court: document.getElementById('hkCourt').value,
+                    witness: document.getElementById('hkWitness').value,
+                    clerk: document.getElementById('hkClerk').value,
+                    defendant: document.getElementById('hkDefendant').value,
+                    question: document.getElementById('hkQuestion').value,
+                    answer: document.getElementById('hkAnswer').value,
+                    flag: document.getElementById('hkFlag').value,
+                    indiscernible: document.getElementById('hkIndisc').value,
+                },
+                word_styles: {
+                    colloquy: document.getElementById('styleColloquy').value,
+                    qa: document.getElementById('styleQA').value,
+                    parenthetical: document.getElementById('styleParen').value,
+                    speaker_id: document.getElementById('styleSpeaker').value,
+                    exam_header: document.getElementById('styleExam').value,
+                    template_path: document.getElementById('styleTemplate').value,
+                },
+                word_boost: document.getElementById('pWordBoost').value.split('\n').map(s => s.trim()).filter(Boolean),
+                custom_spelling: (() => {
+                    const cs = {};
+                    document.getElementById('pCustomSpelling').value.split('\n').forEach(line => {
+                        const parts = line.split(/\u2192|->/).map(s => s.trim());
+                        if (parts.length === 2 && parts[0] && parts[1]) cs[parts[0]] = parts[1];
+                    });
+                    return cs;
+                })(),
+                bookmark_mapping: (() => {
+                    const m = {};
+                    document.getElementById('pBookmarks').value.split('\n').forEach(line => {
+                        const parts = line.split(/\u2192|->/).map(s => s.trim());
+                        if (parts.length === 2 && parts[0] && parts[1]) m[parts[0]] = parts[1];
+                    });
+                    return m;
+                })(),
+                // Branding & Graphics
+                cover_logo: document.getElementById('pCoverLogo').value,
+                cover_logo_position: document.getElementById('pCoverLogoPosition').value,
+                cover_logo_width: parseFloat(document.getElementById('pCoverLogoWidth').value) || 2.0,
+                watermark_text: document.getElementById('pWatermarkText').value,
+                watermark_opacity: parseFloat(document.getElementById('pWatermarkOpacity').value) || 0.06,
+                watermark_scope: document.getElementById('pWatermarkScope').value,
+                header_image: document.getElementById('pHeaderImage').value,
+                footer_image: document.getElementById('pFooterImage').value,
+                // Signature & Certification
+                signature_image: document.getElementById('pSignatureImage').value,
+                signature_name: document.getElementById('pSignatureName').value,
+                digital_certificate_path: document.getElementById('pDigitalCert').value,
+                digital_certificate_password: document.getElementById('pDigitalCertPass').value,
+                // Advanced Production
+                auto_optimize_spacing: document.getElementById('pAutoOptimize').checked,
+                cover_letter_template: document.getElementById('pCoverLetterTpl').value,
+            }),
+        });
+        document.getElementById('profileModal').classList.remove('active');
+        loadProfiles();
+    }
+
+    async function deleteProfile(name) {
+        if (!confirm(`Delete "${name}"?`)) return;
+        await fetch(`/api/profile/${name}`, { method: 'DELETE' });
+        loadProfiles();
+    }
+
+    loadProfiles();
+
+    // Drag-and-drop for Word template path
+    const dropZone = document.getElementById('templateDropZone');
+    const templateInput = document.getElementById('styleTemplate');
+
+    ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.outline = '2px dashed var(--gold)';
+            dropZone.style.outlineOffset = '-2px';
+        });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+            dropZone.style.outline = '';
+            dropZone.style.outlineOffset = '';
+        });
+    });
+    // Upload template — works from both drag-drop and file picker
+    async function uploadTemplate(file) {
+        if (!file) return;
+        const status = document.getElementById('templateStatus');
+        status.textContent = 'Uploading...';
+        status.style.color = 'var(--amber)';
+
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const r = await fetch('/api/upload-template', { method: 'POST', body: form });
+            const data = await r.json();
+            if (data.ok) {
+                templateInput.value = data.filename;
+                window._droppedTemplate = file;
+
+                // Auto-fill style fields from detected styles
+                const ds = data.detected_styles || {};
+                if (ds.colloquy) document.getElementById('styleColloquy').value = ds.colloquy;
+                if (ds.qa) document.getElementById('styleQA').value = ds.qa;
+                if (ds.parenthetical) document.getElementById('styleParen').value = ds.parenthetical;
+                if (ds.speaker_id) document.getElementById('styleSpeaker').value = ds.speaker_id;
+
+                const styleCount = Object.keys(ds).length;
+                const totalStyles = (data.all_styles || []).length;
+                status.textContent = `Uploaded — ${styleCount} styles detected` + (totalStyles ? ` (${totalStyles} total)` : '');
+                status.style.color = 'var(--green)';
+                setTimeout(() => { status.textContent = ''; }, 5000);
+            } else {
+                status.textContent = data.error || 'Upload failed';
+                status.style.color = 'var(--red)';
+            }
+        } catch(e) {
+            status.textContent = 'Error: ' + e.message;
+            status.style.color = 'var(--red)';
+        }
+    }
+
+    // Make the function available globally for the file input onchange
+    window.uploadTemplate = uploadTemplate;
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            uploadTemplate(e.dataTransfer.files[0]);
+        }
+    });
+    // Upload asset (logo, signature, header, footer, certificate, cover letter template)
+    async function uploadAsset(file, category, displayFieldId) {
+        if (!file) return;
+        const form = new FormData();
+        form.append('file', file);
+        try {
+            const r = await fetch(`/api/profile/upload-asset?category=${category}`, { method: 'POST', body: form });
+            const data = await r.json();
+            if (data.ok) {
+                document.getElementById(displayFieldId).value = data.path;
+            } else {
+                alert(data.error || 'Upload failed');
+            }
+        } catch(e) {
+            alert('Upload failed: ' + e.message);
+        }
+    }
+    function showTip(id, trigger) {
+        const tip = document.getElementById(id);
+        if (!tip) return;
+        tip.style.display = '';
+        // Position: check if there's room below, otherwise show above
+        const triggerRect = trigger.getBoundingClientRect();
+        const tipHeight = tip.offsetHeight || 150;
+        const spaceBelow = window.innerHeight - triggerRect.bottom;
+        const spaceAbove = triggerRect.top;
+        if (spaceBelow < tipHeight + 20 && spaceAbove > tipHeight + 20) {
+            tip.style.top = 'auto';
+            tip.style.bottom = '100%';
+            tip.style.marginBottom = '4px';
+            tip.style.marginTop = '';
+        } else {
+            tip.style.top = '100%';
+            tip.style.bottom = 'auto';
+            tip.style.marginTop = '4px';
+            tip.style.marginBottom = '';
+        }
+    }
+    function hideTip(id) {
+        const tip = document.getElementById(id);
+        if (tip) tip.style.display = 'none';
+    }
+    </script>
+<script src="/static/theme.js"></script>
+<script src="/static/support_widget.js"></script>
+</body>
+</html>

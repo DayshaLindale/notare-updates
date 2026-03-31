@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Settings</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html">Help</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <h2 class="page-title">Settings</h2>
+
+        <div class="card">
+            <h3>Transcription Engine</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                Choose your transcription backend. API keys are stored locally and never shared.
+            </p>
+            <div class="form-group">
+                <label>Engine</label>
+                <select id="engine" onchange="toggleApiFields()">
+                    <option value="assemblyai">AssemblyAI (Cloud)</option>
+                    <option value="deepgram">Deepgram (Cloud — Nova-3)</option>
+                    <option value="rev">Rev.ai (Cloud — Legal/Media)</option>
+                    <option value="whisper">Whisper (Local — No API key needed)</option>
+                </select>
+            </div>
+            <div id="apiKeySection">
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="password" id="apiKey" placeholder="Enter your API key">
+                    <p id="apiKeyWarning" style="font-size: 11px; color: var(--amber); margin-top: 4px; display: none;">An API key is required for cloud transcription. Jobs will fail without one. Choose Whisper (Local) to transcribe without an API key.</p>
+                    <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Stored locally in settings.json. Never sent anywhere except the selected transcription service.</p>
+                </div>
+            </div>
+            <div id="whisperSection" style="display: none;">
+                <div class="form-group">
+                    <label>Whisper Model Size</label>
+                    <select id="whisperModel">
+                        <option value="tiny.en">Tiny (fastest, least accurate)</option>
+                        <option value="base.en">Base</option>
+                        <option value="small.en" selected>Small (recommended)</option>
+                        <option value="medium.en">Medium (slower, more accurate)</option>
+                        <option value="large-v3">Large v3 (slowest, most accurate)</option>
+                    </select>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted);">Local Whisper runs entirely on your machine. No API key needed, no per-minute costs. Requires an NVIDIA GPU with 4GB+ VRAM for reasonable speed.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Application</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Default Capture Mode</label>
+                    <select id="defaultMode">
+                        <option value="A">Mode A: Remote</option>
+                        <option value="B">Mode B: Multi-Mic</option>
+                        <option value="C">Mode C: Room Audio</option>
+                        <option value="D" selected>Mode D: File / Batch</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Server Port</label>
+                    <input type="number" id="port" value="8080">
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Code -->
+        <div class="card" id="referralCard" style="display: none;">
+            <h3>Your Referral Code</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                Share your referral code with colleagues. They get a discount on their first month, and you earn credit toward yours.
+            </p>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="referralCode" readonly style="flex: 1; font-family: monospace; font-size: 16px; letter-spacing: 1px; text-align: center; padding: 12px; background: var(--bg); border: 2px solid var(--gold); border-radius: 6px;">
+                <button class="btn btn-primary" onclick="copyReferral()" id="copyRefBtn">Copy</button>
+            </div>
+            <div id="referralStats" style="font-size: 12px; color: var(--text-dim); margin-top: 8px;"></div>
+        </div>
+
+        <!-- Admin access — only visible to those who know it's here -->
+        <div class="card" style="border: 1px dashed var(--border); opacity: 0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'">
+            <h3 style="font-size: 13px;">Administration</h3>
+            <a href="/static/admin.html" target="_blank" style="color: var(--gold); font-size: 13px;">Open Admin Panel</a>
+            <span style="font-size: 11px; color: var(--text-light); margin-left: 8px;">License management, customer accounts, system monitoring</span>
+        </div>
+
+        <!-- Tech support override — hidden until activated -->
+        <div id="supportOverride" style="display: none;">
+            <div class="card" style="border: 2px solid var(--gold);">
+                <h3 style="font-size: 13px; color: var(--gold);">Tech Support Mode</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                    Temporarily elevates access for troubleshooting. Does not modify the customer's license.
+                    Session ends when you click Exit or close the app.
+                </p>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span id="supportStatus" style="font-size: 12px; color: var(--green); font-weight: 600;">Active</span>
+                    <button class="btn btn-sm btn-secondary" onclick="exitSupportMode()">Exit Support Mode</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        // Support override — activated by typing the support code anywhere on the settings page
+        let supportBuffer = '';
+        document.addEventListener('keypress', (e) => {
+            supportBuffer += e.key;
+            if (supportBuffer.length > 20) supportBuffer = supportBuffer.slice(-20);
+            // Activation code: "notaresupport"
+            if (supportBuffer.includes('notaresupport')) {
+                supportBuffer = '';
+                document.getElementById('supportPrompt').style.display = '';
+            }
+        });
+
+        async function activateSupportMode() {
+            const code = document.getElementById('supportCode').value.trim();
+            const r = await fetch('/api/support/activate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ code: code }),
+            });
+            const data = await r.json();
+            if (data.ok) {
+                document.getElementById('supportPrompt').style.display = 'none';
+                document.getElementById('supportOverride').style.display = '';
+                // Store in session
+                window._supportMode = true;
+                window._supportToken = data.token;
+            } else {
+                document.getElementById('supportError').textContent = 'Invalid support code';
+                document.getElementById('supportError').style.display = '';
+            }
+        }
+
+        async function exitSupportMode() {
+            await fetch('/api/support/deactivate', { method: 'POST' });
+            window._supportMode = false;
+            window._supportToken = null;
+            document.getElementById('supportOverride').style.display = 'none';
+            location.reload();
+        }
+        </script>
+
+        <!-- Support activation prompt (hidden until code typed) -->
+        <div id="supportPrompt" style="display: none;">
+            <div class="card" style="border: 2px solid var(--gold);">
+                <h3 style="font-size: 13px; color: var(--gold);">Support Authentication</h3>
+                <div style="display: flex; gap: 8px; align-items: end;">
+                    <div class="form-group" style="flex: 1; margin: 0;">
+                        <label>Support Code</label>
+                        <input type="password" id="supportCode" placeholder="Enter your support code">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="activateSupportMode()" style="height: 38px;">Activate</button>
+                </div>
+                <div id="supportError" style="display: none; color: var(--red); font-size: 12px; margin-top: 4px;"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+        <div id="settingsStatus" style="text-align: right; margin-top: 8px; font-size: 13px; color: var(--green);"></div>
+    </div>
+
+    <script>
+    function toggleApiFields() {
+        const engine = document.getElementById('engine').value;
+        document.getElementById('apiKeySection').style.display = engine === 'whisper' ? 'none' : '';
+        document.getElementById('whisperSection').style.display = engine === 'whisper' ? '' : 'none';
+        // Show warning if cloud engine selected but no key
+        const keyField = document.getElementById('apiKey');
+        const warning = document.getElementById('apiKeyWarning');
+        if (engine !== 'whisper' && !keyField.value && !keyField.placeholder.includes('saved')) {
+            warning.style.display = '';
+        } else {
+            warning.style.display = 'none';
+        }
+    }
+
+    async function loadSettings() {
+        try {
+            const r = await fetch('/api/settings');
+            const s = await r.json();
+            if (s.engine) document.getElementById('engine').value = s.engine;
+            if (s.api_key_display) {
+                document.getElementById('apiKey').value = '';
+                document.getElementById('apiKey').placeholder = s.api_key_display + ' (saved — enter new key to change)';
+            }
+            if (s.whisper_model) document.getElementById('whisperModel').value = s.whisper_model;
+            if (s.default_mode) document.getElementById('defaultMode').value = s.default_mode;
+            if (s.port) document.getElementById('port').value = s.port;
+            toggleApiFields();
+        } catch(e) {}
+    }
+
+    async function saveSettings() {
+        await fetch('/api/settings', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                engine: document.getElementById('engine').value,
+                api_key: document.getElementById('apiKey').value,
+                whisper_model: document.getElementById('whisperModel').value,
+                default_mode: document.getElementById('defaultMode').value,
+                port: parseInt(document.getElementById('port').value) || 8080,
+            }),
+        });
+        document.getElementById('settingsStatus').textContent = 'Settings saved';
+        setTimeout(() => document.getElementById('settingsStatus').textContent = '', 3000);
+    }
+
+    loadSettings();
+
+    // Referral code display
+    async function loadReferral() {
+        try {
+            const r = await fetch('/api/settings/referral');
+            const data = await r.json();
+            if (data.code) {
+                document.getElementById('referralCard').style.display = '';
+                document.getElementById('referralCode').value = data.code;
+                if (data.uses !== undefined) {
+                    document.getElementById('referralStats').textContent =
+                        `Used ${data.uses} time${data.uses !== 1 ? 's' : ''}${data.credits ? ` — $${data.credits} credit earned` : ''}`;
+                }
+            }
+        } catch(e) {}
+    }
+
+    function copyReferral() {
+        const code = document.getElementById('referralCode').value;
+        navigator.clipboard.writeText(code).then(() => {
+            document.getElementById('copyRefBtn').textContent = 'Copied!';
+            setTimeout(() => document.getElementById('copyRefBtn').textContent = 'Copy', 2000);
+        }).catch(() => {
+            // Fallback for non-HTTPS contexts
+            const ta = document.createElement('textarea');
+            ta.value = code;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            document.getElementById('copyRefBtn').textContent = 'Copied!';
+            setTimeout(() => document.getElementById('copyRefBtn').textContent = 'Copy', 2000);
+        });
+    }
+
+    loadReferral();
+    </script>
+<script src="/static/theme.js"></script>
+<script src="/static/support_widget.js"></script>
+</body>
+</html>

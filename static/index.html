@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Legal Transcription Platform</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+        <nav>
+            <a href="/static/index.html">Dashboard</a>
+            <a href="/static/new_job.html">New Job</a>
+            <a href="/static/cases.html">Cases</a>
+            <a href="/static/voices.html">Voices</a>
+            <a href="/static/profiles.html">Profiles</a>
+            <a href="/static/settings.html">Settings</a>
+            <a href="/static/help.html">Help</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <!-- Major update banner — shown when a full reinstall is needed -->
+        <div id="majorUpdateBanner" style="display:none; background:linear-gradient(135deg, #1a2744, #2a3f6e); color:white; padding:16px 24px; border-radius:8px; margin-bottom:20px; position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-weight:700; font-size:15px; margin-bottom:4px;">Major Update Available — v0.5.0</div>
+                    <div style="font-size:13px; opacity:0.9; line-height:1.6;">This update adds the plugin system, export previews, document attachments, and improved performance. It requires a quick reinstall (your data is preserved). Takes about 2 minutes.</div>
+                </div>
+                <a href="https://notarelegal.com/static/download.html" target="_blank" class="btn" style="background:var(--gold, #c8a55c); color:#1a2744; font-weight:700; white-space:nowrap; padding:10px 24px; font-size:14px; text-decoration:none;">Download Update</a>
+            </div>
+            <button onclick="dismissUpdateBanner()" style="position:absolute; top:8px; right:12px; background:none; border:none; color:rgba(255,255,255,0.5); font-size:18px; cursor:pointer;">&times;</button>
+        </div>
+        <script>
+        // Show banner if plugin loader isn't available (pre-0.5.0 exe)
+        (async function checkMajorUpdate() {
+            try {
+                // Try hitting a plugin endpoint — if it 404s, the plugin loader isn't compiled in
+                const r = await fetch('/api/preview/prepare', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{"source_path":"__test__"}' });
+                // If we get 404 "Not Found" (route doesn't exist) vs 404 "Source file not found" (route exists but file missing)
+                const data = await r.json();
+                if (data.detail === 'Not Found' && !localStorage.getItem('dismissed_050')) {
+                    document.getElementById('majorUpdateBanner').style.display = '';
+                }
+                // If we get "Source file not found" — plugin loader is working, no banner needed
+            } catch(e) {
+                // Network error or server down — don't show banner
+            }
+        })();
+        function dismissUpdateBanner() {
+            document.getElementById('majorUpdateBanner').style.display = 'none';
+            localStorage.setItem('dismissed_050', '1');
+        }
+        </script>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 class="page-title" style="margin-bottom: 0;">Dashboard</h2>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <div style="position:relative;">
+                    <input type="text" id="searchInput" placeholder="Search all transcripts..."
+                           style="padding:8px 12px; border:1px solid var(--border); border-radius:4px; font-size:13px; width:220px;"
+                           oninput="debounceSearch(this.value)">
+                    <div id="searchResults" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:400px; overflow-y:auto; background:var(--surface, #fff); border:1px solid var(--border); border-radius:0 0 6px 6px; box-shadow:0 4px 16px rgba(0,0,0,0.1); z-index:20;"></div>
+                </div>
+                <button class="btn btn-secondary" onclick="importTranscriptAsJob()" style="font-size:12px;">Import Transcript</button>
+                <a href="/static/new_job.html" class="btn btn-primary">+ New Job</a>
+            </div>
+        </div>
+
+        <!-- Update notification -->
+        <div id="updateNotice" style="display: none; background: var(--gold-soft); border: 1px solid var(--gold); border-radius: var(--radius); padding: 10px 16px; margin-bottom: 16px; font-size: 13px; justify-content: space-between; align-items: center;">
+            <span id="updateText" style="color: var(--text-dark);"></span>
+            <button class="btn btn-sm btn-secondary" onclick="this.parentElement.style.display='none'">Dismiss</button>
+        </div>
+
+        <div id="jobList">
+            <div class="card" style="text-align: center; padding: 60px;">
+                <p style="color: var(--text-dim); font-size: 16px;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Check if a silent update was recently applied (only shows for pushed updates, not manual installs)
+    fetch('/api/settings').then(r => r.json()).then(s => {
+        if (s.last_update && s.updated_silently) {
+            const notice = document.getElementById('updateNotice');
+            const updateDate = new Date(s.last_update);
+            const now = new Date();
+            const hoursSince = (now - updateDate) / (1000 * 60 * 60);
+            if (hoursSince < 48) {
+                document.getElementById('updateText').textContent =
+                    `Notare was updated to v${s.version || ''} — ${updateDate.toLocaleString()}`;
+                notice.style.display = 'flex';
+            }
+            // Clear the flag so it doesn't show again next launch
+            fetch('/api/settings', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ updated_silently: false }),
+            });
+        }
+    }).catch(() => {});
+
+    function importTranscriptAsJob() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.docx,.txt,.pdf,.doc';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                // Step 1: Create a new job
+                const title = file.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ');
+                const createForm = new FormData();
+                createForm.append('capture_mode', 'D');
+                createForm.append('title', title);
+                createForm.append('proceeding_type', 'Imported Transcript');
+                const cr = await fetch('/api/job/create', { method: 'POST', body: createForm });
+                const createData = await cr.json();
+                if (!createData.job_id) {
+                    alert(createData.error || 'Could not create job');
+                    return;
+                }
+                // Step 2: Import the transcript into the new job
+                const importForm = new FormData();
+                importForm.append('file', file);
+                importForm.append('run_proofing', 'true');
+                const ir = await fetch(`/api/job/${createData.job_id}/import-transcript`, { method: 'POST', body: importForm });
+                const importData = await ir.json();
+                if (importData.ok) {
+                    window.location.href = `/static/editor.html?id=${createData.job_id}`;
+                } else {
+                    alert(importData.error || 'Import failed');
+                }
+            } catch(e) {
+                alert('Import failed: ' + e.message);
+            }
+        };
+        input.click();
+    }
+
+    async function loadJobs() {
+        const r = await fetch('/api/jobs');
+        const jobs = await r.json();
+        const list = document.getElementById('jobList');
+
+        if (!jobs || Object.keys(jobs).length === 0) {
+            list.innerHTML = `
+                <div class="card" style="text-align: center; padding: 60px;">
+                    <p style="color: var(--text-dim); font-size: 16px;">No jobs yet</p>
+                    <p style="color: var(--text-dim); margin-top: 8px;">Create a new job to get started</p>
+                    <a href="/static/new_job.html" class="btn btn-primary" style="margin-top: 20px;">+ New Job</a>
+                </div>`;
+            return;
+        }
+
+        let html = '<div class="job-list">';
+        for (const [id, job] of Object.entries(jobs)) {
+            const statusClass = job.status || 'created';
+            const caption = job.case_caption || 'Untitled Job';
+            const caseNum = job.case_number || 'No case #';
+            const segCount = job.transcript ? job.transcript.segments.length : 0;
+
+            html += `
+            <div class="card job-card" onclick="openJob('${id}', '${statusClass}')">
+                <div class="status ${statusClass}"></div>
+                <div class="info">
+                    <h4>${caption} — ${caseNum}</h4>
+                    <p>${job.proceeding_type || ''} | ${job.court_name || ''} | ${job.date || ''} | Mode ${job.capture_mode || 'D'} | ${statusClass.toUpperCase()}${segCount ? ' | ' + segCount + ' segments' : ''}</p>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    ${statusClass === 'created' ? `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); processJob('${id}')">Process</button>` : ''}
+                    ${statusClass === 'processing' ? `<span style="color: var(--amber); font-size: 13px;">${job.progress || 0}%</span>` : ''}
+                    ${statusClass === 'complete' ? `<a href="/static/editor.html?id=${id}" class="btn btn-sm btn-secondary" onclick="event.stopPropagation()">Open Editor</a>` : ''}
+                    <button class="btn btn-sm btn-icon" onclick="event.stopPropagation(); deleteJob('${id}')" title="Delete job">X</button>
+                </div>
+            </div>`;
+        }
+        html += '</div>';
+        list.innerHTML = html;
+    }
+
+    function openJob(id, status) {
+        if (status === 'created') {
+            if (confirm('This job hasn\'t been processed yet. Process it now?')) {
+                processJob(id);
+            }
+        } else {
+            window.location = '/static/editor.html?id=' + id;
+        }
+    }
+
+    // Full-text search across all transcripts
+    let _searchTimer = null;
+    function debounceSearch(q) {
+        clearTimeout(_searchTimer);
+        const results = document.getElementById('searchResults');
+        if (!q || q.length < 2) { results.style.display = 'none'; return; }
+        _searchTimer = setTimeout(() => runSearch(q), 300);
+    }
+
+    async function runSearch(q) {
+        const results = document.getElementById('searchResults');
+        try {
+            const r = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=20`);
+            const data = await r.json();
+            if (!data.results || data.results.length === 0) {
+                results.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--text-dim);">No results</div>';
+                results.style.display = '';
+                return;
+            }
+            results.innerHTML = data.results.map(m => `
+                <a href="/static/editor.html?id=${m.job_id}" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-body);font-size:12px;">
+                    <div style="font-weight:600;color:var(--text-dark);margin-bottom:2px;">${m.case_caption || 'Untitled'} ${m.case_number ? '— ' + m.case_number : ''}</div>
+                    <div style="color:var(--text-muted);">${m.speaker ? '<strong>' + m.speaker + ':</strong> ' : ''}${m.text}</div>
+                </a>
+            `).join('');
+            results.style.display = '';
+        } catch(e) {
+            results.style.display = 'none';
+        }
+    }
+
+    // Close search on click outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#searchInput') && !e.target.closest('#searchResults')) {
+            document.getElementById('searchResults').style.display = 'none';
+        }
+    });
+
+    async function deleteJob(id) {
+        if (!confirm('Delete this job? This cannot be undone.')) return;
+        await fetch(`/api/job/${id}`, { method: 'DELETE' });
+        loadJobs();
+    }
+
+    async function processJob(id) {
+        await fetch(`/api/job/${id}/process`, { method: 'POST' });
+        const poll = setInterval(async () => {
+            const r = await fetch(`/api/job/${id}/status`);
+            const data = await r.json();
+            if (data.status === 'complete' || data.status === 'error') {
+                clearInterval(poll);
+                loadJobs();
+            }
+        }, 2000);
+        loadJobs();
+    }
+
+    loadJobs();
+
+    // Auto-refresh dashboard every 5s if any job is processing
+    setInterval(() => {
+        const hasProcessing = document.querySelector('.status.processing');
+        if (hasProcessing) loadJobs();
+    }, 5000);
+    </script>
+
+    <!-- Share Code Modal -->
+    <div class="modal-overlay" id="shareCodeModal">
+        <div class="modal" style="max-width: 400px;">
+            <h3>Enter Share Code</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Enter the 6-character code from the reporter to view their transcript. Nothing is saved to your machine.</p>
+            <div class="form-group">
+                <input type="text" id="shareCodeInput" placeholder="e.g., A3X9K2" maxlength="6"
+                       style="font-size: 24px; text-align: center; letter-spacing: 6px; text-transform: uppercase; font-family: monospace; font-weight: 700;">
+            </div>
+            <div id="shareCodeError" style="font-size: 12px; color: #b84040; margin-bottom: 8px; display: none;"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="document.getElementById('shareCodeModal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="openSharedView()">View Transcript</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function openSharedView() {
+        const code = document.getElementById('shareCodeInput').value.trim().toUpperCase();
+        const errEl = document.getElementById('shareCodeError');
+        if (code.length < 4) {
+            errEl.textContent = 'Enter the full share code';
+            errEl.style.display = 'block';
+            return;
+        }
+        errEl.style.display = 'none';
+
+        try {
+            const r = await fetch(`/api/share/pull/${code}`);
+            if (r.ok) {
+                document.getElementById('shareCodeModal').classList.remove('active');
+                // Open the live viewer with the code
+                window.open(`/static/shared_view.html?code=${code}`, '_blank');
+            } else {
+                const data = await r.json();
+                errEl.textContent = data.error || 'Code not found or expired';
+                errEl.style.display = 'block';
+            }
+        } catch(e) {
+            errEl.textContent = 'Could not connect to share server';
+            errEl.style.display = 'block';
+        }
+    }
+
+    // Allow Enter key in the code input
+    document.getElementById('shareCodeInput')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') openSharedView();
+    });
+    </script>
+
+    <div class="toast-container" id="toasts"></div>
+<script src="/static/theme.js"></script>
+<script src="/static/support_widget.js"></script>
+<script>
+// Support notification checker (master key only)
+(async function checkSupportNotifications() {
+    try {
+        const resp = await fetch('/api/support/notifications');
+        const data = await resp.json();
+        const notifs = data.notifications || [];
+        if (notifs.length > 0) {
+            // Show notification badge
+            let badge = document.getElementById('supportNotifBadge');
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.id = 'supportNotifBadge';
+                badge.style.cssText = 'position:fixed;top:16px;right:16px;z-index:10000;background:#c8a55c;color:#0f1b2d;padding:12px 20px;border-radius:8px;font-family:Inter,sans-serif;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.15);cursor:pointer;display:flex;align-items:center;gap:8px;';
+                badge.innerHTML = '<span style="font-size:18px;">&#9993;</span> <span id="supportNotifCount"></span> support request(s)';
+                badge.addEventListener('click', async () => {
+                    let msg = '';
+                    notifs.forEach((n, i) => {
+                        msg += `--- Request ${i+1} ---\n`;
+                        msg += `From: ${n.customer || n.name || 'Unknown'}\n`;
+                        msg += `Email: ${n.email || 'N/A'}\n`;
+                        msg += `Type: ${n.type || n.interest || 'help'}\n`;
+                        msg += `Message: ${n.description || n.message || n.question || 'N/A'}\n`;
+                        msg += `Time: ${n.timestamp || 'N/A'}\n\n`;
+                    });
+                    alert(msg);
+                    await fetch('/api/support/notifications/clear', {method:'POST'});
+                    badge.remove();
+                });
+                document.body.appendChild(badge);
+            }
+            document.getElementById('supportNotifCount').textContent = notifs.length;
+        }
+    } catch(e) {}
+    // Poll every 30 seconds
+    setTimeout(checkSupportNotifications, 30000);
+})();
+</script>
+</body>
+</html>

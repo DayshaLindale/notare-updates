@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Shared Transcript</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <style>
+        :root { --navy: #1a2744; --gold: #c8a55c; --text: #1a1a1a; --muted: #888; --bg: #faf8f5; --border: #e8e4de; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+        .header { background: var(--navy); color: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; }
+        .header h1 span { color: var(--gold); }
+        .header .badge { font-size: 11px; background: var(--gold); color: white; padding: 3px 10px; border-radius: 3px; font-weight: 600; letter-spacing: 1px; }
+        .case-info { padding: 20px 32px; background: white; border-bottom: 1px solid var(--border); }
+        .case-info h2 { font-size: 18px; color: var(--navy); margin-bottom: 8px; }
+        .case-info .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 16px; }
+        .case-info .meta-item { display: flex; align-items: center; gap: 4px; }
+        .case-info .meta-label { font-weight: 600; color: var(--text); }
+        .speakers-bar { padding: 12px 32px; background: #f5f3ef; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+        .speakers-bar strong { color: var(--text); }
+        .transcript { max-width: 800px; margin: 32px auto; padding: 0 24px; }
+        .segment { margin-bottom: 16px; padding: 12px 16px; background: white; border-radius: 6px; border-left: 3px solid var(--border); font-size: 15px; line-height: 1.8; }
+        .segment .speaker { font-weight: 700; color: var(--navy); font-size: 13px; margin-bottom: 4px; text-transform: uppercase; }
+        .segment .time { font-size: 11px; color: var(--muted); float: right; }
+        .segment .text { color: var(--text); }
+        .acknowledge-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 2px solid var(--gold); padding: 16px 32px; text-align: center; box-shadow: 0 -4px 12px rgba(0,0,0,0.08); z-index: 100; }
+        .acknowledge-bar.acknowledged { background: #f0f8f0; border-top-color: #4caf50; }
+        .btn { padding: 10px 28px; font-size: 14px; font-weight: 600; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .btn-primary { background: var(--navy); color: white; }
+        .btn-primary:hover { background: #253a5c; }
+        .btn-success { background: #4caf50; color: white; }
+        .btn-success:disabled { opacity: 0.7; cursor: default; }
+        .error-page { text-align: center; padding: 80px 32px; color: var(--muted); font-size: 18px; }
+        .error-page h2 { color: var(--navy); margin-bottom: 12px; }
+        .download-bar { padding: 8px 32px; text-align: right; }
+        .download-bar .btn { font-size: 12px; padding: 6px 14px; margin-left: 8px; background: var(--border); color: var(--text); }
+        .download-bar .btn:hover { background: var(--gold); color: white; }
+        .hidden { display: none !important; }
+        @media print {
+            .header { background: white; color: var(--navy); border-bottom: 2px solid var(--navy); }
+            .acknowledge-bar, .download-bar { display: none; }
+            .segment { border: none; padding: 4px 0; page-break-inside: avoid; }
+        }
+        @media (max-width: 600px) {
+            .header { padding: 12px 16px; }
+            .case-info { padding: 16px; }
+            .transcript { padding: 0 12px; margin: 16px auto; }
+            .case-info .meta { flex-direction: column; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>N</span>OTARE — Shared Transcript</h1>
+        <span class="badge">READ-ONLY</span>
+    </div>
+
+    <div id="caseInfo" class="case-info hidden"></div>
+    <div id="speakersBar" class="speakers-bar hidden"></div>
+    <div id="downloadBar" class="download-bar hidden"></div>
+    <div class="transcript" id="transcriptArea"></div>
+    <div id="acknowledgeBar" class="acknowledge-bar hidden"></div>
+
+    <div id="errorPage" class="error-page hidden">
+        <h2 id="errorTitle">Transcript Unavailable</h2>
+        <p id="errorMessage">This link is invalid or has expired.</p>
+    </div>
+
+    <script>
+    const params = new URLSearchParams(window.location.search);
+    const TOKEN = params.get('token');
+    const CODE = params.get('code');
+
+    if (CODE) {
+        loadFromCode();
+    } else if (TOKEN) {
+        loadTranscript();
+    } else {
+        showError('Invalid Link', 'No share token or code provided. Please check the link you received.');
+    }
+
+    let _livePolling = null;
+    let _lastSegCount = 0;
+
+    async function loadFromCode() {
+        try {
+            const r = await fetch(`/api/share/pull/${CODE}`);
+            if (r.status === 404) {
+                showError('Code Not Found', 'This share code is invalid or has been removed.');
+                return;
+            }
+            if (r.status === 410) {
+                showError('Code Expired', 'This share code has expired. Request a new code from the reporter.');
+                return;
+            }
+            if (!r.ok) {
+                showError('Error', 'Unable to load transcript.');
+                return;
+            }
+
+            const data = await r.json();
+
+            // Update badge for live shares
+            if (data.live) {
+                document.querySelector('.badge').innerHTML = '<span class="live-dot" style="display:inline-block;width:8px;height:8px;background:#e74c3c;border-radius:50%;margin-right:6px;animation:pulse 1.5s infinite;"></span>LIVE';
+                document.querySelector('.badge').style.background = '#e74c3c';
+            }
+
+            renderTranscript(data);
+
+            // If live, poll for updates every 3 seconds
+            if (data.live) {
+                _livePolling = setInterval(async () => {
+                    try {
+                        const r2 = await fetch(`/api/share/pull/${CODE}`);
+                        if (r2.ok) {
+                            const updated = await r2.json();
+                            const newSegs = updated.segments || [];
+                            if (newSegs.length !== _lastSegCount) {
+                                _lastSegCount = newSegs.length;
+                                // Re-render transcript area only
+                                const area = document.getElementById('transcriptArea');
+                                area.innerHTML = '';
+                                let currentSpeaker = '';
+                                newSegs.forEach(seg => {
+                                    const div = document.createElement('div');
+                                    div.className = 'segment';
+                                    const speaker = seg.speaker || '';
+                                    const time = formatTime(seg.start);
+                                    const text = seg.text || '';
+                                    let html = '';
+                                    if (time) html += `<span class="time">${escapeHtml(time)}</span>`;
+                                    if (speaker && speaker !== currentSpeaker) {
+                                        html += `<div class="speaker">${escapeHtml(speaker)}</div>`;
+                                        currentSpeaker = speaker;
+                                    }
+                                    html += `<div class="text">${escapeHtml(text)}</div>`;
+                                    div.innerHTML = html;
+                                    area.appendChild(div);
+                                });
+                                // Auto-scroll to bottom for live
+                                area.scrollTop = area.scrollHeight;
+                                window.scrollTo(0, document.body.scrollHeight);
+                            }
+                        }
+                    } catch(e) {}
+                }, 3000);
+            }
+        } catch (err) {
+            showError('Connection Error', 'Unable to connect. Please try again.');
+        }
+    }
+
+    // Cleanup polling when page closes
+    window.addEventListener('beforeunload', () => {
+        if (_livePolling) clearInterval(_livePolling);
+    });
+
+    function showError(title, message) {
+        document.getElementById('errorPage').classList.remove('hidden');
+        document.getElementById('errorTitle').textContent = title;
+        document.getElementById('errorMessage').textContent = message;
+    }
+
+    function formatTime(seconds) {
+        if (!seconds && seconds !== 0) return '';
+        const s = Math.floor(seconds);
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+        if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+        return `${m}:${String(sec).padStart(2,'0')}`;
+    }
+
+    async function loadTranscript() {
+        try {
+            const r = await fetch(`/api/shared/${TOKEN}`);
+            if (r.status === 404) {
+                showError('Link Not Found', 'This share link is invalid or has been removed.');
+                return;
+            }
+            if (r.status === 410) {
+                showError('Link Expired', 'This share link has expired. Contact the reporter for a new link.');
+                return;
+            }
+            if (!r.ok) {
+                showError('Error', 'Unable to load transcript.');
+                return;
+            }
+
+            const data = await r.json();
+            renderTranscript(data);
+        } catch (err) {
+            showError('Connection Error', 'Unable to connect to Notare. Please try again.');
+        }
+    }
+
+    function renderTranscript(data) {
+        // Case info
+        const infoEl = document.getElementById('caseInfo');
+        infoEl.classList.remove('hidden');
+        infoEl.innerHTML = `
+            <h2>${escapeHtml(data.case_caption || 'Untitled Transcript')}</h2>
+            <div class="meta">
+                ${data.case_number ? `<div class="meta-item"><span class="meta-label">Case No.</span> ${escapeHtml(data.case_number)}</div>` : ''}
+                ${data.court_name ? `<div class="meta-item"><span class="meta-label">Court:</span> ${escapeHtml(data.court_name)}</div>` : ''}
+                ${data.proceeding_type ? `<div class="meta-item"><span class="meta-label">Proceeding:</span> ${escapeHtml(data.proceeding_type)}</div>` : ''}
+                ${data.date ? `<div class="meta-item"><span class="meta-label">Date:</span> ${escapeHtml(data.date)}</div>` : ''}
+                ${data.reporter_name ? `<div class="meta-item"><span class="meta-label">Reporter:</span> ${escapeHtml(data.reporter_name)}</div>` : ''}
+            </div>
+        `;
+
+        // Speakers
+        const speakers = data.speakers || [];
+        if (speakers.length > 0) {
+            const bar = document.getElementById('speakersBar');
+            bar.classList.remove('hidden');
+            const names = speakers.map(s => {
+                let label = s.name || 'Unknown';
+                if (s.representing) label += ` (${s.representing})`;
+                return label;
+            });
+            bar.innerHTML = `<strong>Participants:</strong> ${escapeHtml(names.join(' | '))}`;
+        }
+
+        // Download / print bar based on permissions
+        const perms = data.permissions || ['view'];
+        if (perms.includes('download') || perms.includes('print')) {
+            const bar = document.getElementById('downloadBar');
+            bar.classList.remove('hidden');
+            let buttons = '';
+            if (perms.includes('download')) {
+                buttons += `<button class="btn" onclick="downloadText()">Download TXT</button>`;
+            }
+            if (perms.includes('print')) {
+                buttons += `<button class="btn" onclick="window.print()">Print</button>`;
+            }
+            bar.innerHTML = buttons;
+        }
+
+        // Block print via CSS if not permitted
+        if (!perms.includes('print')) {
+            const style = document.createElement('style');
+            style.textContent = '@media print { body { display: none !important; } body::after { content: "Printing not permitted for this transcript."; display: block; padding: 40px; font-size: 24px; text-align: center; } }';
+            document.head.appendChild(style);
+        }
+
+        // Transcript segments
+        const area = document.getElementById('transcriptArea');
+        const segments = data.segments || [];
+        let currentSpeaker = '';
+
+        segments.forEach((seg, idx) => {
+            const div = document.createElement('div');
+            div.className = 'segment';
+
+            const speaker = seg.speaker || '';
+            const time = formatTime(seg.start);
+            const text = seg.text || '';
+
+            let html = '';
+            if (time) {
+                html += `<span class="time">${escapeHtml(time)}</span>`;
+            }
+            if (speaker && speaker !== currentSpeaker) {
+                html += `<div class="speaker">${escapeHtml(speaker)}</div>`;
+                currentSpeaker = speaker;
+            }
+            html += `<div class="text">${escapeHtml(text)}</div>`;
+
+            div.innerHTML = html;
+            area.appendChild(div);
+        });
+
+        if (segments.length === 0) {
+            area.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">No transcript content available.</div>';
+        }
+
+        // Acknowledge bar (witness read-and-sign)
+        const ackBar = document.getElementById('acknowledgeBar');
+        ackBar.classList.remove('hidden');
+
+        if (data.acknowledged) {
+            ackBar.classList.add('acknowledged');
+            ackBar.innerHTML = `
+                <p style="color:#2e7d32;font-weight:600;">This transcript has been reviewed and acknowledged.</p>
+                <p style="font-size:12px;color:var(--muted);margin-top:4px;">Acknowledged on ${escapeHtml(data.acknowledged_at || '')}</p>
+            `;
+        } else {
+            ackBar.innerHTML = `
+                <p style="margin-bottom:10px;font-size:14px;color:var(--muted);">After reviewing this transcript, confirm your acknowledgment below.</p>
+                <button class="btn btn-primary" id="ackBtn" onclick="acknowledgeTranscript()">I Have Reviewed This Transcript</button>
+            `;
+        }
+
+        // Add bottom padding so content isn't hidden behind acknowledge bar
+        document.getElementById('transcriptArea').style.paddingBottom = '100px';
+
+        // Store for download
+        window._transcriptData = data;
+    }
+
+    async function acknowledgeTranscript() {
+        const btn = document.getElementById('ackBtn');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        try {
+            const r = await fetch(`/api/shared/${TOKEN}/acknowledge`, { method: 'POST' });
+            if (r.ok) {
+                const result = await r.json();
+                const ackBar = document.getElementById('acknowledgeBar');
+                ackBar.classList.add('acknowledged');
+                ackBar.innerHTML = `
+                    <p style="color:#2e7d32;font-weight:600;">Thank you. Your acknowledgment has been recorded.</p>
+                    <p style="font-size:12px;color:var(--muted);margin-top:4px;">Acknowledged on ${escapeHtml(result.acknowledged_at || new Date().toISOString())}</p>
+                `;
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'I Have Reviewed This Transcript';
+                alert('Unable to submit acknowledgment. Please try again.');
+            }
+        } catch (err) {
+            btn.disabled = false;
+            btn.textContent = 'I Have Reviewed This Transcript';
+            alert('Connection error. Please try again.');
+        }
+    }
+
+    function downloadText() {
+        const data = window._transcriptData;
+        if (!data) return;
+
+        let lines = [];
+        lines.push(data.court_name || '');
+        lines.push(`Case No. ${data.case_number || ''}`);
+        lines.push(data.case_caption || '');
+        lines.push(`${data.proceeding_type || ''} - ${data.date || ''}`);
+        lines.push('');
+        lines.push('='.repeat(60));
+        lines.push('');
+
+        let currentSpeaker = '';
+        (data.segments || []).forEach(seg => {
+            const speaker = seg.speaker || '';
+            if (speaker && speaker !== currentSpeaker) {
+                lines.push('');
+                lines.push(speaker.toUpperCase() + ':');
+                currentSpeaker = speaker;
+            }
+            const time = formatTime(seg.start);
+            lines.push(`  ${time}  ${seg.text || ''}`);
+        });
+
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${data.case_number || 'transcript'}_shared.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    </script>
+</body>
+</html>
