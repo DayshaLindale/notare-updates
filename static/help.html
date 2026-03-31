@@ -18,7 +18,8 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <!-- In-app header (shown when accessed from within Notare) -->
+    <div class="header" id="appHeader">
         <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
         <nav>
             <a href="/static/index.html">Dashboard</a>
@@ -30,6 +31,28 @@
             <a href="/static/help.html" class="active">Help</a>
         </nav>
     </div>
+
+    <!-- Public header (shown when accessed from the website) -->
+    <div id="publicHeader" style="display:none; position:fixed; top:0; width:100%; z-index:100; background:rgba(255,255,255,0.95); backdrop-filter:blur(12px); border-bottom:1px solid #e0ddd8; padding:14px 0;">
+        <div style="max-width:1100px; margin:0 auto; padding:0 24px; display:flex; justify-content:space-between; align-items:center;">
+            <a href="https://notarelegal.com" style="text-decoration:none; display:flex; align-items:center; gap:6px;"><img src="/static/quill_icon_only.png" style="height:22px;" alt=""><span style="font-family:'Playfair Display',Georgia,serif; font-size:22px; font-weight:700; letter-spacing:2px; color:#0f1b2d;">Notare</span></a>
+            <div style="display:flex; gap:28px; align-items:center;">
+                <a href="https://notarelegal.com" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Home</a>
+                <a href="https://notarelegal.com/static/site.html#features" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Features</a>
+                <a href="https://notarelegal.com/static/site.html#pricing" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Pricing</a>
+                <a href="https://notarelegal.com/static/download.html" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Download</a>
+                <a href="https://notarelegal.com/static/contact.html" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Contact</a>
+            </div>
+        </div>
+    </div>
+    <script>
+    // Detect if we're in the app (localhost) or on the public site
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        document.getElementById('appHeader').style.display = 'none';
+        document.getElementById('publicHeader').style.display = '';
+        document.body.style.paddingTop = '60px';
+    }
+    </script>
 
     <div class="container">
         <h2 class="page-title">Help & Troubleshooting</h2>
@@ -267,6 +290,15 @@
             </details>
         </div>
     </div>
+<div id="publicFooter" style="display:none; background:#0f1b2d; color:rgba(255,255,255,0.7); padding:40px 24px; text-align:center; font-size:13px;">
+    <p>&copy; 2026 Notare. All rights reserved.</p>
+    <p style="margin-top:8px;"><a href="/static/privacy.html" style="color:#c8a55c; text-decoration:none;">Privacy Policy</a> &bull; <a href="https://notarelegal.com" style="color:#c8a55c; text-decoration:none;">Home</a></p>
+</div>
+<script>
+if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    document.getElementById('publicFooter').style.display = '';
+}
+</script>
 <script src="/static/theme.js"></script>
 <script src="/static/support_widget.js"></script>
 </body>
