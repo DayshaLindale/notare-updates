@@ -3,59 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notare | Help & Troubleshooting</title>
+    <title>Notare | Help & FAQ</title>
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; }
-        .faq summary { font-weight: 600; font-size: 14px; cursor: pointer; color: var(--text-dark); }
+        :root {
+            --navy: #0f1b2d;
+            --navy-light: #1a2b45;
+            --white: #fafafa;
+            --cream: #f7f5f2;
+            --gold: #c8a55c;
+            --text-dark: #1a1a2a;
+            --text-body: #3d3d4e;
+            --text-muted: #6b6b7b;
+            --text-dim: #999;
+            --border: #e0ddd8;
+            --green: #2d8a6e;
+            --radius: 6px;
+        }
+        body.public-mode { font-family: 'Inter', -apple-system, sans-serif; background: var(--white); color: var(--text-body); line-height: 1.6; margin: 0; }
+        body.public-mode h1, body.public-mode h2, body.public-mode h3 { font-family: 'Playfair Display', Georgia, serif; color: var(--text-dark); }
+
+        .pub-nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border); padding: 14px 0;
+        }
+        .pub-nav .inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
+        .pub-nav .logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; letter-spacing: 2px; text-decoration: none; color: var(--navy); }
+        .pub-nav .links { display: flex; gap: 28px; align-items: center; }
+        .pub-nav .links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; }
+        .pub-nav .links a:hover { color: var(--navy); }
+        .pub-nav .links a.active { color: var(--navy); font-weight: 600; }
+
+        .pub-hero { padding: 120px 24px 40px; background: var(--cream); text-align: center; }
+        .pub-hero h1 { font-size: 36px; margin-bottom: 12px; color: var(--navy); }
+        .pub-hero p { font-size: 15px; color: var(--text-body); max-width: 600px; margin: 0 auto; }
+
+        .pub-content { max-width: 800px; margin: 0 auto; padding: 40px 24px 60px; }
+
+        .section-label { font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; margin-top: 32px; }
+        .faq details { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; }
+        .faq summary { font-weight: 600; font-size: 14px; cursor: pointer; color: var(--text-dark); font-family: 'Inter', sans-serif; }
         .faq summary:hover { color: var(--gold); }
         .faq .answer { margin-top: 10px; font-size: 13px; color: var(--text-muted); line-height: 1.7; }
-        .faq .answer ul { margin: 8px 0 8px 20px; }
+        .faq .answer ul, .faq .answer ol { margin: 8px 0 8px 20px; }
         .faq .answer li { margin-bottom: 4px; }
         .faq .answer code { background: var(--cream); padding: 2px 6px; border-radius: 3px; font-size: 12px; }
-        .section-label { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; margin-top: 28px; }
+
+        .pub-footer { background: var(--navy); color: rgba(255,255,255,0.7); padding: 40px 24px; text-align: center; font-size: 13px; }
+        .pub-footer a { color: var(--gold); text-decoration: none; }
+
+        @media (max-width: 600px) {
+            .pub-hero h1 { font-size: 28px; }
+            .pub-nav .links { display: none; }
+        }
     </style>
 </head>
 <body>
-    <!-- In-app header (shown when accessed from within Notare) -->
-    <div class="header" id="appHeader">
-        <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
-        <nav>
-            <a href="/static/index.html">Dashboard</a>
-            <a href="/static/new_job.html">New Job</a>
-            <a href="/static/cases.html">Cases</a>
-            <a href="/static/voices.html">Voices</a>
-            <a href="/static/profiles.html">Profiles</a>
-            <a href="/static/settings.html">Settings</a>
-            <a href="/static/help.html" class="active">Help</a>
-        </nav>
-    </div>
 
-    <!-- Public header (shown when accessed from the website) -->
-    <div id="publicHeader" style="display:none; position:fixed; top:0; width:100%; z-index:100; background:rgba(255,255,255,0.95); backdrop-filter:blur(12px); border-bottom:1px solid #e0ddd8; padding:14px 0;">
-        <div style="max-width:1100px; margin:0 auto; padding:0 24px; display:flex; justify-content:space-between; align-items:center;">
-            <a href="https://notarelegal.com" style="text-decoration:none; display:flex; align-items:center; gap:6px;"><img src="/static/quill_icon_only.png" style="height:22px;" alt=""><span style="font-family:'Playfair Display',Georgia,serif; font-size:22px; font-weight:700; letter-spacing:2px; color:#0f1b2d;">Notare</span></a>
-            <div style="display:flex; gap:28px; align-items:center;">
-                <a href="https://notarelegal.com" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Home</a>
-                <a href="https://notarelegal.com/static/site.html#features" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Features</a>
-                <a href="https://notarelegal.com/static/site.html#pricing" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Pricing</a>
-                <a href="https://notarelegal.com/static/download.html" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Download</a>
-                <a href="https://notarelegal.com/static/contact.html" style="color:#6b6b7b; text-decoration:none; font-size:14px; font-weight:500;">Contact</a>
-            </div>
+<!-- In-app header (shown when accessed from within Notare) -->
+<div class="header" id="appHeader">
+    <a href="https://notarelegal.com" target="_blank" style="text-decoration:none;"><h1 style="margin:0;display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:24px;" alt=""><span style="font-family:Palatino,Georgia,serif;letter-spacing:1px;font-style:italic;color:var(--gold,#c8a55c);">Notare</span></h1></a>
+    <nav>
+        <a href="/static/index.html">Dashboard</a>
+        <a href="/static/new_job.html">New Job</a>
+        <a href="/static/cases.html">Cases</a>
+        <a href="/static/voices.html">Voices</a>
+        <a href="/static/profiles.html">Profiles</a>
+        <a href="/static/settings.html">Settings</a>
+        <a href="/static/help.html" class="active">Help</a>
+    </nav>
+</div>
+
+<!-- Public header (hidden by default, shown on public site) -->
+<nav class="pub-nav" id="publicHeader" style="display:none;">
+    <div class="inner">
+        <a href="https://notarelegal.com" class="logo" style="display:flex;align-items:center;gap:6px;"><img src="/static/quill_icon_only.png" style="height:22px;" alt="">Notare</a>
+        <div class="links">
+            <a href="https://notarelegal.com">Home</a>
+            <a href="/static/site.html#features">Features</a>
+            <a href="/static/site.html#pricing">Pricing</a>
+            <a href="/static/download.html">Download</a>
+            <a href="/static/help.html" class="active">Help</a>
+            <a href="/static/contact.html">Contact</a>
         </div>
     </div>
-    <script>
-    // Detect if we're in the app (localhost) or on the public site
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        document.getElementById('appHeader').style.display = 'none';
-        document.getElementById('publicHeader').style.display = '';
-        document.body.style.paddingTop = '60px';
-    }
-    </script>
+</nav>
 
-    <div class="container">
-        <h2 class="page-title">Help & Troubleshooting</h2>
+<!-- Public hero (hidden by default) -->
+<div class="pub-hero" id="publicHero" style="display:none;">
+    <div class="label" style="font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Support</div>
+    <h1>Help & FAQ</h1>
+    <p>Answers to common questions about setup, transcription, exports, and collaboration.</p>
+</div>
+
+<script>
+// Detect if we're in the app (localhost) or on the public site
+if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    document.getElementById('appHeader').style.display = 'none';
+    document.getElementById('publicHeader').style.display = '';
+    document.getElementById('publicHero').style.display = '';
+    document.body.classList.add('public-mode');
+}
+</script>
+
+<div class="pub-content" id="faqContent">
+    <div class="container" id="appContainer">
+        <h2 class="page-title" id="appTitle">Help & Troubleshooting</h2>
 
         <div class="faq">
             <div class="section-label">Getting Started</div>
@@ -80,6 +136,10 @@
 
             <details><summary>What audio formats are supported?</summary>
                 <div class="answer">WAV, MP3, M4A, AAC, FLAC, OGG, WMA, and FTR .TRM files. WAV provides the best quality. FTR .TRM files from For The Record court systems are converted automatically. You can upload multiple files per job and Notare concatenates them in order.</div>
+            </details>
+
+            <details><summary>How do I import Zoom or Teams meeting recordings?</summary>
+                <div class="answer">Enable "Record a separate audio file for each participant" in your Zoom settings. After the meeting, use the <strong>Meeting Recording</strong> upload zone when creating a new job. Drop in the per-speaker audio files and Notare automatically detects speaker names from the filenames. Each file is transcribed with its speaker label for perfect diarization.</div>
             </details>
 
             <details><summary>My .trm files aren't being recognized</summary>
@@ -114,11 +174,15 @@
                 <div class="answer">To fix speaker labels:
                     <ul>
                         <li>Click any speaker label in the editor to reassign it</li>
+                        <li>Click <strong>Reanalyze Speakers</strong> in the review bar to re-run enhanced speaker detection</li>
                         <li>Use speaker hotkeys: Alt+U (THE COURT), Alt+W (THE WITNESS), Alt+K (THE CLERK), Alt+D (THE DEFENDANT)</li>
-                        <li>Speaker hotkeys apply from the current segment forward until the next speaker change</li>
                         <li>Use Find/Replace to rename a speaker throughout the entire transcript</li>
                     </ul>
                 </div>
+            </details>
+
+            <details><summary>What is "Reanalyze Speakers"?</summary>
+                <div class="answer">This feature re-runs speaker detection using an enhanced neural analysis engine. On first use, it downloads a one-time ~2 GB package. Processing takes 3-7 minutes per hour of audio on CPU. The result is significantly more accurate speaker separation, especially for recordings with multiple speakers or overlapping speech.</div>
             </details>
 
             <details><summary>Processing seems stuck or is taking very long</summary>
@@ -155,6 +219,10 @@
                 <div class="answer">In the editor sidebar under Exhibits, click "+ Add". Enter an Exhibit ID, description, and optionally upload the exhibit file (PDFs, photos, video, audio, documents — all accepted). Uploaded exhibits are embedded in the Standard Deposition PDF with bidirectional hyperlinks: click a reference in the transcript to jump to the exhibit, click the exhibit to jump back.</div>
             </details>
 
+            <details><summary>How do I compare a proofed transcript against the original?</summary>
+                <div class="answer">Click <strong>Compare / Redline</strong> in the review bar and upload the edited document. Notare generates a line-by-line comparison showing additions, deletions, and modifications. Each change includes a notes field for proofreader comments. You can also use the standalone <strong>Compare</strong> page from the main navigation to compare any two documents.</div>
+            </details>
+
             <div class="section-label">Export & Document Production</div>
 
             <details><summary>What export formats are available?</summary>
@@ -188,10 +256,6 @@
                 <div class="answer">In your profile under <strong>Signature & Certification</strong>: upload a scanned signature image (PNG, JPG) or enter your name for a stylized signature. It appears on the Certificate of Reporter page. For cryptographic PDF signing, upload your .p12/.pfx digital certificate — this adds court-compliant modification detection.</div>
             </details>
 
-            <details><summary>How do I sign any document?</summary>
-                <div class="answer">Click <strong>Sign Document</strong> in the editor toolbar. Select any PDF from your computer. Notare applies your signature (from your profile settings) and downloads the signed copy. Works on court filings, affidavits, certificates — any PDF.</div>
-            </details>
-
             <details><summary>How does the errata comparison work?</summary>
                 <div class="answer">In the Export dropdown under Delivery, click <strong>Errata Sheet (auto-populated)</strong>. Notare compares your original transcription against your edited version and fills in the errata sheet with every change — page, line, original text, corrected text, and reason code. Much faster than filling blanks by hand.</div>
             </details>
@@ -206,10 +270,6 @@
                 </div>
             </details>
 
-            <details><summary>Macros are missing or not working</summary>
-                <div class="answer">Your source template must be a .dotm file (macro-enabled template). Notare exports as .docm to preserve macros. If macros still don't run, check your Office Trust Center settings under File > Options > Trust Center.</div>
-            </details>
-
             <div class="section-label">Sharing & Collaboration</div>
 
             <details><summary>How do I share a live transcript view?</summary>
@@ -222,84 +282,84 @@
 
             <details><summary>How do I collaborate with a remote proofreader?</summary>
                 <div class="answer">
-                    Notare's sharing and collaboration features work on your local network by design — no transcript data ever touches an external server. For remote collaboration (e.g., a proofreader working from home), you can use a third-party VPN tool to connect both machines as if they were on the same network. <strong>Notare does not include or bundle any remote access tools</strong> — this is your choice and your responsibility.
+                    Notare's sharing works on your local network — no data touches external servers. For remote collaboration, use a VPN tool to connect both machines.
                     <br><br>
-                    <strong>Option: Tailscale (recommended for simplicity)</strong>
-                    <ol style="margin:8px 0 8px 20px;">
-                        <li>Both you and your proofreader create a free account at <strong>tailscale.com</strong></li>
-                        <li>Both download and install Tailscale (small, lightweight app)</li>
-                        <li>You invite your proofreader to your Tailscale network (or they share their device with you)</li>
-                        <li>Once connected, Tailscale assigns each machine a private IP (e.g., 100.x.x.x)</li>
-                        <li>Your proofreader opens <code>http://YOUR_TAILSCALE_IP:8080/static/editor.html?id=JOB_ID</code></li>
-                        <li>They click <strong>Collaborate</strong>, enter their name, and you're both editing live with segment locking</li>
+                    <strong>Option: Tailscale (recommended)</strong>
+                    <ol>
+                        <li>Both install Tailscale (free, lightweight)</li>
+                        <li>Connect to the same Tailscale network</li>
+                        <li>Proofreader opens <code>http://YOUR_TAILSCALE_IP:8080/static/editor.html?id=JOB_ID</code></li>
+                        <li>Both edit live with segment locking</li>
                     </ol>
-                    <strong>Alternative: ngrok</strong>
-                    <ol style="margin:8px 0 8px 20px;">
-                        <li>Install ngrok from <strong>ngrok.com</strong> (free tier available)</li>
-                        <li>Run <code>ngrok http 8080</code> from your command line</li>
-                        <li>ngrok gives you a public URL (e.g., https://abc123.ngrok.io)</li>
-                        <li>Send that URL to your proofreader — they open it in any browser</li>
-                        <li>Close ngrok when you're done to cut off access immediately</li>
-                    </ol>
-                    <p style="margin-top:8px; font-size:11px; color:var(--text-dim);">
-                        <strong>Important:</strong> When using any remote access method, your transcript data travels over that tool's network. Tailscale uses encrypted peer-to-peer connections (data doesn't pass through their servers). ngrok routes through their servers (encrypted in transit). Evaluate the privacy implications for your use case. Notare has no control over third-party tools and makes no guarantees about their security.
-                    </p>
+                    <p style="margin-top:8px; font-size:11px; color:var(--text-dim);">Tailscale uses encrypted peer-to-peer connections. Notare has no control over third-party tools.</p>
                 </div>
             </details>
 
             <details><summary>How do I consolidate multiple volumes?</summary>
-                <div class="answer">Go to the Cases page, open a case with 2 or more linked jobs. Two buttons appear: <strong>Consolidate Volumes</strong> merges all volumes into one continuous PDF with a master index. <strong>Generate Master Index</strong> creates a standalone CRC 8.144-compliant cross-volume index. Both are Professional tier and above.</div>
+                <div class="answer">Go to Cases, open a case with 2+ linked jobs. <strong>Consolidate Volumes</strong> merges all into one continuous PDF with a master index. <strong>Generate Master Index</strong> creates a standalone CRC 8.144-compliant cross-volume index. Professional tier and above.</div>
             </details>
 
             <div class="section-label">Live Capture</div>
 
             <details><summary>How does live recording work?</summary>
-                <div class="answer">Create a Mode C job, select your microphone, and click Record. Notare captures audio through the server and transcribes in real-time. Use hotkeys during the session to flag segments, assign speakers, and switch formatting styles. The full recording is saved for later reprocessing if needed.</div>
-            </details>
-
-            <details><summary>Microphone isn't detected</summary>
-                <div class="answer">Make sure your microphone is connected before opening the job. Check Windows Sound settings to confirm the mic is recognized. Try unplugging and reconnecting USB microphones. The dropdown shows all audio input devices Windows recognizes.</div>
+                <div class="answer">Create a Mode C job, select your microphone, and click Record. Notare captures audio and transcribes in real-time. Use hotkeys during the session to flag segments, assign speakers, and switch formatting styles. The full recording is saved for later reprocessing.</div>
             </details>
 
             <div class="section-label">Account & License</div>
 
-            <details><summary>My license key is rejected</summary>
-                <div class="answer">Check that you're entering the key exactly as provided, including dashes (e.g., NOTARE-XXXX-XXXX-XXXX). Keys are case-sensitive. If you've copy-pasted, make sure there are no extra spaces. Contact support if the issue persists.</div>
-            </details>
-
-            <details><summary>My license expired</summary>
-                <div class="answer">Contact support to renew. Your data is never deleted — all transcripts, profiles, and jobs are preserved locally. Processing features pause until the license is renewed.</div>
-            </details>
-
             <details><summary>What are the different plans?</summary>
                 <div class="answer">
                     <ul>
-                        <li><strong>Solo ($59/mo)</strong> — All capture modes, 15 export formats with preview, branded covers, signatures, digital signing, exhibit hyperlinks, sign any document, jurisdiction profiles, speaker detection, document extraction, proofing.</li>
-                        <li><strong>Professional ($89/mo)</strong> — Everything in Solo plus case management, voice profiles, local network live sharing (view & edit), multi-volume consolidation & master index.</li>
+                        <li><strong>Solo ($59/mo)</strong> — All capture modes, 15 exports, branded covers, signatures, digital signing, exhibits, profiles, speaker detection, proofing.</li>
+                        <li><strong>Professional ($89/mo)</strong> — Everything in Solo plus case management, voice profiles, live sharing, multi-volume consolidation.</li>
                         <li><strong>Agency ($119/mo)</strong> — Everything in Professional plus 5 seats, shared profiles & speaker database.</li>
-                        <li><strong>Enterprise</strong> — Everything, unlimited seats, offline licensing, admin panel.</li>
+                        <li><strong>Enterprise</strong> — Unlimited seats, offline licensing, admin panel.</li>
                         <li><strong>Trial</strong> — Full Professional access free for 7 days.</li>
                     </ul>
+                </div>
+            </details>
+
+            <details><summary>My license key is rejected</summary>
+                <div class="answer">Check that you're entering the key exactly as provided, including dashes (e.g., NOTARE-XXXX-XXXX-XXXX). Keys are case-sensitive. Contact support if the issue persists.</div>
+            </details>
+
+            <div class="section-label">System Requirements</div>
+
+            <details><summary>What hardware do I need?</summary>
+                <div class="answer">
+                    <ul>
+                        <li><strong>Basic (Cloud Mode):</strong> Windows 10/11, any modern CPU, 8 GB RAM, 1 GB free disk, internet required</li>
+                        <li><strong>Standard (Local Transcription):</strong> Intel i5 / AMD Ryzen 5+, 8-16 GB RAM, 3 GB free disk</li>
+                        <li><strong>Professional (GPU Accelerated):</strong> Intel i7 / AMD Ryzen 7+, 16 GB RAM, 8 GB free disk, NVIDIA GPU with 6+ GB VRAM</li>
+                    </ul>
+                    Enhanced speaker detection downloads a one-time ~2 GB package. All local processing stays on your machine.
                 </div>
             </details>
 
             <div class="section-label">Still Need Help?</div>
 
             <details open><summary>How do I contact support?</summary>
-                <div class="answer">Click the <strong>?</strong> button in the bottom-right corner of any screen for instant answers. If the chatbot can't help, click "Contact Support Team" to send a message directly to our team. You can also reach us through the contact form at notarelegal.com.</div>
+                <div class="answer">Click the <strong>?</strong> button in the bottom-right corner of any screen for instant answers. If the chatbot can't help, click "Contact Support Team" to send a message directly. You can also reach us at <a href="/static/contact.html" style="color:var(--gold);">notarelegal.com/contact</a>.</div>
             </details>
         </div>
     </div>
-<div id="publicFooter" style="display:none; background:#0f1b2d; color:rgba(255,255,255,0.7); padding:40px 24px; text-align:center; font-size:13px;">
-    <p>&copy; 2026 Notare. All rights reserved.</p>
-    <p style="margin-top:8px;"><a href="/static/privacy.html" style="color:#c8a55c; text-decoration:none;">Privacy Policy</a> &bull; <a href="https://notarelegal.com" style="color:#c8a55c; text-decoration:none;">Home</a></p>
 </div>
+
+<div class="pub-footer" id="publicFooter" style="display:none;">
+    <p>&copy; 2026 Notare. All rights reserved.</p>
+    <p style="margin-top:8px;"><a href="/static/privacy.html">Privacy Policy</a> &bull; <a href="https://notarelegal.com">Home</a></p>
+</div>
+
 <script>
 if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    document.getElementById('appHeader').style.display = 'none';
+    document.getElementById('publicHeader').style.display = '';
+    document.getElementById('publicHero').style.display = '';
     document.getElementById('publicFooter').style.display = '';
+    document.getElementById('appTitle').style.display = 'none';
+    document.body.classList.add('public-mode');
 }
 </script>
-<script src="/static/theme.js"></script>
-<script src="/static/support_widget.js"></script>
+
 </body>
 </html>

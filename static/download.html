@@ -118,6 +118,7 @@
             <a href="https://notarelegal.com">Home</a>
             <a href="/static/site.html#features">Features</a>
             <a href="/static/site.html#pricing">Pricing</a>
+            <a href="/static/help.html">Help</a>
             <a href="/static/contact.html">Contact</a>
         </div>
     </div>
@@ -127,11 +128,75 @@
     <div class="inner">
         <div class="label">Download</div>
         <h1>Get Notare</h1>
-        <p>Download the installer for Windows. After installation, request a free 7-day trial key to unlock full Professional features. No payment required.</p>
+        <p>Check the system requirements below, then download the installer. Request a free 7-day trial key to unlock full Professional features.</p>
+    </div>
+</div>
 
+<section class="requirements">
+    <div class="inner" style="max-width: 900px;">
+        <h2>System Requirements</h2>
+        <p style="text-align: center; font-size: 14px; color: var(--text-muted); margin-bottom: 28px;">Notare adapts to your hardware. Cloud mode runs on any machine. Local transcription improves with better specs.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 24px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">Basic</div>
+                <h3 style="font-size: 18px; margin-bottom: 4px; font-family: 'Playfair Display', serif;">Cloud Mode</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Light use, any modern machine</p>
+                <div style="text-align: left; font-size: 13px; line-height: 2;">
+                    <div><strong>OS:</strong> Windows 10/11 (64-bit)</div>
+                    <div><strong>CPU:</strong> Any modern processor</div>
+                    <div><strong>RAM:</strong> 8 GB</div>
+                    <div><strong>Storage:</strong> 1 GB free</div>
+                    <div><strong>GPU:</strong> Not needed</div>
+                    <div><strong>Internet:</strong> Required</div>
+                </div>
+            </div>
+            <div style="background: white; border: 2px solid var(--gold); border-radius: 8px; padding: 24px; text-align: center; position: relative;">
+                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold); color: white; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 12px; border-radius: 10px;">RECOMMENDED</div>
+                <div style="font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px;">Standard</div>
+                <h3 style="font-size: 18px; margin-bottom: 4px; font-family: 'Playfair Display', serif;">Local Transcription</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Daily transcription work</p>
+                <div style="text-align: left; font-size: 13px; line-height: 2;">
+                    <div><strong>OS:</strong> Windows 10/11 (64-bit)</div>
+                    <div><strong>CPU:</strong> Intel i5 / AMD Ryzen 5+</div>
+                    <div><strong>RAM:</strong> 8 GB (16 GB preferred)</div>
+                    <div><strong>Storage:</strong> 3 GB free</div>
+                    <div><strong>GPU:</strong> Not required</div>
+                    <div><strong>Internet:</strong> For setup only</div>
+                </div>
+            </div>
+            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 24px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">Professional</div>
+                <h3 style="font-size: 18px; margin-bottom: 4px; font-family: 'Playfair Display', serif;">GPU Accelerated</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">High volume, fastest processing</p>
+                <div style="text-align: left; font-size: 13px; line-height: 2;">
+                    <div><strong>OS:</strong> Windows 10/11 (64-bit)</div>
+                    <div><strong>CPU:</strong> Intel i7 / AMD Ryzen 7+</div>
+                    <div><strong>RAM:</strong> 16 GB</div>
+                    <div><strong>Storage:</strong> 8 GB free</div>
+                    <div><strong>GPU:</strong> NVIDIA, 6+ GB VRAM</div>
+                    <div><strong>Internet:</strong> For setup only</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; font-size: 13px; color: var(--text-body); line-height: 1.8;">
+            <strong style="color: var(--text-dark);">Good to know:</strong>
+            <ul style="margin: 8px 0 0 16px; padding: 0;">
+                <li>WebView2 Runtime is installed automatically if not already present</li>
+                <li>Enhanced speaker detection (Professional) downloads a one-time ~2 GB package on first use</li>
+                <li>All transcription in Standard and Professional modes is processed locally &mdash; no audio data leaves your computer</li>
+                <li>Notare automatically detects your hardware and selects the best settings</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section style="padding: 40px 24px 20px; text-align: center;">
+    <div class="inner" style="max-width: 700px;">
         <div class="download-card">
             <h3>Notare for Windows</h3>
-            <p class="version">Version 0.5.0 &mdash; Windows 10/11, 64-bit</p>
+            <p class="version">Version 0.6.0 &mdash; Windows 10/11, 64-bit</p>
             <a href="/api/download-installer" class="btn-download">Download Installer</a>
             <p class="meta">~1.2 GB installer &bull; No admin privileges required &bull; Installs locally</p>
         </div>
@@ -139,14 +204,14 @@
         <div style="max-width:600px; margin:0 auto; background:white; border:1px solid var(--border); border-radius:8px; padding:20px 24px; text-align:left;">
             <h3 style="font-size:15px; font-family:'Inter',sans-serif; margin-bottom:8px;">Updating from a previous version?</h3>
             <p style="font-size:13px; color:var(--text-body); line-height:1.7; margin-bottom:12px;">
-                If you're seeing the update notice in your app, download and run the installer. It installs alongside your existing copy &mdash; <strong>all your jobs, profiles, templates, and settings are preserved</strong>. The installer only replaces the application files.
+                Download and run the installer &mdash; <strong>all your jobs, profiles, templates, and settings are preserved</strong>.
             </p>
             <p style="font-size:13px; color:var(--text-body); line-height:1.7; margin-bottom:0;">
-                <strong>What's new in v0.5.0:</strong> Plugin system for faster updates, export previews, document attachments, local network sharing, branded cover pages, digital signatures, exhibit hyperlinks, 15 export formats, expanded support chatbot (148 entries), and more.
+                <strong>What's new in v0.6.0:</strong> Enhanced neural speaker detection (Professional), document comparison &amp; redline, Zoom/Teams/WebEx meeting recording import, reanalyze speakers button, progress indicators, system requirements display, and performance improvements.
             </p>
         </div>
     </div>
-</div>
+</section>
 
 <section class="steps">
     <div class="inner">
@@ -174,20 +239,6 @@
                 <h3>Activate and start working</h3>
                 <p>Launch Notare, enter your trial key when prompted, and you're ready. Set up a jurisdiction profile, upload your Word template, and create your first job.</p>
             </div>
-        </div>
-    </div>
-</section>
-
-<section class="requirements">
-    <div class="inner">
-        <h2>System requirements</h2>
-        <div class="req-grid">
-            <div class="req-item"><strong>OS:</strong> Windows 10 or 11, 64-bit</div>
-            <div class="req-item"><strong>RAM:</strong> 8 GB minimum, 16 GB recommended</div>
-            <div class="req-item"><strong>Disk:</strong> ~3 GB for installation</div>
-            <div class="req-item"><strong>GPU:</strong> NVIDIA GPU recommended for local transcription (optional)</div>
-            <div class="req-item"><strong>Network:</strong> Required only for cloud engines and license activation</div>
-            <div class="req-item"><strong>Browser:</strong> WebView2 Runtime (installed automatically)</div>
         </div>
     </div>
 </section>
