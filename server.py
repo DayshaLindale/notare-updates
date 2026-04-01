@@ -62,6 +62,12 @@ def save_manifest(m):
 # Client endpoints — called by Notare desktop app on startup
 # ---------------------------------------------------------------------------
 
+@app.get("/api/manifest")
+async def get_manifest():
+    """Return the full manifest — used by in-app banner to check version."""
+    return JSONResponse(load_manifest())
+
+
 @app.get("/api/update")
 async def check_update(current: str = "0.0.0"):
     """Client calls this to check if a newer version exists."""

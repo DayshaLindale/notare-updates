@@ -1,7 +1,12 @@
 {
-  "current_version": "0.3.0",
-  "released": "2026-03-29",
+  "current_version": "0.6.0",
+  "released": "2026-04-01",
   "updates": [
+    {
+      "version": "0.6.0",
+      "released": "2026-04-01",
+      "notes": "Neural speaker detection (Reanalyze Speakers), document comparison and redline, Zoom/Teams/WebEx meeting import, plugin system, 15 export formats, bundled Whisper models, smart update banners, performance improvements"
+    },
     {
       "version": "0.3.0",
       "released": "2026-03-29",
