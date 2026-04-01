@@ -1,7 +1,12 @@
 {
-  "current_version": "0.6.0",
+  "current_version": "0.6.1",
   "released": "2026-04-01",
   "updates": [
+    {
+      "version": "0.6.1",
+      "released": "2026-04-01",
+      "notes": "Fix: Speaker reanalysis JSON parse error on Windows. Frontend error handling improvements."
+    },
     {
       "version": "0.6.0",
       "released": "2026-04-01",
