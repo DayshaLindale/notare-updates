@@ -1,7 +1,12 @@
 {
-  "current_version": "0.6.1",
+  "current_version": "0.6.2",
   "released": "2026-04-01",
   "updates": [
+    {
+      "version": "0.6.2",
+      "released": "2026-04-01",
+      "notes": "Fix: Speaker reanalysis shows error banner even when speakers were successfully generated. Success banner auto-dismisses after 5 seconds."
+    },
     {
       "version": "0.6.1",
       "released": "2026-04-01",
