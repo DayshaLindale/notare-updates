@@ -574,17 +574,18 @@
             }
 
             // Auto-fill case info
-            if (data.case_info.case_number) {
+            const ci = data.case_info || {};
+            if (ci.case_number) {
                 const cn = document.querySelector('[name="case_number"]');
-                if (cn && !cn.value) { cn.value = data.case_info.case_number; filled.push('case number'); }
+                if (cn && !cn.value) { cn.value = ci.case_number; filled.push('case number'); }
             }
-            if (data.case_info.defendant) {
+            if (ci.defendant) {
                 const cc = document.querySelector('[name="case_caption"]');
-                if (cc && !cc.value) { cc.value = data.case_info.defendant; filled.push('caption'); }
+                if (cc && !cc.value) { cc.value = ci.defendant; filled.push('caption'); }
             }
-            if (data.case_info.hearing_type) {
+            if (ci.hearing_type) {
                 const pt = document.querySelector('[name="proceeding_type"]');
-                if (pt) { pt.value = data.case_info.hearing_type; filled.push('proceeding type'); }
+                if (pt) { pt.value = ci.hearing_type; filled.push('proceeding type'); }
             }
             if (data.metadata.date) {
                 const dt = document.querySelector('[name="date"]');

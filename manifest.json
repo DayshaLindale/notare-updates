@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.3",
+  "current_version": "0.7.4",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.7.4",
+      "released": "2026-04-02",
+      "notes": "Fix: FTR log parser crash when log has no case number entry. Null-safe case_info handling."
+    },
     {
       "version": "0.7.3",
       "released": "2026-04-02",
