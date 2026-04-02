@@ -1,7 +1,12 @@
 {
-  "current_version": "0.6.7",
+  "current_version": "0.6.8",
   "released": "2026-04-01",
   "updates": [
+    {
+      "version": "0.6.8",
+      "released": "2026-04-01",
+      "notes": "Fix: Speaker labels no longer mangle roles (Juror Number 7, Interpreter, etc.). Reanalyze speakers shows live progress with time estimates for long recordings. Tier-based feature gating."
+    },
     {
       "version": "0.6.2",
       "released": "2026-04-01",
