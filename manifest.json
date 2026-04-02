@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.0",
-  "released": "2026-04-01",
+  "current_version": "0.7.1",
+  "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.7.1",
+      "released": "2026-04-02",
+      "notes": "Critical: OTA updater now patches app.py (was silently skipping it). All previous fixes now reach customer installs. Migration auto-triggers on first boot."
+    },
     {
       "version": "0.7.0",
       "released": "2026-04-01",
