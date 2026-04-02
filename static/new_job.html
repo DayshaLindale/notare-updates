@@ -219,6 +219,18 @@
                     <div id="caseDocStatus" style="font-size: 12px; color: var(--text-muted); margin-top: 6px; text-align: center;"></div>
                 </div>
             </div>
+            <!-- FTR Log File -->
+            <div style="margin-top: 12px;">
+                <div class="upload-zone" id="ftrLogZone" onclick="document.getElementById('ftrLogInput').click()" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+                    <div class="icon" style="font-size: 24px;">&#128221;</div>
+                    <div>
+                        <p style="margin:0;"><strong>FTR Log File</strong> <span style="font-size:11px; color:var(--text-dim);">(optional)</span></p>
+                        <p style="font-size: 11px; color: var(--text-dim); margin:2px 0 0;">FTR .htm sidecar — auto-fills judge, case info, and suggests channel labels</p>
+                    </div>
+                </div>
+                <input type="file" id="ftrLogInput" accept=".htm,.html" style="display: none;" onchange="parseFTRLog(this.files[0])">
+                <div id="ftrLogStatus" style="font-size: 12px; color: var(--text-muted); margin-top: 6px;"></div>
+            </div>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
@@ -526,6 +538,92 @@
         html += '<p style="font-size:10px; color:var(--text-dim); margin-top:6px;">Channels without labels will be named "Channel 1", "Channel 2", etc.</p>';
         rows.innerHTML = html;
         panel.style.display = 'block';
+    }
+
+    // FTR Log parsing
+    const ftrLogZone = document.getElementById('ftrLogZone');
+    ftrLogZone.addEventListener('dragover', e => { e.preventDefault(); ftrLogZone.classList.add('dragover'); });
+    ftrLogZone.addEventListener('dragleave', () => ftrLogZone.classList.remove('dragover'));
+    ftrLogZone.addEventListener('drop', e => { e.preventDefault(); ftrLogZone.classList.remove('dragover'); if (e.dataTransfer.files.length) parseFTRLog(e.dataTransfer.files[0]); });
+
+    async function parseFTRLog(file) {
+        if (!file) return;
+        const status = document.getElementById('ftrLogStatus');
+        status.innerHTML = '<span style="color:var(--amber);">Parsing FTR log...</span>';
+
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const resp = await fetch('/api/parse-ftr-log', { method: 'POST', body: form });
+            const data = await resp.json();
+
+            if (data.error) {
+                status.innerHTML = `<span style="color:var(--red);">${data.error}</span>`;
+                return;
+            }
+
+            let filled = [];
+
+            // Auto-fill judge
+            if (data.judge) {
+                const courtField = document.querySelector('[name="court_name"]');
+                if (courtField && !courtField.value) {
+                    courtField.value = data.metadata.location || '';
+                    filled.push('location');
+                }
+            }
+
+            // Auto-fill case info
+            if (data.case_info.case_number) {
+                const cn = document.querySelector('[name="case_number"]');
+                if (cn && !cn.value) { cn.value = data.case_info.case_number; filled.push('case number'); }
+            }
+            if (data.case_info.defendant) {
+                const cc = document.querySelector('[name="case_caption"]');
+                if (cc && !cc.value) { cc.value = data.case_info.defendant; filled.push('caption'); }
+            }
+            if (data.case_info.hearing_type) {
+                const pt = document.querySelector('[name="proceeding_type"]');
+                if (pt) { pt.value = data.case_info.hearing_type; filled.push('proceeding type'); }
+            }
+            if (data.metadata.date) {
+                const dt = document.querySelector('[name="date"]');
+                if (dt && !dt.value) { dt.value = data.metadata.date; filled.push('date'); }
+            }
+
+            // Auto-fill speakers — add judge and any identified speakers
+            if (data.judge) {
+                // Add THE COURT as first speaker
+                const existing = document.querySelectorAll('.spk-name');
+                const hasJudge = Array.from(existing).some(inp => inp.value.includes('COURT'));
+                if (!hasJudge) {
+                    addSpeaker();
+                    const rows = document.querySelectorAll('#speakerRows tr.spk-row');
+                    const lastRow = rows[rows.length - 1];
+                    if (lastRow) lastRow.querySelector('.spk-name').value = 'THE COURT (' + data.judge + ')';
+                    filled.push('judge');
+                }
+            }
+
+            // If channel mapping is visible, suggest judge on channel 0
+            if (detectedChannels > 1 && data.judge) {
+                const ch0 = document.querySelector('.channel-label[data-ch="0"]');
+                if (ch0 && !ch0.value) {
+                    ch0.value = 'THE COURT';
+                    filled.push('channel 1 label');
+                }
+            }
+
+            let summary = `<span style="color:var(--green);">&#10003; ${file.name} — ${data.entry_count} entries`;
+            if (filled.length) summary += `, auto-filled: ${filled.join(', ')}`;
+            summary += '</span>';
+            if (data.judge) summary += `<br><span style="font-size:11px;">Judge: ${data.judge}</span>`;
+            if (data.metadata.location) summary += ` | <span style="font-size:11px;">Location: ${data.metadata.location}</span>`;
+            status.innerHTML = summary;
+
+        } catch (e) {
+            status.innerHTML = `<span style="color:var(--red);">Parse failed: ${e.message}</span>`;
+        }
     }
 
     // Load profiles and wire up selection

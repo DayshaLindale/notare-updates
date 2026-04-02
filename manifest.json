@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.2",
+  "current_version": "0.7.3",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.7.3",
+      "released": "2026-04-02",
+      "notes": "FTR .htm log parser: auto-fills judge, case number, defendant, hearing type, date, location. Channel label suggestions from log data. Per-channel transcription respects user engine choice (AssemblyAI/Whisper). Whisper path multi-channel detection. Aurora Shield and Macaria Legacy plugins fixed."
+    },
     {
       "version": "0.7.2",
       "released": "2026-04-02",
