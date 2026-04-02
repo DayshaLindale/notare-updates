@@ -14,6 +14,7 @@
             <a href="/static/index.html">Dashboard</a>
             <a href="/static/new_job.html">New Job</a>
             <a href="/static/cases.html">Cases</a>
+            <a href="/static/compare.html">Compare</a>
             <a href="/static/voices.html">Voices</a>
             <a href="/static/profiles.html">Profiles</a>
             <a href="/static/settings.html">Settings</a>
@@ -26,7 +27,7 @@
                    title="Document title — used as the filename for all exports">
             <button class="btn btn-sm btn-secondary" onclick="showGlobalReplace()">Find/Replace</button>
             <button class="btn btn-sm" onclick="runProofing()" style="background: #2d8a6e; color: white;">Run Proofing</button>
-            <button class="btn btn-sm" onclick="importTranscript()" style="background: var(--accent-soft); color: var(--text);">Import Transcript</button>
+            <button class="btn btn-sm" onclick="attachDocument()" style="background: var(--accent-soft); color: var(--text);">Attach Document</button>
             <button class="btn btn-sm" onclick="signDocument()" style="background: var(--accent-soft); color: var(--text);">Sign Document</button>
             <button class="btn btn-sm" id="collabBtn" onclick="toggleCollaboration()" style="background: var(--accent-soft); color: var(--text);">Collaborate</button>
 
@@ -142,6 +143,13 @@
                     <button class="btn btn-sm btn-secondary" onclick="showAddExhibit()" style="padding:2px 8px; font-size:10px;">+ Add</button>
                 </h4>
                 <div id="exhibitList"><p style="font-size: 12px; color: var(--text-dim);">No exhibits linked.</p></div>
+            </div>
+            <div class="sidebar-panel">
+                <h4 style="display:flex; justify-content:space-between; align-items:center;">
+                    Attachments
+                    <button class="btn btn-sm btn-secondary" onclick="attachDocument()" style="padding:2px 8px; font-size:10px;">+ Attach</button>
+                </h4>
+                <div id="attachmentList"><p style="font-size: 12px; color: var(--text-dim);">No attached documents. Attach transcripts, filings, or reference documents.</p></div>
             </div>
             <div class="sidebar-panel">
                 <h4 style="display:flex; justify-content:space-between; align-items:center;">
@@ -383,20 +391,25 @@
 
         // Flag color system
         const flagColors = {
-            'confidence_high':    { color: '#b84040', icon: '&#9679;', label: 'Low Confidence' },
-            'confidence_medium':  { color: '#d4913d', icon: '&#9679;', label: 'Med Confidence' },
-            'confidence_low':     { color: '#c8a55c', icon: '&#9679;', label: 'Mild Confidence' },
-            'context_legal_term': { color: '#7b61c4', icon: '&#9670;', label: 'Legal Term' },
-            'context_unlikely':   { color: '#7b61c4', icon: '&#9670;', label: 'Unlikely' },
+            'confidence_high':       { color: '#b84040', icon: '&#9679;', label: 'Low Confidence' },
+            'confidence_medium':     { color: '#d4913d', icon: '&#9679;', label: 'Med Confidence' },
+            'confidence_low':        { color: '#c8a55c', icon: '&#9679;', label: 'Mild Confidence' },
+            'context_legal_term':    { color: '#7b61c4', icon: '&#9670;', label: 'Legal Term' },
+            'context_unlikely':      { color: '#7b61c4', icon: '&#9670;', label: 'Unlikely' },
             'context_unlikely_word': { color: '#7b61c4', icon: '&#9670;', label: 'Unlikely Word' },
-            'context_name_variant': { color: '#5b8fb9', icon: '&#9670;', label: 'Name Variant' },
-            'context_fragment':   { color: '#7b61c4', icon: '&#9670;', label: 'Fragment' },
-            'context_llm_review': { color: '#7b61c4', icon: '&#9670;', label: 'AI Review' },
-            'speaker_missing':    { color: '#3d8a6e', icon: '&#9673;', label: 'No Speaker' },
-            'speaker_unresolved': { color: '#3d8a6e', icon: '&#9673;', label: 'Unresolved' },
-            'speaker_ambiguous':  { color: '#3d8a6e', icon: '&#9673;', label: 'Ambiguous' },
-            'review':             { color: '#c8a55c', icon: '&#9873;', label: 'Manual Flag' },
-            'live_flag':          { color: '#c8a55c', icon: '&#9873;', label: 'Live Flag' },
+            'context_name_variant':  { color: '#5b8fb9', icon: '&#9670;', label: 'Name Variant' },
+            'context_fragment':      { color: '#7b61c4', icon: '&#9670;', label: 'Fragment' },
+            'context_repetition':    { color: '#7b61c4', icon: '&#9670;', label: 'Repetition' },
+            'context_capitalization': { color: '#7b61c4', icon: '&#9670;', label: 'Capitalization' },
+            'context_phone_number':  { color: '#7b61c4', icon: '&#9670;', label: 'Phone Number' },
+            'context_unclosed_paren': { color: '#7b61c4', icon: '&#9670;', label: 'Unclosed Paren' },
+            'context_llm_review':    { color: '#7b61c4', icon: '&#9670;', label: 'AI Review' },
+            'asr_artifact':          { color: '#b84040', icon: '&#9679;', label: 'ASR Artifact' },
+            'speaker_missing':       { color: '#3d8a6e', icon: '&#9673;', label: 'No Speaker' },
+            'speaker_unresolved':    { color: '#3d8a6e', icon: '&#9673;', label: 'Unresolved' },
+            'speaker_ambiguous':     { color: '#3d8a6e', icon: '&#9673;', label: 'Ambiguous' },
+            'review':                { color: '#c8a55c', icon: '&#9873;', label: 'Manual Flag' },
+            'live_flag':             { color: '#c8a55c', icon: '&#9873;', label: 'Live Flag' },
         };
 
         // Legend
@@ -460,6 +473,15 @@
                 ${noSpeaker.length > 0 ? `<span style="color: var(--amber);">&#9888; ${noSpeaker.length} unresolved speaker(s)</span>` : '<span style="color: var(--green);">&#10003; All speakers identified</span>'}
                 <span style="color: var(--text-light);">${totalSegs} total segments</span>
             </div>
+            <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button onclick="reanalyzeSpeakers()" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" title="Re-run speaker detection with enhanced analysis">
+                    <span style="font-size: 14px; line-height: 1;">&#8635;</span> Reanalyze Speakers
+                </button>
+                <button onclick="document.getElementById('redlineFileInput').click()" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" title="Upload proofed transcript to generate redline comparison">
+                    <span style="font-size: 14px; line-height: 1;">&#9998;</span> Compare / Redline
+                </button>
+                <input type="file" id="redlineFileInput" accept=".docx,.txt,.pdf" style="display:none;" onchange="uploadRedline(this.files[0])">
+            </div>
         </div>`;
         // Build map of flagged segment indices to their flag type for coloring
         const flagMap = {};
@@ -497,7 +519,7 @@
             const ambiguous = seg.speaker_ambiguous ? 'ambiguous' : '';
 
             html += `
-            <div class="segment ${lowConf} ${flagged}" data-start="${seg.start}" data-end="${seg.end}" data-index="${i}" onclick="seekTo(${seg.start})" ${isFlagged ? `style="border-left-color:${flagColor};"` : ''}>
+            <div class="segment ${lowConf} ${flagged}" data-start="${seg.start}" data-end="${seg.end}" data-index="${i}" onclick="activateSegment(this); seekTo(${seg.start})" ${isFlagged ? `style="border-left-color:${flagColor};"` : ''}>
                 <div class="timestamp">${ts}</div>
                 <div class="speaker-label ${courtClass} ${ambiguous}" onclick="event.stopPropagation(); editSpeaker(${i})">${speaker}${seg.speaker_ambiguous ? ' &#9888;' : ''}</div>
                 <div class="text" contenteditable="true" onfocus="lockSegment(${i})" onblur="saveSegment(${i}, this.innerText); unlockSegment(${i})">${seg.text}</div>
@@ -540,6 +562,307 @@
         });
     }
 
+    // Pyannote download status banner
+    function showPyannoteStatus(message, type) {
+        let banner = document.getElementById('pyannote-status-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'pyannote-status-banner';
+            const panel = document.getElementById('transcriptPanel');
+            panel.prepend(banner);
+        }
+        const colors = {
+            downloading: { bg: '#f0f4ff', border: '#b8cce8', text: '#2d5a8a', icon: '&#8987;' },
+            success:     { bg: '#f0faf5', border: '#a8d8c0', text: '#2d8a6e', icon: '&#10003;' },
+            error:       { bg: '#fdf0f0', border: '#e8b8b8', text: '#8a2d2d', icon: '&#9888;' },
+        };
+        const c = colors[type] || colors.downloading;
+        banner.style.cssText = `background: ${c.bg}; border: 1px solid ${c.border}; border-radius: var(--radius); padding: 10px 16px; margin-bottom: 10px; font-size: 12px; color: ${c.text};`;
+        if (type === 'downloading') {
+            banner.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <span style="font-size: 16px;">${c.icon}</span><span>${message}</span>
+                </div>
+                <div style="background: ${c.border}; border-radius: 3px; height: 4px; overflow: hidden;">
+                    <div id="pyannote-progress-bar" style="background: ${c.text}; height: 100%; width: 0%; border-radius: 3px; transition: width 1s linear;"></div>
+                </div>
+                <div style="margin-top: 4px; font-size: 11px; color: ${c.text}; opacity: 0.7;" id="pyannote-progress-label"></div>`;
+        } else {
+            banner.innerHTML = `<div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 16px;">${c.icon}</span><span>${message}</span></div>`;
+        }
+        if (type === 'success') {
+            setTimeout(() => banner.remove(), 5000);
+        }
+    }
+
+    function hidePyannoteStatus() {
+        const banner = document.getElementById('pyannote-status-banner');
+        if (banner) banner.remove();
+    }
+
+    function pollPyannoteDownload() {
+        const poll = setInterval(async () => {
+            try {
+                const resp = await fetch('/api/pyannote/status');
+                const data = await resp.json();
+                if (data.status === 'downloading') {
+                    showPyannoteStatus(`Installing enhanced speaker analysis engine... ${data.message || ''}`, 'downloading');
+                } else if (data.status === 'available') {
+                    clearInterval(poll);
+                    showPyannoteStatus('Enhanced speaker analysis engine is ready. Click "Reanalyze Speakers" to use it.', 'success');
+                } else if (data.status === 'failed') {
+                    clearInterval(poll);
+                    showPyannoteStatus(`Installation failed: ${data.message || 'Unknown error'}`, 'error');
+                } else {
+                    clearInterval(poll);
+                    hidePyannoteStatus();
+                }
+            } catch (e) {
+                clearInterval(poll);
+            }
+        }, 3000);
+    }
+
+    async function reanalyzeSpeakers() {
+        try {
+            const resp = await fetch(`/api/job/${JOB_ID}/reanalyze-speakers`, { method: 'POST' });
+            if (!resp.ok && resp.status >= 500) {
+                const text = await resp.text();
+                showPyannoteStatus('Speaker reanalysis failed: Server error (' + resp.status + ')', 'error');
+                console.error('Reanalyze error:', text);
+                return;
+            }
+            const data = await resp.json();
+
+            if (data.status === 'upgrade_required') {
+                alert(`${data.message}\n\nUpgrade your plan at notarelegal.com to unlock enhanced speaker analysis.`);
+                return;
+            }
+
+            if (data.status === 'needs_download') {
+                if (confirm(`${data.message}\n\nThis is a one-time download (${data.download_size}). Download now?`)) {
+                    const dlResp = await fetch('/api/pyannote/download', { method: 'POST' });
+                    showPyannoteStatus('Starting download of enhanced speaker analysis engine...', 'downloading');
+                    pollPyannoteDownload();
+                }
+                return;
+            }
+
+            if (data.status === 'downloading') {
+                showPyannoteStatus(`Installation in progress... ${data.message || ''}`, 'downloading');
+                pollPyannoteDownload();
+                return;
+            }
+
+            if (data.status === 'running') {
+                // Use the server's estimate (accounts for GPU vs CPU and audio length)
+                const estMinutes = data.estimated_minutes || 5;
+                const deviceLabel = data.device || 'CPU';
+                const estSeconds = estMinutes * 60;
+                const startTime = Date.now();
+
+                showPyannoteStatus(`Analyzing speakers (${deviceLabel}, estimated ~${estMinutes > 60 ? Math.floor(estMinutes/60) + 'h ' + (estMinutes%60) + 'm' : estMinutes + ' min'})...`, 'downloading');
+
+                // Animate progress bar and show server heartbeat messages
+                const progressTimer = setInterval(() => {
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    const pct = Math.min(95, (elapsed / estSeconds) * 100);
+                    const bar = document.getElementById('pyannote-progress-bar');
+                    if (bar) bar.style.width = pct + '%';
+                }, 2000);
+
+                const pollInterval = setInterval(async () => {
+                    const jobResp = await fetch(`/api/job/${JOB_ID}`);
+                    const jobData = await jobResp.json();
+                    const msg = jobData.progress_message || '';
+
+                    // Update the label with the server's heartbeat message
+                    const label = document.getElementById('pyannote-progress-label');
+                    if (label && msg && !msg.includes('complete') && !msg.includes('failed')) {
+                        label.textContent = msg;
+                    }
+
+                    if (msg.includes('complete')) {
+                        clearInterval(pollInterval);
+                        clearInterval(progressTimer);
+                        showPyannoteStatus('Speaker reanalysis complete. Refreshing transcript...', 'success');
+                        const trResp = await fetch(`/api/job/${JOB_ID}`);
+                        const trData = await trResp.json();
+                        if (trData.transcript) {
+                            renderTranscript(trData.transcript);
+                        }
+                        // Auto-dismiss success banner after 5 seconds
+                        setTimeout(() => {
+                            const banner = document.getElementById('pyannote-status');
+                            if (banner) banner.style.display = 'none';
+                        }, 5000);
+                    } else if (msg.includes('failed')) {
+                        clearInterval(pollInterval);
+                        clearInterval(progressTimer);
+                        // Check if speakers were actually generated despite error
+                        const checkResp = await fetch(`/api/job/${JOB_ID}`);
+                        const checkData = await checkResp.json();
+                        const segs = checkData.transcript?.segments || [];
+                        const speakers = new Set(segs.map(s => s.speaker).filter(s => s && s.trim()));
+                        if (speakers.size >= 2) {
+                            showPyannoteStatus(`Speakers detected (${speakers.size} found). Refreshing...`, 'success');
+                            renderTranscript(checkData.transcript);
+                            setTimeout(() => {
+                                const banner = document.getElementById('pyannote-status');
+                                if (banner) banner.style.display = 'none';
+                            }, 5000);
+                        } else {
+                            showPyannoteStatus('Speaker reanalysis failed: ' + msg, 'error');
+                        }
+                    } else if (msg) {
+                        showPyannoteStatus(msg, 'downloading');
+                    }
+                }, 2000);
+            }
+        } catch (e) {
+            showPyannoteStatus('Speaker reanalysis failed: ' + e.message, 'error');
+        }
+    }
+
+    // Check if pyannote is currently downloading on page load
+    fetch('/api/pyannote/status').then(r => r.json()).then(data => {
+        if (data.status === 'downloading') {
+            showPyannoteStatus(`Installing enhanced speaker analysis engine... ${data.message || ''}`, 'downloading');
+            pollPyannoteDownload();
+        }
+    }).catch(() => {});
+
+    // === Redline Comparison ===
+    async function uploadRedline(file) {
+        if (!file) return;
+        showRedlineStatus('Comparing transcripts...', 'processing');
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const resp = await fetch(`/api/job/${JOB_ID}/compare-transcript`, { method: 'POST', body: formData });
+            const data = await resp.json();
+            if (data.error) {
+                showRedlineStatus('Comparison failed: ' + data.error, 'error');
+                return;
+            }
+            showRedlineStatus(`Redline complete: ${data.total_changes} changes (${data.summary.modifications} modified, ${data.summary.additions} added, ${data.summary.deletions} deleted)`, 'success');
+            renderRedlinePanel(data);
+        } catch (e) {
+            showRedlineStatus('Comparison failed: ' + e.message, 'error');
+        }
+    }
+
+    function showRedlineStatus(message, type) {
+        let banner = document.getElementById('redline-status-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'redline-status-banner';
+            const panel = document.getElementById('transcriptPanel');
+            panel.parentNode.insertBefore(banner, panel);
+        }
+        const colors = {
+            processing: { bg: '#f0f4ff', border: '#b8cce8', text: '#2d5a8a', icon: '&#8987;' },
+            success:    { bg: '#f0faf5', border: '#a8d8c0', text: '#2d8a6e', icon: '&#10003;' },
+            error:      { bg: '#fdf0f0', border: '#e8b8b8', text: '#8a2d2d', icon: '&#9888;' },
+        };
+        const c = colors[type] || colors.processing;
+        banner.style.cssText = `background: ${c.bg}; border: 1px solid ${c.border}; border-radius: var(--radius); padding: 10px 16px; margin-bottom: 10px; font-size: 12px; color: ${c.text}; display: flex; align-items: center; gap: 10px;`;
+        banner.innerHTML = `<span style="font-size: 16px;">${c.icon}</span><span>${message}</span>`;
+    }
+
+    function renderRedlinePanel(data) {
+        let panel = document.getElementById('redlinePanel');
+        if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'redlinePanel';
+            const transcript = document.getElementById('transcriptPanel');
+            transcript.prepend(panel);
+        }
+        const changes = data.changes || [];
+        let html = `
+            <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="margin: 0; font-size: 14px; color: var(--navy);">Redline Comparison</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <span class="btn btn-sm btn-icon" onclick="document.getElementById('redlinePanel').remove()">Close</span>
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+                    Compared against: <strong>${data.proofed_file || 'uploaded file'}</strong> &mdash;
+                    <span style="color: var(--amber);">${data.summary.modifications} modified</span>,
+                    <span style="color: var(--green);">${data.summary.additions} added</span>,
+                    <span style="color: #b84040;">${data.summary.deletions} deleted</span>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 4px;">`;
+
+        if (changes.length === 0) {
+            html += `<div style="padding: 24px; text-align: center; color: var(--text-muted);">No differences found. Transcripts match.</div>`;
+        }
+
+        for (const ch of changes) {
+            const noteId = 'note-' + (ch.line || Math.random().toString(36).substr(2));
+            if (ch.type === 'modified') {
+                html += `
+                    <div style="padding: 8px 12px; border-bottom: 1px solid var(--border-light);">
+                        <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">Line ${ch.line} &mdash; Modified</div>
+                        <div style="font-size: 12px; color: #b84040; text-decoration: line-through; margin-bottom: 2px;">${ch.original || ''}</div>
+                        <div style="font-size: 12px; color: var(--green);">${ch.proofed || ''}</div>
+                        <div style="margin-top: 4px;">
+                            <input type="text" placeholder="Add note..." class="redline-note" data-line="${ch.line}" style="width: 100%; padding: 3px 6px; font-size: 11px; border: 1px solid var(--border-light); border-radius: 3px; color: var(--text-muted);" onchange="saveRedlineNote(this, '${noteId}')">
+                        </div>
+                    </div>`;
+            } else if (ch.type === 'added') {
+                html += `
+                    <div style="padding: 8px 12px; border-bottom: 1px solid var(--border-light); background: #f8fdf8;">
+                        <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">Added</div>
+                        <div style="font-size: 12px; color: var(--green);">+ ${ch.proofed || ''}</div>
+                        <div style="margin-top: 4px;">
+                            <input type="text" placeholder="Add note..." class="redline-note" data-line="${ch.line}" style="width: 100%; padding: 3px 6px; font-size: 11px; border: 1px solid var(--border-light); border-radius: 3px; color: var(--text-muted);" onchange="saveRedlineNote(this, '${noteId}')">
+                        </div>
+                    </div>`;
+            } else if (ch.type === 'deleted') {
+                html += `
+                    <div style="padding: 8px 12px; border-bottom: 1px solid var(--border-light); background: #fdf8f8;">
+                        <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">Line ${ch.line} &mdash; Deleted</div>
+                        <div style="font-size: 12px; color: #b84040; text-decoration: line-through;">- ${ch.original || ''}</div>
+                        <div style="margin-top: 4px;">
+                            <input type="text" placeholder="Add note..." class="redline-note" data-line="${ch.line}" style="width: 100%; padding: 3px 6px; font-size: 11px; border: 1px solid var(--border-light); border-radius: 3px; color: var(--text-muted);" onchange="saveRedlineNote(this, '${noteId}')">
+                        </div>
+                    </div>`;
+            }
+        }
+
+        html += `</div></div>`;
+        panel.innerHTML = html;
+    }
+
+    function saveRedlineNote(input, noteId) {
+        // Save note to the job's redline data
+        const note = input.value.trim();
+        const line = input.dataset.line;
+        fetch(`/api/job/${JOB_ID}/flag`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                type: 'redline_note',
+                index: parseInt(line) || 0,
+                text: note,
+                timestamp: 0,
+                detail: `Redline note: ${note}`,
+            }),
+        });
+    }
+
+    // Load existing redline on page load
+    fetch(`/api/job/${JOB_ID}/redline`).then(r => {
+        if (r.ok) return r.json();
+        return null;
+    }).then(data => {
+        if (data && data.changes && data.changes.length > 0) {
+            renderRedlinePanel(data);
+        }
+    }).catch(() => {});
+
     function editSpeaker(idx) {
         const segEl = document.querySelectorAll('.segment')[idx];
         const oldName = segEl.querySelector('.speaker-label').textContent.replace(' ⚠', '');
@@ -553,7 +876,7 @@
 
         let renameAll = false;
         if (matchCount > 1) {
-            renameAll = confirm(`"${oldName}" appears in ${matchCount} segments.\n\nYes = rename ALL of them to "${name}"\nNo = rename only THIS segment`);
+            renameAll = confirm(`"${oldName}" appears in ${matchCount} segments.\n\nOK = rename ALL of them to "${name}"\nCancel = rename only THIS segment`);
         }
 
         if (renameAll) {
@@ -699,31 +1022,66 @@
         input.click();
     }
 
-    function importTranscript() {
+    function attachDocument() {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.docx,.txt,.pdf,.doc';
+        input.accept = '.docx,.txt,.pdf,.doc,.rtf,.xlsx,.csv,.jpg,.jpeg,.png,.tiff';
         input.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('run_proofing', 'true');
             try {
-                const r = await fetch(`/api/job/${JOB_ID}/import-transcript`, {
+                const r = await fetch(`/api/job/${JOB_ID}/attachment`, {
                     method: 'POST', body: formData
                 });
                 const data = await r.json();
                 if (data.ok) {
-                    alert(`Imported ${data.segments} segments from ${data.imported_from}.\nProofing: ${data.proofing_applied ? 'Applied' : 'Skipped'}`);
-                    location.reload();
+                    showToast(`Attached: ${file.name}`, 'success');
+                    loadAttachments();
                 } else {
-                    alert(data.error || 'Import failed');
+                    showToast(data.error || 'Upload failed', 'error');
                 }
-            } catch(e) { alert('Error importing: ' + e.message); }
+            } catch(e) { showToast('Error attaching: ' + e.message, 'error'); }
         };
         input.click();
     }
+
+    async function loadAttachments() {
+        try {
+            const r = await fetch(`/api/job/${JOB_ID}/attachments`);
+            const data = await r.json();
+            const list = document.getElementById('attachmentList');
+            const files = data.attachments || [];
+            if (files.length === 0) {
+                list.innerHTML = '<p style="font-size: 12px; color: var(--text-dim);">No attached documents.</p>';
+                return;
+            }
+            list.innerHTML = files.map(f => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border);">
+                    <span style="font-size:12px; cursor:pointer; color:var(--gold);" onclick="viewAttachment('${f.filename}')" title="Click to open">${f.filename}</span>
+                    <div style="display:flex; gap:4px; align-items:center;">
+                        <span style="font-size:10px; color:var(--text-dim);">${(f.size / 1024).toFixed(0)}KB</span>
+                        <button onclick="deleteAttachment('${f.filename}')" style="background:none; border:none; color:#b84040; cursor:pointer; font-size:12px;" title="Remove">&times;</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {}
+    }
+
+    function viewAttachment(filename) {
+        window.open(`/api/job/${JOB_ID}/attachment/${encodeURIComponent(filename)}`, '_blank');
+    }
+
+    async function deleteAttachment(filename) {
+        if (!confirm(`Remove attachment "${filename}"?`)) return;
+        await fetch(`/api/job/${JOB_ID}/attachment/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+        loadAttachments();
+        showToast('Attachment removed');
+    }
+
+    // Load attachments on page load
+    setTimeout(loadAttachments, 500);
 
     async function exportJob(fmt) {
         try {
@@ -831,6 +1189,12 @@
             html += '<div><kbd>F8</kbd> Fwd 5s</div></div>';
             sidebar.innerHTML = html;
         }
+    }
+
+    function activateSegment(el) {
+        // Set clicked segment as active so hotkeys work even without audio playback
+        document.querySelectorAll('.segment.active').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
     }
 
     document.addEventListener('keydown', e => {
@@ -1198,24 +1562,67 @@
     }
 
     // --- Export Preview ---
-    let _previewFormat = '';
+    let _previewTempFile = null;
+
     async function previewExport(fmt) {
-        _previewFormat = fmt;
-        const names = {
-            deposition: 'Standard Deposition', pdf: 'PDF', condensed: 'Condensed PDF (4-on-1)',
-            disc_label: 'Disc Label',
-        };
-        document.getElementById('previewTitle').textContent = `Preview: ${names[fmt] || fmt}`;
-        document.getElementById('previewFrame').src = `/api/job/${JOB_ID}/export?format=${fmt}&save_local=false`;
-        document.getElementById('previewModal').classList.add('active');
+        try {
+            showToast('Generating preview...', 'info');
+            // Generate the export (saves to exports folder)
+            const r = await fetch(`/api/job/${JOB_ID}/export?format=${fmt}`);
+            const data = await r.json();
+            if (data.ok && data.path) {
+                // Copy to static folder as temp for iframe preview
+                const copyR = await fetch('/api/preview/prepare', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ source_path: data.path }),
+                });
+                const copyData = await copyR.json();
+                if (copyData.ok) {
+                    _previewTempFile = copyData.temp_name;
+                    const names = {
+                        deposition: 'Standard Deposition', pdf: 'PDF',
+                        condensed: 'Condensed PDF (4-on-1)', disc_label: 'Disc Label',
+                    };
+                    document.getElementById('previewTitle').textContent = `Preview: ${names[fmt] || fmt}`;
+                    document.getElementById('previewFrame').src = `/static/${copyData.temp_name}`;
+                    document.getElementById('previewSaveBtn').textContent = 'Done';
+                    document.getElementById('previewSaveBtn').disabled = false;
+                    document.getElementById('previewModal').classList.add('active');
+                } else {
+                    showToast('Preview could not be generated — try exporting instead', 'error');
+                }
+            } else {
+                showToast(data.error || 'Export failed', 'error');
+            }
+        } catch(e) {
+            showToast('Preview failed: ' + e.message, 'error');
+        }
     }
 
     function savePreviewedExport() {
-        if (_previewFormat) {
-            exportJob(_previewFormat);
-            document.getElementById('previewModal').classList.remove('active');
+        // Clean up temp preview file
+        if (_previewTempFile) {
+            fetch('/api/preview/cleanup', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ temp_name: _previewTempFile }),
+            }).catch(() => {});
+            _previewTempFile = null;
         }
+        document.getElementById('previewFrame').src = '';
+        document.getElementById('previewModal').classList.remove('active');
     }
+
+    // Also clean up if they close the modal without clicking Done
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#previewModal .btn-secondary') && _previewTempFile) {
+            fetch('/api/preview/cleanup', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ temp_name: _previewTempFile }),
+            }).catch(() => {});
+            _previewTempFile = null;
+            document.getElementById('previewFrame').src = '';
+        }
+    });
 
     // --- Errata Comparison ---
     async function generateErrata() {
