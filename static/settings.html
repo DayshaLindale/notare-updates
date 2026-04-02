@@ -14,6 +14,7 @@
             <a href="/static/index.html">Dashboard</a>
             <a href="/static/new_job.html">New Job</a>
             <a href="/static/cases.html">Cases</a>
+            <a href="/static/compare.html">Compare</a>
             <a href="/static/voices.html">Voices</a>
             <a href="/static/profiles.html">Profiles</a>
             <a href="/static/settings.html">Settings</a>
@@ -22,7 +23,10 @@
     </div>
 
     <div class="container">
-        <h2 class="page-title">Settings</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
+            <h2 class="page-title" style="margin-bottom:0;">Settings</h2>
+            <div id="versionDisplay" style="font-size:13px; color:var(--text-muted);"></div>
+        </div>
 
         <div class="card">
             <h3>Transcription Engine</h3>
@@ -50,15 +54,14 @@
                 <div class="form-group">
                     <label>Whisper Model Size</label>
                     <select id="whisperModel">
-                        <option value="tiny.en">Tiny (75MB — fastest, basic accuracy, any PC)</option>
-                        <option value="base.en">Base (142MB — fast, decent accuracy, any PC)</option>
-                        <option value="small.en" selected>Small (464MB — balanced speed and accuracy)</option>
-                        <option value="medium.en">Medium (1.5GB — high accuracy, GPU recommended)</option>
-                        <option value="large-v3-turbo">Large v3 Turbo (1.6GB — best value, GPU required)</option>
-                        <option value="large-v3">Large v3 (2.9GB — highest accuracy, 8GB+ GPU)</option>
+                        <option value="tiny.en">Tiny (fastest, least accurate)</option>
+                        <option value="base.en">Base</option>
+                        <option value="small.en" selected>Small (recommended)</option>
+                        <option value="medium.en">Medium (slower, more accurate)</option>
+                        <option value="large-v3">Large v3 (slowest, most accurate)</option>
                     </select>
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted);">Tiny and Small are bundled with Notare. Larger models download automatically on first use (~1-3GB). GPU users: try Large v3 Turbo for the best speed-to-accuracy ratio. CPU only: stick with Tiny or Small.</p>
+                <p style="font-size: 12px; color: var(--text-muted);">Local Whisper runs entirely on your machine. No API key needed, no per-minute costs. Requires an NVIDIA GPU with 4GB+ VRAM for reasonable speed.</p>
             </div>
         </div>
 
@@ -262,6 +265,31 @@
     }
 
     loadReferral();
+
+    // Version display — shows current version and checks for updates
+    (async function showVersion() {
+        try {
+            const settingsResp = await fetch('/api/settings');
+            const settings = await settingsResp.json();
+            const localVersion = settings.version || '0.0.0';
+
+            let updateHtml = '';
+            try {
+                const updateResp = await fetch('/api/update');
+                const update = await updateResp.json();
+                if (update.update_available) {
+                    updateHtml = ` &mdash; <a href="https://notarelegal.com/static/download.html" target="_blank" style="color:var(--gold); font-weight:600;">Update available: v${update.version}</a>`;
+                } else {
+                    updateHtml = ' &mdash; <span style="color:var(--green);">Up to date</span>';
+                }
+            } catch(e) {}
+
+            document.getElementById('versionDisplay').innerHTML =
+                '<span style="color:var(--text-dark); font-weight:600;">v' + localVersion + '</span>' + updateHtml;
+        } catch(e) {
+            document.getElementById('versionDisplay').textContent = 'Could not determine version';
+        }
+    })();
     </script>
 <script src="/static/theme.js"></script>
 <script src="/static/support_widget.js"></script>

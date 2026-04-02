@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.5",
+  "current_version": "0.7.6",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.7.6",
+      "released": "2026-04-02",
+      "notes": "Version number visible in Settings page with update-available indicator."
+    },
     {
       "version": "0.7.5",
       "released": "2026-04-02",
