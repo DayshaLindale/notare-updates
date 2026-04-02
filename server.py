@@ -139,6 +139,42 @@ async def validate_key(key: str = ""):
     return JSONResponse({"valid": False, "reason": "invalid_key"})
 
 
+@app.post("/api/validate-license")
+async def validate_license_post(request: Request):
+    """POST-based license validation — used by notare.py remote fallback."""
+    try:
+        data = await request.json()
+        key = data.get("key", "")
+    except Exception:
+        return JSONResponse({"valid": False, "reason": "bad_request"})
+    if not key:
+        return JSONResponse({"valid": False, "reason": "no_key"})
+
+    admin_file = BASE_DIR / "admin_data.json"
+    if not admin_file.exists():
+        return JSONResponse({"valid": False, "reason": "no_database"})
+
+    try:
+        admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
+        for lic in admin_data.get("licenses", []):
+            if lic.get("key") == key and lic.get("status") == "active":
+                exp = lic.get("expires", "")
+                if exp and exp != "":
+                    from datetime import datetime as _dt
+                    if exp < _dt.now().strftime("%Y-%m-%d"):
+                        return JSONResponse({"valid": False, "reason": "expired"})
+                return JSONResponse({
+                    "valid": True,
+                    "tier": lic.get("tier", "solo"),
+                    "expires": lic.get("expires", ""),
+                    "customer": lic.get("customer_name", ""),
+                })
+    except Exception:
+        pass
+
+    return JSONResponse({"valid": False, "reason": "invalid_key"})
+
+
 # ---------------------------------------------------------------------------
 # Support ticket relay
 # ---------------------------------------------------------------------------
