@@ -14,6 +14,7 @@
             <a href="/static/index.html">Dashboard</a>
             <a href="/static/new_job.html">New Job</a>
             <a href="/static/cases.html">Cases</a>
+            <a href="/static/compare.html">Compare</a>
             <a href="/static/voices.html">Voices</a>
             <a href="/static/profiles.html">Profiles</a>
             <a href="/static/settings.html">Settings</a>
@@ -22,73 +23,32 @@
     </div>
 
     <div class="container">
-        <!-- Major update banner — polls manifest and shows for any user on an older version -->
+        <!-- Major update banner — shown when a full reinstall is needed -->
         <div id="majorUpdateBanner" style="display:none; background:linear-gradient(135deg, #1a2744, #2a3f6e); color:white; padding:16px 24px; border-radius:8px; margin-bottom:20px; position:relative;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <div id="bannerTitle" style="font-weight:700; font-size:15px; margin-bottom:4px;">Major Update Available — v0.6.7</div>
-                    <div id="bannerBody" style="font-size:13px; opacity:0.9; line-height:1.6;">This update adds auto-updates (all future patches apply automatically), neural speaker detection, improved error handling, hotkey and bookmark fixes, and a full EULA. Reinstall once — your data is preserved — and you will never need to manually update again.</div>
+                    <div style="font-weight:700; font-size:15px; margin-bottom:4px;">Major Update Available — v0.7.1</div>
+                    <div style="font-size:13px; opacity:0.9; line-height:1.6;">Restructured tiers, intelligent speaker formatting, live reanalysis progress, dedicated support, document comparison, 19 feature gates, and automatic OTA updates. Requires a reinstall (~1.2 GB). Your jobs, profiles, and settings are preserved.</div>
                 </div>
                 <a href="https://notarelegal.com/static/download.html" target="_blank" class="btn" style="background:var(--gold, #c8a55c); color:#1a2744; font-weight:700; white-space:nowrap; padding:10px 24px; font-size:14px; text-decoration:none;">Download Update</a>
             </div>
             <button onclick="dismissUpdateBanner()" style="position:absolute; top:8px; right:12px; background:none; border:none; color:rgba(255,255,255,0.5); font-size:18px; cursor:pointer;">&times;</button>
         </div>
         <script>
-        // Check local version against server manifest — show banner if behind
-        async function checkMajorUpdate() {
+        // Show banner if user is on an older version
+        (async function checkMajorUpdate() {
             try {
-                // Get local version from settings
-                const settingsResp = await fetch('/api/settings');
-                const settings = await settingsResp.json();
-                const localVersion = settings.version || '0.0.0';
-
-                // Get server manifest for latest version — try local proxy first, then direct
-                let serverVersion = null;
-                try {
-                    const manifestResp = await fetch('/api/update?current=' + localVersion);
-                    const updateData = await manifestResp.json();
-                    if (updateData.update_available) {
-                        serverVersion = updateData.version;
-                    }
-                } catch(e) {}
-
-                // Fallback: try the public site manifest endpoint directly
-                if (!serverVersion) {
-                    try {
-                        const directResp = await fetch('https://notarelegal.com/api/manifest');
-                        const manifest = await directResp.json();
-                        if (localVersion < manifest.current_version) {
-                            serverVersion = manifest.current_version;
-                        }
-                    } catch(e) {}
-                }
-
-                if (serverVersion) {
-                    const dismissKey = 'dismissed_' + serverVersion.replace(/\./g, '');
-                    if (!localStorage.getItem(dismissKey)) {
-                        document.getElementById('bannerTitle').textContent = 'Major Update Available \u2014 v' + serverVersion;
-                        document.getElementById('majorUpdateBanner').style.display = '';
-                    }
+                // Check pyannote status endpoint — only exists in 0.6.0+
+                const r = await fetch('/api/pyannote/status');
+                if (r.status === 404 && !localStorage.getItem('dismissed_060')) {
+                    document.getElementById('majorUpdateBanner').style.display = '';
                 }
             } catch(e) {
-                // Fallback: show banner if plugin loader missing (pre-0.5.0)
-                try {
-                    const r = await fetch('/api/preview/prepare', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{"source_path":"__test__"}' });
-                    const data = await r.json();
-                    if (data.detail === 'Not Found' && !localStorage.getItem('dismissed_060')) {
-                        document.getElementById('majorUpdateBanner').style.display = '';
-                    }
-                } catch(e2) {}
+                // Network error — don't show banner
             }
-        }
-
-        // Run immediately and re-check every 5 minutes so running instances pick up new versions
-        checkMajorUpdate();
-        setInterval(checkMajorUpdate, 300000);
-
+        })();
         function dismissUpdateBanner() {
             document.getElementById('majorUpdateBanner').style.display = 'none';
-            // Dismiss is version-specific — new versions will show again
             localStorage.setItem('dismissed_060', '1');
         }
         </script>
