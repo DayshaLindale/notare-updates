@@ -92,8 +92,14 @@
         <a href="#" onclick="showTab('customers', this)">Customers</a>
         <a href="#" onclick="showTab('contacts', this)">Contact Requests</a>
         <a href="#" onclick="showTab('referrals', this)">Referrals</a>
-        <a href="#" onclick="showTab('support', this)">Support</a>
+        <a href="#" onclick="showTab('support', this)">Support <span id="supportBadge" style="display:none;background:#b84040;color:white;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;">0</span></a>
         <a href="#" onclick="showTab('system', this)">System</a>
+    </div>
+
+    <!-- Dedicated Support Alert Banner -->
+    <div id="dedicatedAlert" style="display:none; background:linear-gradient(90deg,#0f1b2d,#1a2b45); color:white; padding:14px 24px; text-align:center; cursor:pointer; border-bottom:2px solid #c8a55c;" onclick="showTab('support', document.querySelector('.admin-nav a:nth-child(7)'))">
+        <span style="font-size:14px; font-weight:600; letter-spacing:0.5px;">DEDICATED SUPPORT REQUEST</span>
+        <span id="dedicatedAlertDetail" style="display:block; font-size:12px; color:#c8a55c; margin-top:2px;"></span>
     </div>
 
     <div class="content">
@@ -871,9 +877,12 @@ async function loadSupportTickets() {
         } else {
             document.getElementById('noTickets').style.display = 'none';
             document.getElementById('ticketsTable').innerHTML = active.map(t => `
-                <tr>
+                <tr style="${t.priority === 'dedicated' ? 'background:rgba(200,165,92,0.08);border-left:3px solid #c8a55c;' : ''}">
                     <td style="font-size:12px;">${(t.timestamp || '').replace('T', ' ').substring(0, 19)}</td>
-                    <td><strong>${t.customer || t.name || 'Unknown'}</strong><br><span style="font-size:11px;color:#9a9aaa;">${t.reporter_key || t.email || ''}</span></td>
+                    <td><strong>${t.customer || t.name || 'Unknown'}</strong><br><span style="font-size:11px;color:#9a9aaa;">${t.reporter_key || t.email || ''}</span>
+                        ${t.priority === 'dedicated' ? '<br><span class="badge pro" style="margin-top:4px;">DEDICATED</span>' : ''}
+                        ${t.tier ? '<span class="badge ' + t.tier + '" style="margin-left:4px;">' + t.tier + '</span>' : ''}
+                    </td>
                     <td style="max-width:300px;">
                         <div style="font-size:13px;">${t.question || t.subject || ''}</div>
                         <div style="font-size:12px;color:#6b6b7b;margin-top:4px;">${t.description || t.message || ''}</div>
@@ -966,6 +975,94 @@ if (window._adminToken) {
     document.getElementById('adminName').textContent = window._adminName;
     loadDashboard();
 }
+
+// ---------------------------------------------------------------------------
+// Dedicated Support Alert Poller
+// ---------------------------------------------------------------------------
+let _lastSeenTicketIds = new Set();
+let _dedicatedAlertSound = null;
+
+function _playAlertSound() {
+    // Simple tone using Web Audio API — no external file needed
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gain.gain.value = 0.3;
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.stop(ctx.currentTime + 0.5);
+        // Second tone
+        setTimeout(() => {
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.frequency.value = 1100;
+            osc2.type = 'sine';
+            gain2.gain.value = 0.3;
+            osc2.start();
+            gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc2.stop(ctx.currentTime + 0.5);
+        }, 200);
+    } catch(e) {}
+}
+
+async function pollDedicatedSupport() {
+    if (!window._adminToken) return;
+    try {
+        const r = await fetch('/api/support/tickets');
+        const data = await r.json();
+        const tickets = data.tickets || [];
+
+        // Find open dedicated tickets
+        const dedicated = tickets.filter(t =>
+            t.priority === 'dedicated' && t.status === 'open'
+        );
+
+        // Check for NEW dedicated tickets we haven't seen
+        const newDedicated = dedicated.filter(t => !_lastSeenTicketIds.has(t.id));
+
+        // Update badge on Support tab
+        const badge = document.getElementById('supportBadge');
+        if (dedicated.length > 0) {
+            badge.style.display = 'inline';
+            badge.textContent = dedicated.length;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        // Show alert banner for dedicated tickets
+        const alertBanner = document.getElementById('dedicatedAlert');
+        const alertDetail = document.getElementById('dedicatedAlertDetail');
+        if (dedicated.length > 0) {
+            const latest = dedicated[dedicated.length - 1];
+            alertBanner.style.display = 'block';
+            alertDetail.textContent = `${latest.customer || latest.name || 'Customer'} (${(latest.tier || 'pro').toUpperCase()}) — ${latest.question || latest.subject || 'Needs assistance'}`;
+        } else {
+            alertBanner.style.display = 'none';
+        }
+
+        // Play sound for NEW dedicated tickets
+        if (newDedicated.length > 0) {
+            _playAlertSound();
+        }
+
+        // Remember all current ticket IDs
+        _lastSeenTicketIds = new Set(tickets.map(t => t.id));
+    } catch(e) {
+        // Silently fail — don't break the admin panel
+    }
+}
+
+// Poll every 30 seconds
+setInterval(pollDedicatedSupport, 30000);
+// Initial poll after login
+setTimeout(pollDedicatedSupport, 2000);
 </script>
 <script src="/static/support_widget.js"></script>
 </body>

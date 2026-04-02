@@ -1,7 +1,12 @@
 {
-  "current_version": "0.6.8",
+  "current_version": "0.6.9",
   "released": "2026-04-01",
   "updates": [
+    {
+      "version": "0.6.9",
+      "released": "2026-04-01",
+      "notes": "Speaker labels: THE COURT stays all caps, roles (the clerk, the witness) use proper convention. Counsel handling. Dedicated support alerts in admin dashboard with priority badges and sound notification. Tier-tagged support requests."
+    },
     {
       "version": "0.6.8",
       "released": "2026-04-01",
