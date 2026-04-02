@@ -65,7 +65,7 @@ def _run_update(force=False):
     # Extract safe files only
     import zipfile as _zf
     _safe_prefixes = ("_internal/plugins/", "_internal/static/", "static/", "templates/")
-    _safe_files = ("app.py", "_internal/app.py")
+    _safe_files = ("app.py", "_internal/app.py", "notare.py")
     extracted = 0
     skipped = []
     with _zf.ZipFile(str(tmp), "r") as zf:

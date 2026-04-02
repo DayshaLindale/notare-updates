@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.4",
+  "current_version": "0.7.5",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.7.5",
+      "released": "2026-04-02",
+      "notes": "Remote license validation fallback — keys now validate against server when not in local database. Fixes 'license not valid' for keys generated after install. Auto-caches valid keys locally for offline use."
+    },
     {
       "version": "0.7.4",
       "released": "2026-04-02",
