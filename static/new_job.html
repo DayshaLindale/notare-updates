@@ -14,6 +14,7 @@
             <a href="/static/index.html">Dashboard</a>
             <a href="/static/new_job.html">New Job</a>
             <a href="/static/cases.html">Cases</a>
+            <a href="/static/compare.html">Compare</a>
             <a href="/static/voices.html">Voices</a>
             <a href="/static/profiles.html">Profiles</a>
             <a href="/static/settings.html">Settings</a>
@@ -180,10 +181,10 @@
             <input type="hidden" name="speakers" id="speakersJson" value="[]">
         </div>
 
-        <!-- File Uploads — side by side -->
+        <!-- File Uploads — three columns -->
         <div class="card">
             <h3>5. Files</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                     <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" style="padding: 24px;">
                         <div class="icon" style="font-size: 28px;">&#127908;</div>
@@ -192,6 +193,21 @@
                     </div>
                     <input type="file" id="fileInput" name="files" multiple accept=".wav,.mp3,.m4a,.aac,.flac,.trm,.mp4,.webm" style="display: none;" onchange="handleFiles(this.files)">
                     <div id="fileList"></div>
+                    <!-- Multi-channel mapping — shown when WAV has multiple channels -->
+                    <div id="channelMapPanel" style="display:none; margin-top:12px; padding:12px 16px; background:var(--gold-soft); border:1px solid var(--border); border-radius:var(--radius);">
+                        <div style="font-size:12px; font-weight:600; color:var(--text-dark); margin-bottom:8px;">Multi-Channel Audio Detected</div>
+                        <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">Each channel represents a microphone. Assign a speaker to each channel for automatic speaker separation.</p>
+                        <div id="channelMapRows"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="upload-zone" id="meetingDropZone" onclick="document.getElementById('meetingInput').click()" style="padding: 24px;">
+                        <div class="icon" style="font-size: 28px;">&#127909;</div>
+                        <p><strong>Meeting Recording</strong></p>
+                        <p style="font-size: 11px; color: var(--text-dim);">Zoom / Teams / WebEx per-speaker files</p>
+                    </div>
+                    <input type="file" id="meetingInput" multiple accept=".m4a,.wav,.mp3,.mp4,.aac,.flac" style="display: none;" onchange="handleMeetingFiles(this.files)">
+                    <div id="meetingFileList" style="font-size: 12px; margin-top: 6px;"></div>
                 </div>
                 <div>
                     <div class="upload-zone" id="docDropZone" onclick="document.getElementById('caseDocInput').click()" style="padding: 24px;">
@@ -387,10 +403,72 @@
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
     dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
 
+    // Meeting recording drop zone
+    const meetingDropZone = document.getElementById('meetingDropZone');
+    meetingDropZone.addEventListener('dragover', e => { e.preventDefault(); meetingDropZone.classList.add('dragover'); });
+    meetingDropZone.addEventListener('dragleave', () => meetingDropZone.classList.remove('dragover'));
+    meetingDropZone.addEventListener('drop', e => { e.preventDefault(); meetingDropZone.classList.remove('dragover'); handleMeetingFiles(e.dataTransfer.files); });
+
+    function handleMeetingFiles(files) {
+        // Meeting recordings have one file per speaker
+        // Zoom: "Audio Record - Speaker Name.m4a" or "audio_only_Speaker Name.m4a"
+        // Teams: "Recording - Speaker Name.mp4"
+        // Extract speaker names from filenames and add as regular audio files + auto-populate speakers
+
+        const dt = new DataTransfer();
+        for (const f of uploadedFiles) dt.items.add(f);
+
+        const extractedSpeakers = [];
+        let html = '';
+
+        for (const f of files) {
+            uploadedFiles.push(f);
+            dt.items.add(f);
+
+            // Extract speaker name from filename
+            let name = f.name.replace(/\.[^.]+$/, ''); // strip extension
+            // Zoom patterns
+            name = name.replace(/^Audio Record\s*-\s*/i, '');
+            name = name.replace(/^audio_only_?/i, '');
+            name = name.replace(/^Recording\s*-\s*/i, '');
+            // Clean up underscores and extra whitespace
+            name = name.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+            // Skip generic names
+            if (name && !/^(audio|video|recording|zoom|teams|meeting|\d+)$/i.test(name)) {
+                extractedSpeakers.push(name);
+                html += `<div style="color: var(--green); margin-top: 4px;">&#10003; ${name} &mdash; ${f.name}</div>`;
+            } else {
+                html += `<div style="color: var(--amber); margin-top: 4px;">&#9888; ${f.name} (no speaker name detected)</div>`;
+            }
+        }
+
+        document.getElementById('fileInput').files = dt.files;
+        document.getElementById('meetingFileList').innerHTML = html;
+        document.getElementById('fileList').innerHTML = uploadedFiles.map((f, i) =>
+            `<div class="file-item"><span>${f.name} (${(f.size/1024/1024).toFixed(1)} MB)</span></div>`
+        ).join('');
+
+        // Auto-populate speaker table from extracted names
+        if (extractedSpeakers.length > 0) {
+            const existingNames = Array.from(document.querySelectorAll('.spk-name')).map(el => el.value.trim().toLowerCase());
+            for (const spkName of extractedSpeakers) {
+                if (!existingNames.includes(spkName.toLowerCase())) {
+                    addSpeaker();
+                    const rows = document.querySelectorAll('.spk-row');
+                    const lastRow = rows[rows.length - 1];
+                    lastRow.querySelector('.spk-name').value = spkName;
+                    existingNames.push(spkName.toLowerCase());
+                }
+            }
+        }
+    }
+
     const docDropZone = document.getElementById('docDropZone');
     docDropZone.addEventListener('dragover', e => { e.preventDefault(); docDropZone.classList.add('dragover'); });
     docDropZone.addEventListener('dragleave', () => docDropZone.classList.remove('dragover'));
     docDropZone.addEventListener('drop', e => { e.preventDefault(); docDropZone.classList.remove('dragover'); uploadCaseDocs(e.dataTransfer.files); });
+
+    let detectedChannels = 0;
 
     function handleFiles(files) {
         const dt = new DataTransfer();
@@ -400,6 +478,54 @@
         document.getElementById('fileList').innerHTML = uploadedFiles.map((f, i) =>
             `<div class="file-item"><span>${f.name} (${(f.size/1024/1024).toFixed(1)} MB)</span></div>`
         ).join('');
+
+        // Check for multi-channel WAV — detect after a short delay to let UI settle
+        const wavFile = uploadedFiles.find(f => f.name.toLowerCase().endsWith('.wav'));
+        if (wavFile) {
+            _detectChannels(wavFile);
+        } else {
+            document.getElementById('channelMapPanel').style.display = 'none';
+            detectedChannels = 0;
+        }
+    }
+
+    async function _detectChannels(wavFile) {
+        // Read the WAV header to detect channel count (client-side)
+        try {
+            const buf = await wavFile.slice(0, 44).arrayBuffer();
+            const view = new DataView(buf);
+            // WAV header: bytes 22-23 = numChannels (little-endian uint16)
+            const numChannels = view.getUint16(22, true);
+            detectedChannels = numChannels;
+            if (numChannels > 1) {
+                _showChannelMap(numChannels);
+            } else {
+                document.getElementById('channelMapPanel').style.display = 'none';
+            }
+        } catch(e) {
+            console.log('Channel detection failed:', e);
+            document.getElementById('channelMapPanel').style.display = 'none';
+            detectedChannels = 0;
+        }
+    }
+
+    function _showChannelMap(numChannels) {
+        const panel = document.getElementById('channelMapPanel');
+        const rows = document.getElementById('channelMapRows');
+        const commonRoles = ['THE COURT', 'the Witness', 'Counsel', 'the Clerk', 'the Interpreter', ''];
+        let html = '';
+        for (let i = 0; i < numChannels; i++) {
+            html += `<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                <span style="font-size:12px; color:var(--text-muted); min-width:70px;">Channel ${i + 1}:</span>
+                <input type="text" class="channel-label" data-ch="${i}" placeholder="e.g. THE COURT, the Witness"
+                    style="flex:1; padding:6px 10px; font-size:13px; border:1px solid var(--border); border-radius:4px;"
+                    list="commonRoles" value="${commonRoles[i] || ''}">
+            </div>`;
+        }
+        html += '<datalist id="commonRoles"><option value="THE COURT"><option value="the Witness"><option value="Counsel"><option value="the Clerk"><option value="the Interpreter"><option value="the Defendant"><option value="the Plaintiff"></datalist>';
+        html += '<p style="font-size:10px; color:var(--text-dim); margin-top:6px;">Channels without labels will be named "Channel 1", "Channel 2", etc.</p>';
+        rows.innerHTML = html;
+        panel.style.display = 'block';
     }
 
     // Load profiles and wire up selection
@@ -457,7 +583,28 @@
 
         const resp = await fetch('/api/job/create', { method: 'POST', body: form });
         const data = await resp.json();
+        if (data.status === 'upgrade_required') {
+            alert(data.message + '\n\nUpgrade at notarelegal.com to access this feature.');
+            return;
+        }
         if (data.job_id) {
+            // Send channel labels if multi-channel was detected
+            if (detectedChannels > 1) {
+                const labels = {};
+                document.querySelectorAll('.channel-label').forEach(input => {
+                    const ch = input.dataset.ch;
+                    const label = input.value.trim();
+                    if (label) labels[ch] = label;
+                });
+                if (Object.keys(labels).length > 0) {
+                    await fetch(`/api/job/${data.job_id}/channel-labels`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ labels }),
+                    });
+                }
+            }
+
             if (mode === 'A' || mode === 'B' || mode === 'C') {
                 // Live modes — go to live capture page
                 window.location = `/static/live.html?id=${data.job_id}&mode=${mode}`;

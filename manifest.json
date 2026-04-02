@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.1",
+  "current_version": "0.7.2",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.7.2",
+      "released": "2026-04-02",
+      "notes": "Multi-channel audio pipeline: upload FTR Manager WAV exports, map channels to speakers (THE COURT, the Witness, etc.), per-channel transcription. Honest TRM rejection — proprietary format requires pre-export. Channel mapping UI in job setup."
+    },
     {
       "version": "0.7.1",
       "released": "2026-04-02",
