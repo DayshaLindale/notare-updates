@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.9",
+  "current_version": "0.8.0",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.8.0",
+      "released": "2026-04-03",
+      "notes": "Per-channel progress updates during multi-channel transcription. No more frozen progress bar."
+    },
     {
       "version": "0.7.9",
       "released": "2026-04-03",
