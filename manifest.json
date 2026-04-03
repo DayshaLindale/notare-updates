@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.6",
+  "current_version": "0.7.7",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.7.7",
+      "released": "2026-04-03",
+      "notes": "Fix: reanalyze speakers 500 error on customer machines. Pyannote import catches all exceptions, not just ImportError. Tested on staging before shipping."
+    },
     {
       "version": "0.7.6",
       "released": "2026-04-02",
@@ -10,7 +15,7 @@
     {
       "version": "0.7.5",
       "released": "2026-04-02",
-      "notes": "Remote license validation fallback — keys now validate against server when not in local database. Fixes 'license not valid' for keys generated after install. Auto-caches valid keys locally for offline use."
+      "notes": "Remote license validation fallback \u00e2\u20ac\u201d keys now validate against server when not in local database. Fixes 'license not valid' for keys generated after install. Auto-caches valid keys locally for offline use."
     },
     {
       "version": "0.7.4",
@@ -25,7 +30,7 @@
     {
       "version": "0.7.2",
       "released": "2026-04-02",
-      "notes": "Multi-channel audio pipeline: upload FTR Manager WAV exports, map channels to speakers (THE COURT, the Witness, etc.), per-channel transcription. Honest TRM rejection — proprietary format requires pre-export. Channel mapping UI in job setup."
+      "notes": "Multi-channel audio pipeline: upload FTR Manager WAV exports, map channels to speakers (THE COURT, the Witness, etc.), per-channel transcription. Honest TRM rejection \u00e2\u20ac\u201d proprietary format requires pre-export. Channel mapping UI in job setup."
     },
     {
       "version": "0.7.1",
