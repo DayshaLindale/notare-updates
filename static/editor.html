@@ -481,6 +481,9 @@
                     <span style="font-size: 14px; line-height: 1;">&#9998;</span> Compare / Redline
                 </button>
                 <input type="file" id="redlineFileInput" accept=".docx,.txt,.pdf" style="display:none;" onchange="uploadRedline(this.files[0])">
+                <button onclick="openInWord()" id="wordLiveBtn" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" title="Open transcript in Microsoft Word using your template">
+                    <span style="font-size: 14px; line-height: 1;">&#128196;</span> Open in Word
+                </button>
             </div>
         </div>`;
         // Build map of flagged segment indices to their flag type for coloring
@@ -621,6 +624,38 @@
                 clearInterval(poll);
             }
         }, 3000);
+    }
+
+    async function openInWord() {
+        const btn = document.getElementById('wordLiveBtn');
+        btn.disabled = true;
+        btn.textContent = 'Opening Word...';
+        try {
+            const resp = await fetch(`/api/job/${JOB_ID}/word-live/start`, { method: 'POST' });
+            const data = await resp.json();
+            if (data.ok) {
+                btn.textContent = 'Word Active';
+                btn.style.background = 'var(--green)';
+                btn.style.color = 'white';
+                // Feed existing transcript to Word
+                const transcript = jobData?.transcript?.segments || [];
+                if (transcript.length > 0) {
+                    await fetch(`/api/job/${JOB_ID}/word-live/feed`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ segments: transcript }),
+                    });
+                }
+            } else {
+                alert(data.error || 'Could not open Word');
+                btn.textContent = 'Open in Word';
+                btn.disabled = false;
+            }
+        } catch (e) {
+            alert('Word Live error: ' + e.message);
+            btn.textContent = 'Open in Word';
+            btn.disabled = false;
+        }
     }
 
     async function reanalyzeSpeakers() {

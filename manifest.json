@@ -1,7 +1,12 @@
 {
-  "current_version": "0.8.0",
+  "current_version": "0.8.1",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.8.1",
+      "released": "2026-04-03",
+      "notes": "Word Live: real-time transcription directly into Microsoft Word. Open in Word button in editor. Works with all 4 capture modes. Falls back to built-in editor when Word not available."
+    },
     {
       "version": "0.8.0",
       "released": "2026-04-03",
