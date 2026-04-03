@@ -1,7 +1,12 @@
 {
-  "current_version": "0.7.8",
+  "current_version": "0.7.9",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.7.9",
+      "released": "2026-04-03",
+      "notes": "Fix pyannote_status endpoint crash (FileNotFoundError). Re-enable TRM processing. Tested on staging."
+    },
     {
       "version": "0.7.8",
       "released": "2026-04-03",
