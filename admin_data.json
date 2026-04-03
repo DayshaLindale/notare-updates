@@ -124,6 +124,13 @@
       "expires": "",
       "notes": "First external tester. Non-expiring Professional access in exchange for testing and testimonial.",
       "tester": true
+    },
+    {
+      "key": "NOTARE-29E58817-D65A3EC7-3B3B9FC5",
+      "tier": "professional",
+      "customer_name": "Laptop Test",
+      "status": "active",
+      "expires": ""
     }
   ],
   "tokens": {
