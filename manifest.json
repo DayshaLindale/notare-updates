@@ -1,7 +1,12 @@
 {
-  "current_version": "0.8.2",
+  "current_version": "0.8.3",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.8.3",
+      "released": "2026-04-03",
+      "notes": "Fix reanalyze freeze at completion. Guaranteed final status message so frontend never hangs."
+    },
     {
       "version": "0.8.2",
       "released": "2026-04-03",
