@@ -1,7 +1,12 @@
 {
-  "current_version": "0.8.1",
+  "current_version": "0.8.2",
   "released": "2026-04-02",
   "updates": [
+    {
+      "version": "0.8.2",
+      "released": "2026-04-03",
+      "notes": "Multi-channel cross-talk deduplication (4-layer: noise floor, energy dominance, text dedup, cross-talk flagging). Word Live detection improved \u2014 registry, file path, and COM fallbacks."
+    },
     {
       "version": "0.8.1",
       "released": "2026-04-03",
