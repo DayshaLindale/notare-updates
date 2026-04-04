@@ -1,7 +1,37 @@
 {
-  "current_version": "0.9.1",
+  "current_version": "1.0.0",
   "released": "2026-04-04",
   "updates": [
+    {
+      "version": "0.9.9",
+      "released": "2026-04-04",
+      "notes": "ARCHITECTURE FIX: Preview endpoint moved to plugin (loaded from disk via exec). Frozen exe cannot load OTA-patched app.py — only plugins and static files are patchable. Preview pane, profile merge, scroll fix, Word button removal all now delivered correctly."
+    },
+    {
+      "version": "0.9.8",
+      "released": "2026-04-04",
+      "notes": "OTA fix: static files now patched at both serve path (static/) and bundle path (_internal/static/). Previous OTA patches were writing to _internal only — the server reads from static/. All preview + UI fixes now actually reach the browser."
+    },
+    {
+      "version": "0.9.7",
+      "released": "2026-04-04",
+      "notes": "Removed Open in Word button (preview + export covers this). Preview profile merge and scroll fixes now active."
+    },
+    {
+      "version": "0.9.6",
+      "released": "2026-04-04",
+      "notes": "Preview fix for existing jobs: auto-applies current profile even when job was created before profile system. Eliminates double-load on preview open — loads once, then only refreshes on content changes."
+    },
+    {
+      "version": "0.9.5",
+      "released": "2026-04-04",
+      "notes": "Preview pane fix: loads current jurisdiction profile (template formatting, logos, headers). Smart refresh — only reloads when transcript content changes, no more scroll jumping."
+    },
+    {
+      "version": "0.9.4",
+      "released": "2026-04-04",
+      "notes": "Live preview pane uses actual PDF export engine — shows real template formatting (ccColloquy, ccQandA styles, line numbering, headers/footers). HTML fallback if PDF generation fails."
+    },
     {
       "version": "0.9.0",
       "released": "2026-04-03",
