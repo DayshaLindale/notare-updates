@@ -1,7 +1,17 @@
 {
-  "current_version": "1.0.0",
+  "current_version": "1.0.4",
   "released": "2026-04-04",
   "updates": [
+    {
+      "version": "1.0.4",
+      "released": "2026-04-04",
+      "notes": "Fix pyannote subprocess on machines where Python install path differs from build machine (pyvenv.cfg relocatability patch). Fix whisper_local plugin crash when WhisperModel class location varies by version."
+    },
+    {
+      "version": "1.0.1",
+      "released": "2026-04-04",
+      "notes": "Preview pane uses actual Word template: generates docx with your profile's template (.dotm/.docx), converts to PDF via Word COM. Template-agnostic — whatever template you upload is what you see."
+    },
     {
       "version": "0.9.9",
       "released": "2026-04-04",
@@ -90,7 +100,7 @@
     {
       "version": "0.7.3",
       "released": "2026-04-02",
-      "notes": "FTR .htm log parser: auto-fills judge, case number, defendant, hearing type, date, location. Channel label suggestions from log data. Per-channel transcription respects user engine choice (AssemblyAI/Whisper). Whisper path multi-channel detection. Aurora Shield and Macaria Legacy plugins fixed."
+      "notes": "FTR .htm log parser: auto-fills judge, case number, defendant, hearing type, date, location. Channel label suggestions from log data. Per-channel transcription respects user engine choice (AssemblyAI/Whisper). Whisper path multi-channel detection. Internal plugins fixed."
     },
     {
       "version": "0.7.2",
