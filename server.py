@@ -121,7 +121,7 @@ async def validate_key(key: str = ""):
     try:
         admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
         for lic in admin_data.get("licenses", []):
-            if lic.get("key") == key and lic.get("status") == "active":
+            if lic.get("key", "").upper() == key.upper() and lic.get("status") == "active":
                 exp = lic.get("expires", "")
                 if exp and exp != "":
                     from datetime import datetime
@@ -157,7 +157,7 @@ async def validate_license_post(request: Request):
     try:
         admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
         for lic in admin_data.get("licenses", []):
-            if lic.get("key") == key and lic.get("status") == "active":
+            if lic.get("key", "").upper() == key.upper() and lic.get("status") == "active":
                 exp = lic.get("expires", "")
                 if exp and exp != "":
                     from datetime import datetime as _dt
