@@ -1,7 +1,12 @@
 {
-  "current_version": "0.8.3",
-  "released": "2026-04-02",
+  "current_version": "0.9.0",
+  "released": "2026-04-03",
   "updates": [
+    {
+      "version": "0.9.0",
+      "released": "2026-04-03",
+      "notes": "Smart installer support: manifest-based pyannote env discovery, installer GPU/CPU env detection, OTA-safe install_manifest.json, improved pyannote/whisper bootstrap."
+    },
     {
       "version": "0.8.3",
       "released": "2026-04-03",

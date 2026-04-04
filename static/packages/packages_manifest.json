@@ -1,0 +1,18 @@
+{
+  "packages": {
+    "cpu-pyannote": {
+      "version": "v1",
+      "url": "/static/packages/notare-cpu-pyannote-v1.zip",
+      "sha256": "pending",
+      "size_bytes": 0,
+      "description": "Enhanced speaker diarization (CPU)"
+    },
+    "gpu-pyannote": {
+      "version": "v1",
+      "url": "/static/packages/notare-gpu-pyannote-v1.zip",
+      "sha256": "pending",
+      "size_bytes": 0,
+      "description": "GPU-accelerated transcription + diarization"
+    }
+  }
+}
