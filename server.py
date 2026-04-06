@@ -331,8 +331,8 @@ async def download_installer():
     """Redirect to the installer download. User sees notarelegal.com URL, gets the file from GitHub."""
     from fastapi.responses import RedirectResponse
     return RedirectResponse(
-        "https://github.com/DayshaLindale/notare-updates/releases/download/v1.0.0/NotareSetup_v1.0.0.exe",
-        # v1.0.0: Disk-loaded app.py for reliable OTA, preview pane, profile merge, all fixes
+        "https://github.com/DayshaLindale/notare-updates/releases/download/v1.2.0/NotareSetup_v1.2.0.exe",
+        # v1.2.0: Complete audio fix — assemblyai bundled, local whisper, engine failover, error handling
         status_code=302,
     )
 
