@@ -1,13 +1,12 @@
 {
-  "current_version": "1.2.1",
+  "current_version": "1.2.2",
   "released": "2026-04-06",
   "updates": [
     {
-      "version": "1.2.1",
+      "version": "1.2.2",
       "released": "2026-04-06",
-      "size": 244233,
-      "checksum": "077fdd51aad2b1ac73b837e694a43f2b13d4fd4330ab0c7510e871e705692f5e",
-      "notes": "DLL path fix for frozen exe whisper"
+      "size": 244523,
+      "checksum": "ca5eba86ff48eee8b1431964fdd720dfeda89f40796bda3d458465b796b2fa18"
     }
   ]
 }
