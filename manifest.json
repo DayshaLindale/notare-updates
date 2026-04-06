@@ -1,12 +1,12 @@
 {
-  "current_version": "1.2.5",
+  "current_version": "1.2.6",
   "released": "2026-04-06",
   "updates": [
     {
-      "version": "1.2.5",
+      "version": "1.2.6",
       "released": "2026-04-06",
-      "size": 290924,
-      "checksum": "60ee737254b69451f3b14c34d30642c2196bfa52eb5bb1cf5e2553c4b66d910a"
+      "size": 292022,
+      "checksum": "ae79e6dfa141a3c2d6f612e5c8cab7aaa74b71897769457a252fe26c58e101c0"
     }
   ]
 }
