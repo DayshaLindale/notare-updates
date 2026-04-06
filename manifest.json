@@ -1,13 +1,13 @@
 {
-  "current_version": "1.2.0",
+  "current_version": "1.2.1",
   "released": "2026-04-06",
   "updates": [
     {
-      "version": "1.2.0",
+      "version": "1.2.1",
       "released": "2026-04-06",
-      "size": 43913,
-      "checksum": "f418438499e5cf1935b28cc9651a0cdc1683000dab0c7b9e48e9930ea30332b3",
-      "notes": "Complete audio fix: assemblyai bundled, local whisper, engine failover, error handling"
+      "size": 244233,
+      "checksum": "077fdd51aad2b1ac73b837e694a43f2b13d4fd4330ab0c7510e871e705692f5e",
+      "notes": "DLL path fix for frozen exe whisper"
     }
   ]
 }
