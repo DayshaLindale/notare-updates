@@ -1,12 +1,12 @@
 {
-  "current_version": "1.3.2",
+  "current_version": "1.3.3",
   "released": "2026-04-07",
   "updates": [
     {
-      "version": "1.3.2",
+      "version": "1.3.3",
       "released": "2026-04-07",
-      "size": 293586,
-      "checksum": "9fc594bcfcfbc907130c2c8b2c114b5b1a664b850f8f67cd37b91d351be18229"
+      "size": 293395,
+      "checksum": "35c714297fedef4a878ee92cd3e1b7fa9b5f37b6669abcfe02cbf895487fa1bc"
     }
   ]
 }
