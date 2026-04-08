@@ -1,7 +1,13 @@
 {
-  "current_version": "1.5.4",
+  "current_version": "1.5.5",
   "released": "2026-04-08",
   "updates": [
+    {
+      "version": "1.5.5",
+      "released": "2026-04-08",
+      "size": 163030,
+      "checksum": "31a24711631647c3d3cf79ee4af7f057da359419315fd30d9ce646613d726625"
+    },
     {
       "version": "1.5.4",
       "released": "2026-04-08",
