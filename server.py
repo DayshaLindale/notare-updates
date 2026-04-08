@@ -326,6 +326,109 @@ async def share_pull(code: str):
     })
 
 
+# ---------------------------------------------------------------------------
+# Proof Config Delivery — encrypted configs served per license key
+# Configs are stored server-side in proof_configs/{config_key}_{key_hash}.npc
+# Client pulls only configs encrypted for their key
+# ---------------------------------------------------------------------------
+
+PROOF_CONFIG_DIR = BASE_DIR / "proof_configs"
+PROOF_CONFIG_DIR.mkdir(exist_ok=True)
+
+
+@app.post("/api/proof-configs/push")
+async def push_proof_config(request: Request):
+    """Admin pushes an encrypted proof config for a specific license key.
+
+    Body: {
+        "config_key": "depo_direct",
+        "license_key": "TARGET_KEY",
+        "encrypted_data": "base64-encoded encrypted config blob"
+    }
+    """
+    auth = request.headers.get("Authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data = await request.json()
+    config_key = data.get("config_key", "")
+    license_key = data.get("license_key", "")
+    encrypted_data = data.get("encrypted_data", "")
+
+    if not config_key or not license_key or not encrypted_data:
+        return JSONResponse({"error": "config_key, license_key, and encrypted_data required"}, status_code=400)
+
+    # Store with key hash so we can look up by key without exposing it
+    key_hash = hashlib.sha256(license_key.upper().encode()).hexdigest()[:16]
+    filename = f"{config_key}_{key_hash}.npc"
+    (PROOF_CONFIG_DIR / filename).write_text(encrypted_data, encoding="utf-8")
+
+    return JSONResponse({
+        "ok": True,
+        "config_key": config_key,
+        "key_hash": key_hash,
+        "filename": filename,
+    })
+
+
+@app.get("/api/proof-configs/pull")
+async def pull_proof_configs(key: str = ""):
+    """Client pulls all proof configs assigned to their license key.
+
+    Returns list of {config_key, encrypted_data} — client decrypts locally.
+    Server never sees the decryption key (it's the license key itself).
+    """
+    if not key:
+        return JSONResponse({"configs": []})
+
+    key_hash = hashlib.sha256(key.upper().encode()).hexdigest()[:16]
+    configs = []
+
+    for f in PROOF_CONFIG_DIR.glob(f"*_{key_hash}.npc"):
+        config_key = f.stem.rsplit("_", 1)[0]
+        encrypted_data = f.read_text(encoding="utf-8")
+        configs.append({
+            "config_key": config_key,
+            "encrypted_data": encrypted_data,
+        })
+
+    return JSONResponse({"configs": configs, "count": len(configs)})
+
+
+@app.delete("/api/proof-configs/{config_key}/{key_hash}")
+async def delete_proof_config(config_key: str, key_hash: str, request: Request):
+    """Admin removes a proof config assignment."""
+    auth = request.headers.get("Authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    filename = f"{config_key}_{key_hash}.npc"
+    target = PROOF_CONFIG_DIR / filename
+    if target.exists():
+        target.unlink()
+        return JSONResponse({"ok": True, "deleted": filename})
+    return JSONResponse({"error": "Not found"}, status_code=404)
+
+
+@app.get("/api/proof-configs/list-all")
+async def list_all_proof_configs(request: Request):
+    """Admin lists all proof config assignments."""
+    auth = request.headers.get("Authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    configs = []
+    for f in sorted(PROOF_CONFIG_DIR.glob("*.npc")):
+        parts = f.stem.rsplit("_", 1)
+        configs.append({
+            "config_key": parts[0] if len(parts) > 1 else f.stem,
+            "key_hash": parts[1] if len(parts) > 1 else "",
+            "filename": f.name,
+            "size": f.stat().st_size,
+        })
+    return JSONResponse({"configs": configs, "total": len(configs)})
+
+
 @app.get("/api/download-installer")
 async def download_installer():
     """Redirect to the installer download. User sees notarelegal.com URL, gets the file from GitHub."""
