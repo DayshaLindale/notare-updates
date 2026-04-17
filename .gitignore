@@ -1,2 +1,6 @@
 static/NotareSetup_v0.3.0.exe
 # trigger rebuild
+
+.secrets/
+*.secrets
+admin_key*

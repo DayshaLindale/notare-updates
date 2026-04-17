@@ -16,6 +16,7 @@ import hashlib
 import json
 import os
 import shutil
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -32,7 +33,12 @@ UPDATES_DIR = BASE_DIR / "packages"
 MANIFEST_FILE = BASE_DIR / "manifest.json"
 UPDATES_DIR.mkdir(exist_ok=True)
 
-ADMIN_KEY = os.environ.get("ADMIN_KEY", "notare-update-admin-2026")
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
+if not ADMIN_KEY:
+    import secrets
+    ADMIN_KEY = secrets.token_hex(32)
+    print(f"WARNING: No ADMIN_KEY set in environment. Generated temporary: {ADMIN_KEY[:16]}...")
+    print("Set ADMIN_KEY in your hosting environment variables for persistence.")
 
 app = FastAPI(title="Notare Update Server", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -141,10 +147,15 @@ async def validate_key(key: str = ""):
 
 @app.post("/api/validate-license")
 async def validate_license_post(request: Request):
-    """POST-based license validation — used by notare.py remote fallback."""
+    """POST-based license validation with hardware binding.
+
+    First activation: server records machine_id. Subsequent validations must
+    match. Key works on one machine only. Deactivation releases the binding.
+    """
     try:
         data = await request.json()
         key = data.get("key", "")
+        machine_id = data.get("machine_id", "")  # Client sends hashed hardware ID
     except Exception:
         return JSONResponse({"valid": False, "reason": "bad_request"})
     if not key:
@@ -156,23 +167,80 @@ async def validate_license_post(request: Request):
 
     try:
         admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
+        save_needed = False
+
         for lic in admin_data.get("licenses", []):
-            if lic.get("key", "").upper() == key.upper() and lic.get("status") == "active":
-                exp = lic.get("expires", "")
-                if exp and exp != "":
-                    from datetime import datetime as _dt
-                    if exp < _dt.now().strftime("%Y-%m-%d"):
-                        return JSONResponse({"valid": False, "reason": "expired"})
-                return JSONResponse({
-                    "valid": True,
-                    "tier": lic.get("tier", "solo"),
-                    "expires": lic.get("expires", ""),
-                    "customer": lic.get("customer_name", ""),
-                })
+            if lic.get("key", "").upper() != key.upper():
+                continue
+            if lic.get("status") != "active":
+                return JSONResponse({"valid": False, "reason": "inactive"})
+
+            # Check expiration
+            exp = lic.get("expires", "")
+            if exp and exp != "":
+                if exp < datetime.now().strftime("%Y-%m-%d"):
+                    return JSONResponse({"valid": False, "reason": "expired"})
+
+            # Hardware binding
+            bound_machine = lic.get("machine_id", "")
+            if machine_id:
+                if not bound_machine:
+                    # First activation — bind to this machine
+                    lic["machine_id"] = machine_id
+                    lic["activated_at"] = datetime.now().isoformat()
+                    save_needed = True
+                elif bound_machine != machine_id:
+                    # Already bound to a different machine
+                    return JSONResponse({
+                        "valid": False,
+                        "reason": "wrong_machine",
+                        "message": "This key is activated on another computer. Contact support to transfer.",
+                    })
+
+            if save_needed:
+                admin_file.write_text(json.dumps(admin_data, indent=2), encoding="utf-8")
+
+            return JSONResponse({
+                "valid": True,
+                "tier": lic.get("tier", "solo"),
+                "expires": lic.get("expires", ""),
+                "customer": lic.get("customer_name", ""),
+                "bound": bool(lic.get("machine_id")),
+            })
     except Exception:
         pass
 
     return JSONResponse({"valid": False, "reason": "invalid_key"})
+
+
+@app.post("/api/license/deactivate")
+async def deactivate_license(request: Request):
+    """Admin: release a license's machine binding for transfer to new computer."""
+    auth = request.headers.get("authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data = await request.json()
+    key = data.get("key", "").upper()
+    if not key:
+        return JSONResponse({"error": "No key provided"}, status_code=400)
+
+    admin_file = BASE_DIR / "admin_data.json"
+    try:
+        admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
+        for lic in admin_data.get("licenses", []):
+            if lic.get("key", "").upper() == key:
+                old_machine = lic.pop("machine_id", None)
+                lic.pop("activated_at", None)
+                admin_file.write_text(json.dumps(admin_data, indent=2), encoding="utf-8")
+                return JSONResponse({
+                    "ok": True,
+                    "message": f"Binding released for {lic.get('customer_name', key[:8])}",
+                    "previous_machine": old_machine,
+                })
+        return JSONResponse({"error": "Key not found"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 # ---------------------------------------------------------------------------
@@ -567,10 +635,26 @@ HEALTH_DIR.mkdir(exist_ok=True)
 
 @app.post("/api/telemetry/health")
 async def receive_health_report(request: Request):
-    """Receive health digest from a client. No personal data — just error types and fix rates."""
+    """Receive health digest from a client. Rate-limited, size-limited, validated."""
     try:
-        report = await request.json()
+        # Rate limit: max 10KB per report, reject oversized
+        body = await request.body()
+        if len(body) > 10240:
+            return JSONResponse({"ok": False, "error": "report too large"}, status_code=413)
+        report = json.loads(body)
+
+        # Validate structure — must have profile and event_types
+        if not isinstance(report.get("profile"), dict) or not isinstance(report.get("event_types"), dict):
+            return JSONResponse({"ok": False, "error": "invalid format"}, status_code=400)
+
         machine = report.get("profile", {}).get("machine", "unknown")
+        # Rate limit: max 1 report per machine per hour
+        existing = list(HEALTH_DIR.glob(f"{machine}_*.json"))
+        if existing:
+            latest = max(existing, key=lambda p: p.stat().st_mtime)
+            age = time.time() - latest.stat().st_mtime
+            if age < 3600:
+                return JSONResponse({"ok": True, "throttled": True})
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save report
