@@ -559,6 +559,80 @@ async def health():
 
 
 # ---------------------------------------------------------------------------
+# Fleet Health Telemetry — clients report issues, we see patterns
+# ---------------------------------------------------------------------------
+
+HEALTH_DIR = Path(os.environ.get("HEALTH_DIR", "health_reports"))
+HEALTH_DIR.mkdir(exist_ok=True)
+
+@app.post("/api/telemetry/health")
+async def receive_health_report(request: Request):
+    """Receive health digest from a client. No personal data — just error types and fix rates."""
+    try:
+        report = await request.json()
+        machine = report.get("profile", {}).get("machine", "unknown")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Save report
+        report_path = HEALTH_DIR / f"{machine}_{timestamp}.json"
+        with open(report_path, "w") as f:
+            json.dump(report, f, indent=2)
+
+        # Check for fleet-wide patterns — if multiple machines report the same error
+        recent_reports = sorted(HEALTH_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime)[-50:]
+        error_types = {}
+        for rp in recent_reports:
+            try:
+                r = json.loads(rp.read_text(encoding='utf-8'))
+                for etype, count in r.get("event_types", {}).items():
+                    error_types[etype] = error_types.get(etype, 0) + count
+            except:
+                pass
+
+        # Flag patterns affecting multiple machines
+        fleet_issues = {k: v for k, v in error_types.items() if v >= 3}
+
+        return JSONResponse({
+            "ok": True,
+            "fleet_issues": fleet_issues if fleet_issues else None,
+        })
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+@app.get("/api/telemetry/fleet")
+async def fleet_health(authorization: str = Header(None)):
+    """Admin: see fleet-wide health patterns."""
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    reports = sorted(HEALTH_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime)[-100:]
+    machines = set()
+    all_errors = {}
+    total_fixes = 0
+    total_failed = 0
+
+    for rp in reports:
+        try:
+            r = json.loads(rp.read_text(encoding='utf-8'))
+            machines.add(r.get("profile", {}).get("machine", "?"))
+            for etype, count in r.get("event_types", {}).items():
+                all_errors[etype] = all_errors.get(etype, 0) + count
+            total_fixes += r.get("fixes_applied", 0)
+            total_failed += r.get("fixes_failed", 0)
+        except:
+            pass
+
+    return JSONResponse({
+        "machines": len(machines),
+        "reports": len(reports),
+        "error_types": all_errors,
+        "auto_fixes": total_fixes,
+        "unresolved": total_failed,
+        "fix_rate": round(total_fixes / max(total_fixes + total_failed, 1) * 100, 1),
+    })
+
+
+# ---------------------------------------------------------------------------
 # Support ticket relay (clients push tickets here, support users poll here)
 # ---------------------------------------------------------------------------
 
