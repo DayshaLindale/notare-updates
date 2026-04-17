@@ -94,6 +94,7 @@
         <a href="#" onclick="showTab('referrals', this)">Referrals</a>
         <a href="#" onclick="showTab('support', this)">Support <span id="supportBadge" style="display:none;background:#b84040;color:white;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;">0</span></a>
         <a href="#" onclick="showTab('system', this)">System</a>
+        <a href="#" onclick="showTab('fleet', this)">Fleet Health</a>
     </div>
 
     <!-- Dedicated Support Alert Banner -->
@@ -253,7 +254,7 @@
                     <tbody>
                         <tr>
                             <td><strong>Master / Enterprise</strong></td>
-                            <td>Company owners (Terry, Elizabeth), internal staff</td>
+                            <td>Company owners, internal staff</td>
                             <td>Full app access, all features unlocked regardless of tier, never expires, can access admin panel</td>
                             <td>Nothing — unrestricted</td>
                         </tr>
@@ -295,7 +296,7 @@
                         <tr>
                             <td><strong>Admin</strong></td>
                             <td>Full access: generate/deactivate licenses, manage customers, read contacts, create/remove admin accounts, system settings</td>
-                            <td>Terry (engineering and support), Elizabeth (product and licensing). Can create other admin and support accounts.</td>
+                            <td>Primary administrators. Can create other admin and support accounts.</td>
                         </tr>
                         <tr>
                             <td><strong>Support</strong></td>
@@ -429,6 +430,34 @@
             <div class="card">
                 <h3>Server Info</h3>
                 <div style="font-size: 13px; color: #6b6b7b; line-height: 2;" id="serverInfo">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Fleet Health Tab -->
+        <div class="tab-content" id="tab-fleet">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">Fleet Health</h2>
+
+            <div class="stats" id="fleetStats">
+                <div class="stat-card"><div class="num" id="fleetMachines">—</div><div class="label">Active Machines</div></div>
+                <div class="stat-card"><div class="num" id="fleetFixRate">—</div><div class="label">Auto-Fix Rate</div></div>
+                <div class="stat-card"><div class="num" id="fleetAutoFixes">—</div><div class="label">Issues Self-Healed</div></div>
+                <div class="stat-card"><div class="num" id="fleetUnresolved">—</div><div class="label">Needs Attention</div></div>
+            </div>
+
+            <div class="card">
+                <h3>Error Types Across Fleet</h3>
+                <p style="font-size:12px; color:#9a9aaa; margin-bottom:12px;">Aggregated from all client health reports. High counts = fleet-wide issue needing a patch.</p>
+                <table>
+                    <thead><tr><th>Error Type</th><th>Occurrences</th><th>Status</th></tr></thead>
+                    <tbody id="fleetErrorTable"></tbody>
+                </table>
+                <div id="fleetEmpty" style="display:none; text-align:center; padding:24px; color:#9a9aaa; font-size:13px;">No health reports received yet. Clients report automatically after first launch on v1.9.1+.</div>
+            </div>
+
+            <div class="card">
+                <h3>Recent Health Events</h3>
+                <p style="font-size:12px; color:#9a9aaa; margin-bottom:12px;">Latest events from fleet reports — click to expand.</p>
+                <div id="fleetTimeline" style="max-height:400px; overflow-y:auto;"></div>
             </div>
         </div>
     </div>
@@ -606,6 +635,50 @@ function showTab(name, el) {
     if (name === 'referrals') loadReferrals();
     if (name === 'support') loadSupportTickets();
     if (name === 'system') loadSystem();
+    if (name === 'fleet') loadFleetHealth();
+}
+
+async function loadFleetHealth() {
+    try {
+        const r = await authFetch(`${API}/telemetry/fleet`);
+        const d = await r.json();
+
+        document.getElementById('fleetMachines').textContent = d.machines || 0;
+        document.getElementById('fleetFixRate').textContent = (d.fix_rate || 0) + '%';
+        document.getElementById('fleetAutoFixes').textContent = d.auto_fixes || 0;
+        document.getElementById('fleetUnresolved').textContent = d.unresolved || 0;
+
+        const errors = d.error_types || {};
+        const table = document.getElementById('fleetErrorTable');
+        const keys = Object.keys(errors).sort((a,b) => errors[b] - errors[a]);
+
+        if (keys.length === 0) {
+            table.innerHTML = '';
+            document.getElementById('fleetEmpty').style.display = 'block';
+        } else {
+            document.getElementById('fleetEmpty').style.display = 'none';
+            table.innerHTML = keys.map(k => {
+                const count = errors[k];
+                const severity = count >= 5 ? 'expired' : count >= 3 ? 'trial' : 'active';
+                const label = count >= 5 ? 'PATCH NEEDED' : count >= 3 ? 'MONITORING' : 'AUTO-FIXED';
+                return `<tr>
+                    <td style="font-family:monospace;">${k}</td>
+                    <td>${count}</td>
+                    <td><span class="badge ${severity}">${label}</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Timeline placeholder — would need individual reports endpoint
+        document.getElementById('fleetTimeline').innerHTML =
+            `<div style="text-align:center; padding:16px; color:#9a9aaa; font-size:13px;">
+                ${d.reports || 0} reports from ${d.machines || 0} machines.
+                ${d.auto_fixes || 0} issues self-healed, ${d.unresolved || 0} unresolved.
+            </div>`;
+    } catch(e) {
+        document.getElementById('fleetErrorTable').innerHTML =
+            `<tr><td colspan="3" style="color:#9a9aaa;">Could not load fleet data: ${e.message}</td></tr>`;
+    }
 }
 
 async function loadDashboard() {
