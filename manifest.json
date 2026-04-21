@@ -1,13 +1,20 @@
 {
-  "current_version": "2.0.7",
+  "current_version": "2.0.8",
   "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.8",
+      "released": "2026-04-21",
+      "size": 234499,
+      "checksum": "d2ef6f473ecf968aba65c0aaae8c93c36e1aaee51c6f100e0f18a6979fd19d96",
+      "notes": "Proof tab restored in navigation across all 12 in-app pages (uniform). Three proofing profiles ship bundled: DepoDirect, Legacy Oregon, Legacy Texas. OTA safety filter now permits _internal/proof_scripts/*.py delivery. DOCX exports with no real case metadata skip the synthetic 'Imported Transcript / Case No. / Date' caption block, giving Elizabeth's workflow a clean pass-through. sys.exit/input guards in proof handler still active (from 2.0.7) so no proof script can take down the app. Cumulative with all prior fixes."
+    },
     {
       "version": "2.0.7",
       "released": "2026-04-21",
       "size": 168279,
       "checksum": "17f48ab6c930105e54186436de520d4eefaf0e7ce3d1111b825394a5ac8529e8",
-      "notes": "CRITICAL: Proof tab removed from nav until feature is stable. The /api/proof-document handler now guards against user proof-scripts that call sys.exit() or input() from taking down the whole Notare process — those become structured 400 errors instead of killing the app. Proof-script execution moved off the event loop so slow scripts no longer hang the server. Cumulative with 2.0.6."
+      "notes": "SUPERSEDED by 2.0.8 — hid Proof tab as interim shield. 2.0.8 restores it with the feature fully working. The 2.0.7 proof handler sys.exit/input guards remain in effect."
     },
     {
       "version": "2.0.5",
