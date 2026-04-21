@@ -1,7 +1,14 @@
 {
-  "current_version": "2.0.2",
+  "current_version": "2.0.3",
   "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.3",
+      "released": "2026-04-21",
+      "size": 155070,
+      "checksum": "6c96779f0815511be6fd2736fa38d13da732f828ea6674cfd7a218b93cdc48ad",
+      "notes": "CRITICAL: Word Live and PDF preview no longer attach to the user's running Microsoft Word. Uses DispatchEx to spawn a dedicated Word process, so opening Notare while Word has unsaved work will never close the user's document. Also cumulative with 2.0.2 fixes."
+    },
     {
       "version": "2.0.2",
       "released": "2026-04-21",
