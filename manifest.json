@@ -1,7 +1,14 @@
 {
-  "current_version": "2.0.10",
+  "current_version": "2.0.11",
   "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.11",
+      "released": "2026-04-21",
+      "size": 9779,
+      "checksum": "49183cc3260c0699e4b6992855e8f42b1f43e6fb13e62379dff2f36aa6f46132",
+      "notes": "CRITICAL: Real fix for 'newCount is not defined' on DOCX upload. The v2.0.2 'fix' never shipped — the declaration existed in the dev source but was missing from the update_server copy, so every OTA from 2.0.2 through 2.0.10 re-delivered the broken new_job.html to clients. 2.0.11 ships the actually-fixed new_job.html. Minimal bundle (only the one file) to avoid collateral regressions. Cumulative with 2.0.10."
+    },
     {
       "version": "2.0.10",
       "released": "2026-04-21",

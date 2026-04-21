@@ -337,6 +337,7 @@
                 });
 
                 let emptyIdx = 0;
+                let newCount = 0;
                 for (const s of data.speakers) {
                     const nameKey = (s.name || '').trim().toLowerCase();
                     if (!nameKey || existingNames.has(nameKey)) continue;
