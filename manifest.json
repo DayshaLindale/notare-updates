@@ -1,7 +1,14 @@
 {
-  "current_version": "2.0.3",
+  "current_version": "2.0.4",
   "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.4",
+      "released": "2026-04-21",
+      "size": 157055,
+      "checksum": "c745ec465badfa530c06b5bbe8615b01f92efafc5b7da12c231af0bb61185529",
+      "notes": "Hardening: no-store cache headers for static HTML (kills WebView2 stale-UI bug), global unhandledrejection + error handler surfaces silent fetch failures as visible banners, plus 2.0.3 Word-preservation and 2.0.2 DOCX/Whisper fixes."
+    },
     {
       "version": "2.0.3",
       "released": "2026-04-21",
