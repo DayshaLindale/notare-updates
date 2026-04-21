@@ -1,7 +1,14 @@
 {
-  "current_version": "2.0.8",
+  "current_version": "2.0.9",
   "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.9",
+      "released": "2026-04-21",
+      "size": 234541,
+      "checksum": "e40745f0aa472e6d97c7c28f711977f350bd8deea7b07c1bc9a19295856c40d1",
+      "notes": "Caption-skip condition simplified — export now skips the synthetic header block whenever court_name/case_caption/case_number are all empty, regardless of proceeding_type. 2.0.8's condition was too narrow (required proceeding_type literally = 'Imported Transcript') and Elizabeth's imports came through as 'Hearing'. Cumulative with 2.0.8."
+    },
     {
       "version": "2.0.8",
       "released": "2026-04-21",
