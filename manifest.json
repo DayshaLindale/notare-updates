@@ -1,13 +1,20 @@
 {
-  "current_version": "2.0.5",
+  "current_version": "2.0.6",
   "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.6",
+      "released": "2026-04-21",
+      "size": 162429,
+      "checksum": "c7e735da6b4490e6461315c4491284041b8424413fbed1ce04f47809fea7c0a4",
+      "notes": "Hardening: /api/settings rejects bad port values (previously allowed -1 / 99999999 which brick the next launch), /api/upload-template rejects non-zip files (previously stored garbage as a template), /api/open-folder is now allow-listed and uses list-form Popen to close a command-injection vector on the LAN-exposed endpoint. Cumulative with 2.0.5 sync+stamp, 2.0.4 hardening, and all prior fixes."
+    },
     {
       "version": "2.0.5",
       "released": "2026-04-21",
       "size": 161769,
       "checksum": "87f5c3b0212ee42401747a2ec0a2dd7cf446428b38aa5d7ae2d5b6bcd50034d3",
-      "notes": "CRITICAL: fixes OTA patches landing in _internal/ while the exe served from root/ — installs now mirror _internal to root on every startup (auto-heals any patch since 2.0.2 that looked installed but never displayed). Also: OTA no longer blocks _internal/app.py from extraction, every bundle carries a _notare_version.txt stamp with rollback if it mismatches the manifest, cumulative with 2.0.4 hardening and all prior fixes."
+      "notes": "CRITICAL: fixes OTA patches landing in _internal/ while the exe served from root/ \u2014 installs now mirror _internal to root on every startup (auto-heals any patch since 2.0.2 that looked installed but never displayed). Also: OTA no longer blocks _internal/app.py from extraction, every bundle carries a _notare_version.txt stamp with rollback if it mismatches the manifest, cumulative with 2.0.4 hardening and all prior fixes."
     },
     {
       "version": "2.0.4",
