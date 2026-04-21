@@ -1,7 +1,14 @@
 {
-  "current_version": "2.0.9",
+  "current_version": "2.0.10",
   "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.10",
+      "released": "2026-04-21",
+      "size": 239585,
+      "checksum": "dafe78e8c4bbe07f03a14b80480e56d4a24d5eb66e7116cc6b91483f494edd13",
+      "notes": "Import-transcript now skips the preamble (Case No./APPEARANCES/INDEX/court headers) and starts segments at '(Proceedings convened…)' or the first speaker designation. Elizabeth's source header no longer ends up as paragraph 0 of the export. Also: /api/job/{id}/update-title now accepts case_number, case_caption, court_name, reporter_name, proceeding_type, date, location, time_in, time_out, job_number, jurisdiction_profile — not just title. Cumulative with 2.0.9."
+    },
     {
       "version": "2.0.9",
       "released": "2026-04-21",
