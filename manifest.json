@@ -1,7 +1,14 @@
 {
-  "current_version": "1.8.2",
-  "released": "2026-04-14",
+  "current_version": "2.0.2",
+  "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.2",
+      "released": "2026-04-21",
+      "size": 147033,
+      "checksum": "754e1e44adc95fcd0e11ee6e060a8175805d399aad64f4bc201b345d1a8b88e5",
+      "notes": "Fixes: DOCX upload newCount error, Whisper install auto-failover to AssemblyAI, error-job click now shows error instead of blank editor, proofing workflow next-step prompt, proofreader mode gate for live-reporting controls, new Proof landing page."
+    },
     {
       "version": "1.8.2",
       "released": "2026-04-14",
