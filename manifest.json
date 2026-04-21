@@ -1,13 +1,13 @@
 {
-  "current_version": "2.0.6",
+  "current_version": "2.0.7",
   "released": "2026-04-21",
   "updates": [
     {
-      "version": "2.0.6",
+      "version": "2.0.7",
       "released": "2026-04-21",
-      "size": 162429,
-      "checksum": "c7e735da6b4490e6461315c4491284041b8424413fbed1ce04f47809fea7c0a4",
-      "notes": "Hardening: /api/settings rejects bad port values (previously allowed -1 / 99999999 which brick the next launch), /api/upload-template rejects non-zip files (previously stored garbage as a template), /api/open-folder is now allow-listed and uses list-form Popen to close a command-injection vector on the LAN-exposed endpoint. Cumulative with 2.0.5 sync+stamp, 2.0.4 hardening, and all prior fixes."
+      "size": 168279,
+      "checksum": "17f48ab6c930105e54186436de520d4eefaf0e7ce3d1111b825394a5ac8529e8",
+      "notes": "CRITICAL: Proof tab removed from nav until feature is stable. The /api/proof-document handler now guards against user proof-scripts that call sys.exit() or input() from taking down the whole Notare process — those become structured 400 errors instead of killing the app. Proof-script execution moved off the event loop so slow scripts no longer hang the server. Cumulative with 2.0.6."
     },
     {
       "version": "2.0.5",
