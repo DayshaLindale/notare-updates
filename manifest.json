@@ -1,7 +1,14 @@
 {
-  "current_version": "2.0.11",
+  "current_version": "2.0.12",
   "released": "2026-04-21",
   "updates": [
+    {
+      "version": "2.0.12",
+      "released": "2026-04-21",
+      "size": 116299,
+      "checksum": "b2cfa3f91b6800dd8560bb04fa0d3c2359e4a5b6c423ac202a6bcec4f815d093",
+      "notes": "CRITICAL fixes for imported-transcript workflow (Elizabeth's case). (1) Synthetic caption block (Case No. / Imported Transcript / Date / Location / Reported by) is now always suppressed when the job was created from an uploaded source — imports already carry their own caption from the source document, stacking Notare's on top produced an empty header block above the transcript. (2) Ships the preamble-skip in import_qa_fix.py that was written but never packaged: segments now start at '(Proceedings convened…)' or the first speaker designation, so the pre-proceedings text (court caption, APPEARANCES, INDEX, EXHIBITS, MISCELLANEOUS) no longer gets crushed into segment 0 as a single monolithic paragraph. (3) Also carries forward the 2.0.11 newCount fix. Existing imports created before 2.0.12 will still show the mashed segment 0 — re-import to regenerate segments cleanly. Cumulative with 2.0.10."
+    },
     {
       "version": "2.0.11",
       "released": "2026-04-21",
