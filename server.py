@@ -765,6 +765,150 @@ async def get_notifications(request: Request):
 
 
 # ---------------------------------------------------------------------------
+# Sozawen — license key generation & validation
+# ---------------------------------------------------------------------------
+# Keys are deterministic: HMAC-SHA256(session_id, SOZAWEN_KEY_SECRET) → first 12
+# base32 chars → SOZA-XXXX-XXXX-XXXX. Same Stripe session always yields the same
+# key, so no persistent ledger is required (validation re-derives by listing
+# recent completed sessions and recomputing keys until a match is found).
+#
+# Stripe restricted key is used to read sessions. Stored on Render as
+# STRIPE_READ_KEY (restricted to Checkout Sessions:read, Events:read).
+# SOZAWEN_KEY_SECRET must match between server and any client that derives keys;
+# rotating it invalidates all previously issued keys, so don't.
+
+import hmac as _hmac
+import hashlib as _hashlib
+import base64 as _base64
+import urllib.request as _ureq
+import urllib.parse as _uparse
+import urllib.error as _uerr
+
+SOZAWEN_KEY_SECRET = os.environ.get("SOZAWEN_KEY_SECRET", "")
+STRIPE_READ_KEY = os.environ.get("STRIPE_READ_KEY", "")
+
+
+def _sozawen_derive_key(session_id: str) -> str:
+    """Deterministic license key for a Stripe checkout session."""
+    if not SOZAWEN_KEY_SECRET:
+        raise RuntimeError("SOZAWEN_KEY_SECRET not configured")
+    mac = _hmac.new(SOZAWEN_KEY_SECRET.encode(), session_id.encode(), _hashlib.sha256).digest()
+    b32 = _base64.b32encode(mac).decode().rstrip("=")[:12]
+    return f"SOZA-{b32[0:4]}-{b32[4:8]}-{b32[8:12]}"
+
+
+def _stripe_get(path: str, params: dict | None = None) -> dict:
+    """Minimal Stripe GET helper using restricted read key."""
+    if not STRIPE_READ_KEY:
+        raise RuntimeError("STRIPE_READ_KEY not configured")
+    url = f"https://api.stripe.com{path}"
+    if params:
+        url += "?" + _uparse.urlencode(params)
+    auth = _base64.b64encode(f"{STRIPE_READ_KEY}:".encode()).decode()
+    req = _ureq.Request(url, headers={"Authorization": f"Basic {auth}"})
+    with _ureq.urlopen(req, timeout=15) as r:
+        return json.loads(r.read())
+
+
+@app.get("/api/sozawen/key")
+async def sozawen_key_for_session(session_id: str):
+    """Return the license key for a completed Stripe checkout session.
+
+    Called by /thank-you.html after Stripe redirects. Verifies the session is
+    real and paid before computing the key so the endpoint can't be used to
+    fish keys for unpaid or fabricated session IDs.
+    """
+    if not session_id or not session_id.startswith(("cs_live_", "cs_test_")):
+        return JSONResponse({"error": "invalid session_id"}, status_code=400)
+    try:
+        session = _stripe_get(f"/v1/checkout/sessions/{session_id}")
+    except _uerr.HTTPError as e:
+        return JSONResponse({"error": f"stripe: {e.code}"}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+    if session.get("payment_status") != "paid":
+        return JSONResponse({"error": "session not paid"}, status_code=402)
+
+    try:
+        key = _sozawen_derive_key(session_id)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+    meta = session.get("metadata") or {}
+    return JSONResponse({
+        "key": key,
+        "email": session.get("customer_details", {}).get("email") or session.get("customer_email"),
+        "type": meta.get("type", "self_purchase"),
+        "pool": meta.get("pool", "revenue"),
+        "amount_total": session.get("amount_total"),
+        "currency": session.get("currency"),
+    })
+
+
+@app.post("/api/sozawen/validate")
+async def sozawen_validate_key(request: Request):
+    """Validate a Sozawen license key.
+
+    Strategy: list recent completed Stripe sessions, recompute each key, return
+    valid if any matches. Cached in memory for 10 minutes to avoid hammering
+    Stripe. Good enough for launch scale; switch to a proper ledger past a few
+    thousand customers.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"valid": False, "message": "bad request"}, status_code=400)
+
+    key = str(body.get("key", "")).strip().upper()
+    if not key.startswith("SOZA-") or len(key) != 19:
+        return JSONResponse({"valid": False, "message": "Invalid key format"})
+
+    # Cached session listing (10-minute TTL)
+    now = time.time()
+    cache = getattr(app.state, "sozawen_sessions", None)
+    cache_time = getattr(app.state, "sozawen_sessions_at", 0)
+    if cache is None or now - cache_time > 600:
+        sessions = []
+        starting_after = None
+        # Walk up to ~10 pages (1000 sessions) back
+        for _ in range(10):
+            params = {"limit": "100", "status": "complete"}
+            if starting_after:
+                params["starting_after"] = starting_after
+            try:
+                page = _stripe_get("/v1/checkout/sessions", params)
+            except Exception:
+                break
+            page_data = page.get("data", [])
+            sessions.extend(page_data)
+            if not page.get("has_more") or not page_data:
+                break
+            starting_after = page_data[-1]["id"]
+        app.state.sozawen_sessions = sessions
+        app.state.sozawen_sessions_at = now
+        cache = sessions
+
+    for sess in cache:
+        if sess.get("payment_status") != "paid":
+            continue
+        try:
+            if _sozawen_derive_key(sess["id"]) == key:
+                meta = sess.get("metadata") or {}
+                return JSONResponse({
+                    "valid": True,
+                    "message": "License valid",
+                    "email": sess.get("customer_details", {}).get("email") or sess.get("customer_email"),
+                    "type": meta.get("type", "self_purchase"),
+                    "purchased_at": sess.get("created"),
+                })
+        except Exception:
+            continue
+
+    return JSONResponse({"valid": False, "message": "Key not recognized. If you just purchased, wait 30 seconds and retry."})
+
+
+# ---------------------------------------------------------------------------
 # Local development
 # ---------------------------------------------------------------------------
 

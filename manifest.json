@@ -1,34 +1,34 @@
 {
-  "current_version": "2.0.12",
-  "released": "2026-04-21",
+  "current_version": "2.0.14",
+  "released": "2026-04-22 19:20",
   "updates": [
     {
       "version": "2.0.12",
       "released": "2026-04-21",
       "size": 116299,
       "checksum": "b2cfa3f91b6800dd8560bb04fa0d3c2359e4a5b6c423ac202a6bcec4f815d093",
-      "notes": "CRITICAL fixes for imported-transcript workflow (Elizabeth's case). (1) Synthetic caption block (Case No. / Imported Transcript / Date / Location / Reported by) is now always suppressed when the job was created from an uploaded source — imports already carry their own caption from the source document, stacking Notare's on top produced an empty header block above the transcript. (2) Ships the preamble-skip in import_qa_fix.py that was written but never packaged: segments now start at '(Proceedings convened…)' or the first speaker designation, so the pre-proceedings text (court caption, APPEARANCES, INDEX, EXHIBITS, MISCELLANEOUS) no longer gets crushed into segment 0 as a single monolithic paragraph. (3) Also carries forward the 2.0.11 newCount fix. Existing imports created before 2.0.12 will still show the mashed segment 0 — re-import to regenerate segments cleanly. Cumulative with 2.0.10."
+      "notes": "CRITICAL fixes for imported-transcript workflow (Elizabeth's case). (1) Synthetic caption block (Case No. / Imported Transcript / Date / Location / Reported by) is now always suppressed when the job was created from an uploaded source \u2014 imports already carry their own caption from the source document, stacking Notare's on top produced an empty header block above the transcript. (2) Ships the preamble-skip in import_qa_fix.py that was written but never packaged: segments now start at '(Proceedings convened\u2026)' or the first speaker designation, so the pre-proceedings text (court caption, APPEARANCES, INDEX, EXHIBITS, MISCELLANEOUS) no longer gets crushed into segment 0 as a single monolithic paragraph. (3) Also carries forward the 2.0.11 newCount fix. Existing imports created before 2.0.12 will still show the mashed segment 0 \u2014 re-import to regenerate segments cleanly. Cumulative with 2.0.10."
     },
     {
       "version": "2.0.11",
       "released": "2026-04-21",
       "size": 9779,
       "checksum": "49183cc3260c0699e4b6992855e8f42b1f43e6fb13e62379dff2f36aa6f46132",
-      "notes": "CRITICAL: Real fix for 'newCount is not defined' on DOCX upload. The v2.0.2 'fix' never shipped — the declaration existed in the dev source but was missing from the update_server copy, so every OTA from 2.0.2 through 2.0.10 re-delivered the broken new_job.html to clients. 2.0.11 ships the actually-fixed new_job.html. Minimal bundle (only the one file) to avoid collateral regressions. Cumulative with 2.0.10."
+      "notes": "CRITICAL: Real fix for 'newCount is not defined' on DOCX upload. The v2.0.2 'fix' never shipped \u2014 the declaration existed in the dev source but was missing from the update_server copy, so every OTA from 2.0.2 through 2.0.10 re-delivered the broken new_job.html to clients. 2.0.11 ships the actually-fixed new_job.html. Minimal bundle (only the one file) to avoid collateral regressions. Cumulative with 2.0.10."
     },
     {
       "version": "2.0.10",
       "released": "2026-04-21",
       "size": 239585,
       "checksum": "dafe78e8c4bbe07f03a14b80480e56d4a24d5eb66e7116cc6b91483f494edd13",
-      "notes": "Import-transcript now skips the preamble (Case No./APPEARANCES/INDEX/court headers) and starts segments at '(Proceedings convened…)' or the first speaker designation. Elizabeth's source header no longer ends up as paragraph 0 of the export. Also: /api/job/{id}/update-title now accepts case_number, case_caption, court_name, reporter_name, proceeding_type, date, location, time_in, time_out, job_number, jurisdiction_profile — not just title. Cumulative with 2.0.9."
+      "notes": "Import-transcript now skips the preamble (Case No./APPEARANCES/INDEX/court headers) and starts segments at '(Proceedings convened\u2026)' or the first speaker designation. Elizabeth's source header no longer ends up as paragraph 0 of the export. Also: /api/job/{id}/update-title now accepts case_number, case_caption, court_name, reporter_name, proceeding_type, date, location, time_in, time_out, job_number, jurisdiction_profile \u2014 not just title. Cumulative with 2.0.9."
     },
     {
       "version": "2.0.9",
       "released": "2026-04-21",
       "size": 234541,
       "checksum": "e40745f0aa472e6d97c7c28f711977f350bd8deea7b07c1bc9a19295856c40d1",
-      "notes": "Caption-skip condition simplified — export now skips the synthetic header block whenever court_name/case_caption/case_number are all empty, regardless of proceeding_type. 2.0.8's condition was too narrow (required proceeding_type literally = 'Imported Transcript') and Elizabeth's imports came through as 'Hearing'. Cumulative with 2.0.8."
+      "notes": "Caption-skip condition simplified \u2014 export now skips the synthetic header block whenever court_name/case_caption/case_number are all empty, regardless of proceeding_type. 2.0.8's condition was too narrow (required proceeding_type literally = 'Imported Transcript') and Elizabeth's imports came through as 'Hearing'. Cumulative with 2.0.8."
     },
     {
       "version": "2.0.8",
@@ -42,7 +42,7 @@
       "released": "2026-04-21",
       "size": 168279,
       "checksum": "17f48ab6c930105e54186436de520d4eefaf0e7ce3d1111b825394a5ac8529e8",
-      "notes": "SUPERSEDED by 2.0.8 — hid Proof tab as interim shield. 2.0.8 restores it with the feature fully working. The 2.0.7 proof handler sys.exit/input guards remain in effect."
+      "notes": "SUPERSEDED by 2.0.8 \u2014 hid Proof tab as interim shield. 2.0.8 restores it with the feature fully working. The 2.0.7 proof handler sys.exit/input guards remain in effect."
     },
     {
       "version": "2.0.5",
@@ -227,6 +227,20 @@
       "released": "2026-04-07",
       "size": 294055,
       "checksum": "3636313d77e03b4a62e4e403283cdf755c650446c54cba4f1307fd7fd257d16a"
+    },
+    {
+      "version": "2.0.13",
+      "released": "2026-04-22 19:08",
+      "size": 106947,
+      "checksum": "b1bd77a63fd368f44ce6799cb4dd45f07c56a051b0bc88b0b93f959ae8d1e919",
+      "notes": "CRITICAL fix to imported-transcript speaker splitting. (1) import_qa_fix.py's mid-line speaker detector no longer requires a '.?!' before the speaker label, so transitions like '-- THE COURT:' and mid-word interjections are correctly split into separate segments. (2) Regex tightened to all-caps \u2014 dropped the IGNORECASE flag that caused prose like 'the Plaintiff' to false-match as a speaker and chew through to the next colon. (3) Preamble skip now slices within a single run-on caption paragraph instead of discarding it wholesale, so the first proceeding line (THE CLERK 'We're on the record', THE COURT opening remarks) is preserved when the source .docx collapses case caption + APPEARANCES + INDEX + (Proceedings convened...) + first turns into one line. Verified on Elizabeth's A189340 JWilmot hearing: 218 run-on paragraphs \u2192 688 clean speaker segments with zero residual mid-paragraph labels. Re-import previously-broken transcripts to regenerate segments. Cumulative with 2.0.12."
+    },
+    {
+      "version": "2.0.14",
+      "released": "2026-04-22 19:20",
+      "size": 115917,
+      "checksum": "7bd4dd87f7d1557210e6cb8a89e0db0cfe59fec842cf6800d26ab5f63b96ec7c",
+      "notes": "NEW: Report mode for imported transcripts. Per Elizabeth's feedback - Notare should flag errors, not change formatting. Two buttons on the dashboard: 'Import & Proof' (prior behavior, applies rules and rewrites) and 'Report Only' (parses just enough to run detection, leaves source file untouched, downloads a findings report listing issues with original text, suggested correction, and context). New endpoint /api/job/{id}/export-report emits the report docx. Internally: _detect_proofing_issues() mirrors _apply_proofing_rules() in detection-only form. The import-transcript route accepts a new 'mode' form param ('proof' default, 'report' new) so existing integrations are unaffected. Cumulative with 2.0.13."
     }
   ]
 }
