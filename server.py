@@ -846,6 +846,200 @@ async def sozawen_key_for_session(session_id: str):
     })
 
 
+# ---------------------------------------------------------------------------
+# Sozawen — webhook, email delivery, pool ledger
+# ---------------------------------------------------------------------------
+
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+EMAIL_USER = os.environ.get("EMAIL_USER", "")
+EMAIL_APP_PASSWORD = os.environ.get("EMAIL_APP_PASSWORD", "")
+
+
+def _verify_stripe_signature(payload: bytes, sig_header: str, secret: str, tolerance: int = 300) -> bool:
+    """Verify Stripe webhook signature manually (no stripe SDK dependency).
+
+    Format: t=TIMESTAMP,v1=SIGNATURE[,v0=LEGACY]
+    Signed payload is: f"{t}.{raw_body}", HMAC-SHA256 hex, constant-time compare.
+    """
+    if not secret or not sig_header:
+        return False
+    parts = dict(p.split("=", 1) for p in sig_header.split(",") if "=" in p)
+    ts = parts.get("t", "")
+    v1 = parts.get("v1", "")
+    if not ts or not v1:
+        return False
+    try:
+        if abs(int(time.time()) - int(ts)) > tolerance:
+            return False
+    except ValueError:
+        return False
+    signed = f"{ts}.".encode() + payload
+    expected = _hmac.new(secret.encode(), signed, _hashlib.sha256).hexdigest()
+    return _hmac.compare_digest(expected, v1)
+
+
+def _send_welcome_email(to_email: str, key: str, purchase_type: str = "self_purchase",
+                        amount_cents: int | None = None) -> tuple[bool, str]:
+    """Send the 'welcome to Sozawen' email with the license key + download link.
+
+    Uses Gmail SMTP over SSL with an app password. Fails silently-but-logged
+    so a broken email provider never blocks a webhook response (Stripe would
+    retry the whole webhook on 5xx, which isn't what we want).
+    """
+    if not EMAIL_USER or not EMAIL_APP_PASSWORD:
+        return False, "email not configured"
+
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+
+    if purchase_type == "gift":
+        subject = "Thank you for gifting a Sozawen seat"
+        body_html = f"""
+<html><body style="font-family: -apple-system, Segoe UI, sans-serif; color: #d8d8e8; background: #08080f; padding: 32px; line-height: 1.7;">
+  <div style="max-width: 560px; margin: 0 auto;">
+    <div style="font-size: 32px; letter-spacing: 10px; font-weight: 200; background: linear-gradient(135deg, #9b59b6, #2dd4a8); -webkit-background-clip: text; color: transparent; margin-bottom: 8px;">SOZAWEN</div>
+    <div style="font-style: italic; color: #2dd4a8; margin-bottom: 32px;">Born from the burn. Built by feeling.</div>
+    <p>Thank you. Because of you, a musician who couldn't afford Sozawen is going to get it free.</p>
+    <p>Your gift reference: <code style="background: rgba(45,212,168,.08); padding: 3px 8px; border-radius: 4px; color: #2dd4a8;">{key[-8:]}</code></p>
+    <p>When a seat is claimed from your gift, we'll email you to let you know.</p>
+    <p style="color: #7878a0; font-size: 13px; margin-top: 48px;">— Daysha Lindale</p>
+  </div>
+</body></html>""".strip()
+    else:
+        subject = "Your Sozawen license key"
+        download_url = "https://github.com/DayshaLindale/sozawen/releases/download/v1.0.0/SozawenSetup_v1.0.0.exe"
+        body_html = f"""
+<html><body style="font-family: -apple-system, Segoe UI, sans-serif; color: #d8d8e8; background: #08080f; padding: 32px; line-height: 1.7;">
+  <div style="max-width: 560px; margin: 0 auto;">
+    <div style="font-size: 32px; letter-spacing: 10px; font-weight: 200; background: linear-gradient(135deg, #9b59b6, #2dd4a8); -webkit-background-clip: text; color: transparent; margin-bottom: 8px;">SOZAWEN</div>
+    <div style="font-style: italic; color: #2dd4a8; margin-bottom: 32px;">Born from the burn. Built by feeling.</div>
+    <p>You're in. Thank you for trusting me with your music.</p>
+    <div style="background: rgba(45,212,168,.06); border: 1px solid rgba(45,212,168,.2); border-radius: 8px; padding: 18px; margin: 24px 0;">
+      <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #7878a0; margin-bottom: 8px;">Your license key</div>
+      <div style="font-family: 'Consolas', monospace; font-size: 22px; letter-spacing: 3px; color: #2dd4a8;">{key}</div>
+    </div>
+    <p>
+      <a href="{download_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); color: #fff; text-decoration: none; border-radius: 30px; font-weight: 500; letter-spacing: 2px;">Download Sozawen</a>
+    </p>
+    <p style="color: #7878a0; font-size: 14px;">Windows 10/11, ~1.2 GB. Install, launch, open Preferences, paste your key to activate. The app works without activation too — keys just mark you as a supporter and unlock any future paid-only features.</p>
+    <p style="color: #7878a0; font-size: 13px; margin-top: 48px;">Go make the thing.<br>— Daysha Lindale</p>
+  </div>
+</body></html>""".strip()
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"Sozawen <{EMAIL_USER}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(body_html, "html"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
+            server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
+            server.send_message(msg)
+        return True, "sent"
+    except Exception as e:
+        return False, str(e)
+
+
+@app.post("/api/sozawen/stripe-webhook")
+async def sozawen_stripe_webhook(request: Request):
+    """Receive Stripe events. On checkout.session.completed, derive the key
+    and email it to the customer.
+
+    Stripe retries on 5xx responses, so we always return 200 for valid events
+    (email failures are logged but not propagated to avoid duplicate sends on
+    retry — the thank-you page is the primary delivery path, this email is
+    belt-and-suspenders).
+    """
+    body = await request.body()
+    sig = request.headers.get("Stripe-Signature", "")
+
+    if not _verify_stripe_signature(body, sig, STRIPE_WEBHOOK_SECRET):
+        return JSONResponse({"error": "invalid signature"}, status_code=400)
+
+    try:
+        event = json.loads(body)
+    except Exception:
+        return JSONResponse({"error": "bad json"}, status_code=400)
+
+    if event.get("type") != "checkout.session.completed":
+        return JSONResponse({"ok": True, "ignored": event.get("type")})
+
+    session = event.get("data", {}).get("object", {})
+    sid = session.get("id", "")
+    email = (session.get("customer_details") or {}).get("email") or session.get("customer_email") or ""
+    meta = session.get("metadata") or {}
+    ptype = meta.get("type", "self_purchase")
+    amount = session.get("amount_total")
+
+    if not sid or not email:
+        return JSONResponse({"ok": True, "skipped": "missing session_id or email"})
+
+    try:
+        key = _sozawen_derive_key(sid)
+    except Exception as e:
+        return JSONResponse({"ok": True, "skipped": f"key error: {e}"})
+
+    # Record in ledger (best-effort; ledger is ephemeral on Render free tier
+    # but useful for the pool-balance endpoint between restarts).
+    _ledger_append({
+        "session_id": sid,
+        "key": key,
+        "email": email,
+        "type": ptype,
+        "pool": meta.get("pool", "revenue"),
+        "amount_cents": amount,
+        "at": int(time.time()),
+    })
+
+    ok, msg = _send_welcome_email(email, key, ptype, amount)
+    return JSONResponse({"ok": True, "email_sent": ok, "email_msg": msg, "key_tail": key[-8:]})
+
+
+LEDGER_PATH = Path(os.environ.get("SOZAWEN_LEDGER", "sozawen_ledger.json"))
+
+
+def _ledger_load() -> list[dict]:
+    if LEDGER_PATH.exists():
+        try:
+            return json.loads(LEDGER_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+
+def _ledger_append(entry: dict) -> None:
+    entries = _ledger_load()
+    # Dedupe by session_id so webhook retries don't double-count
+    if any(e.get("session_id") == entry.get("session_id") for e in entries):
+        return
+    entries.append(entry)
+    try:
+        LEDGER_PATH.write_text(json.dumps(entries, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+
+@app.get("/api/sozawen/pool-balance")
+async def sozawen_pool_balance(authorization: str = Header(None)):
+    """Return the scholarship pool balance — gifts received, seats granted,
+    and remaining capacity. Admin-only.
+    """
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    entries = _ledger_load()
+    gifts = [e for e in entries if e.get("pool") == "scholarship"]
+    granted = [e for e in entries if e.get("pool") == "granted"]
+    return JSONResponse({
+        "gifts_received": len(gifts),
+        "gifts_total_cents": sum(int(e.get("amount_cents") or 0) for e in gifts),
+        "seats_granted": len(granted),
+        "seats_available": len(gifts) - len(granted),
+        "entries": entries[-50:],
+    })
+
+
 @app.post("/api/sozawen/validate")
 async def sozawen_validate_key(request: Request):
     """Validate a Sozawen license key.
