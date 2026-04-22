@@ -811,30 +811,58 @@ def _stripe_get(path: str, params: dict | None = None) -> dict:
 
 
 @app.get("/api/sozawen/key")
-async def sozawen_key_for_session(session_id: str):
-    """Return the license key for a completed Stripe checkout session.
+async def sozawen_key_for_purchase(session_id: str = "", payment_intent: str = ""):
+    """Return the license key for a successful Stripe payment.
 
-    Called by /thank-you.html after Stripe redirects. Verifies the session is
-    real and paid before computing the key so the endpoint can't be used to
-    fish keys for unpaid or fabricated session IDs.
+    Accepts either a checkout session_id (legacy Payment Links flow) or a
+    payment_intent id (embedded Payment Element flow). Verifies the payment is
+    real and succeeded with Stripe before computing the key, so the endpoint
+    can't be used to fish keys for unpaid or fabricated IDs.
     """
+    if payment_intent:
+        if not payment_intent.startswith(("pi_live_", "pi_test_")):
+            return JSONResponse({"error": "invalid payment_intent"}, status_code=400)
+        try:
+            pi = _stripe_get(f"/v1/payment_intents/{payment_intent}")
+        except _uerr.HTTPError as e:
+            return JSONResponse({"error": f"stripe: {e.code}"}, status_code=400)
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+        if pi.get("status") != "succeeded":
+            return JSONResponse({"error": "payment not succeeded", "status": pi.get("status")}, status_code=402)
+        try:
+            key = _sozawen_derive_key(payment_intent)
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+        meta = pi.get("metadata") or {}
+        email = pi.get("receipt_email")
+        if not email:
+            for ch in (pi.get("charges", {}).get("data") or []):
+                email = (ch.get("billing_details") or {}).get("email") or ch.get("receipt_email") or ""
+                if email:
+                    break
+        return JSONResponse({
+            "key": key, "email": email,
+            "type": meta.get("type", "self_purchase"),
+            "pool": meta.get("pool", "revenue"),
+            "amount_total": pi.get("amount"),
+            "currency": pi.get("currency"),
+        })
+
     if not session_id or not session_id.startswith(("cs_live_", "cs_test_")):
-        return JSONResponse({"error": "invalid session_id"}, status_code=400)
+        return JSONResponse({"error": "invalid session_id or payment_intent"}, status_code=400)
     try:
         session = _stripe_get(f"/v1/checkout/sessions/{session_id}")
     except _uerr.HTTPError as e:
         return JSONResponse({"error": f"stripe: {e.code}"}, status_code=400)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
-
     if session.get("payment_status") != "paid":
         return JSONResponse({"error": "session not paid"}, status_code=402)
-
     try:
         key = _sozawen_derive_key(session_id)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
-
     meta = session.get("metadata") or {}
     return JSONResponse({
         "key": key,
@@ -963,15 +991,36 @@ async def sozawen_stripe_webhook(request: Request):
     except Exception:
         return JSONResponse({"error": "bad json"}, status_code=400)
 
-    if event.get("type") != "checkout.session.completed":
-        return JSONResponse({"ok": True, "ignored": event.get("type")})
+    etype = event.get("type", "")
+    obj = event.get("data", {}).get("object", {})
 
-    session = event.get("data", {}).get("object", {})
-    sid = session.get("id", "")
-    email = (session.get("customer_details") or {}).get("email") or session.get("customer_email") or ""
-    meta = session.get("metadata") or {}
+    if etype == "checkout.session.completed":
+        # Legacy path — Payment Links flow (Stripe-hosted checkout)
+        sid = obj.get("id", "")
+        email = (obj.get("customer_details") or {}).get("email") or obj.get("customer_email") or ""
+        meta = obj.get("metadata") or {}
+        amount = obj.get("amount_total")
+    elif etype == "payment_intent.succeeded":
+        # Embedded Payment Element flow (sozawen.com/checkout.html)
+        sid = obj.get("id", "")
+        # Email comes from either the charge's receipt_email, the PI's receipt_email,
+        # or the billing_details on the successful charge.
+        email = obj.get("receipt_email") or ""
+        if not email:
+            charges = (obj.get("charges") or {}).get("data") or []
+            if not charges:
+                # PaymentIntent may reference latest_charge instead (newer API)
+                pass
+            for ch in charges:
+                email = (ch.get("billing_details") or {}).get("email") or ch.get("receipt_email") or ""
+                if email:
+                    break
+        meta = obj.get("metadata") or {}
+        amount = obj.get("amount")
+    else:
+        return JSONResponse({"ok": True, "ignored": etype})
+
     ptype = meta.get("type", "self_purchase")
-    amount = session.get("amount_total")
 
     if not sid or not email:
         return JSONResponse({"ok": True, "skipped": "missing session_id or email"})
@@ -1040,6 +1089,71 @@ async def sozawen_pool_balance(authorization: str = Header(None)):
     })
 
 
+@app.post("/api/sozawen/create-payment-intent")
+async def sozawen_create_payment_intent(request: Request):
+    """Create a Stripe PaymentIntent for embedded checkout (Payment Elements).
+
+    Called by /checkout.html on sozawen.com when the page loads. The returned
+    client_secret is never a long-lived credential — it only authorizes ONE
+    payment for ONE specific intent, scoped to the browser session that
+    requested it. Safe to return to the frontend.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    ptype = body.get("type", "self_purchase")
+    if ptype not in ("self_purchase", "gift"):
+        return JSONResponse({"error": "invalid type"}, status_code=400)
+    pool = "scholarship" if ptype == "gift" else "revenue"
+    description = (
+        "Sozawen — pay-it-forward (funds a free license for a musician in need)"
+        if ptype == "gift" else "Sozawen — lifetime license, one-time purchase"
+    )
+
+    params = [
+        ("amount", "7900"),
+        ("currency", "usd"),
+        ("automatic_payment_methods[enabled]", "true"),
+        ("metadata[type]", ptype),
+        ("metadata[pool]", pool),
+        ("metadata[product]", "sozawen"),
+        ("description", description),
+        ("statement_descriptor_suffix", "SOZAWEN"),
+    ]
+    if not STRIPE_READ_KEY:
+        return JSONResponse({"error": "STRIPE_READ_KEY not configured"}, status_code=500)
+    auth = _base64.b64encode(f"{STRIPE_READ_KEY}:".encode()).decode()
+    req = _ureq.Request(
+        "https://api.stripe.com/v1/payment_intents",
+        data=_uparse.urlencode(params).encode(),
+        method="POST",
+        headers={
+            "Authorization": f"Basic {auth}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+    )
+    try:
+        with _ureq.urlopen(req, timeout=15) as r:
+            pi = json.loads(r.read())
+    except _uerr.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")
+        try:
+            err_msg = json.loads(err_body).get("error", {}).get("message", err_body)
+        except Exception:
+            err_msg = err_body
+        return JSONResponse({"error": f"stripe: {err_msg}"}, status_code=500)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+    return JSONResponse({
+        "client_secret": pi.get("client_secret"),
+        "payment_intent_id": pi.get("id"),
+        "amount": pi.get("amount"),
+        "currency": pi.get("currency"),
+    })
+
+
 @app.post("/api/sozawen/validate")
 async def sozawen_validate_key(request: Request):
     """Validate a Sozawen license key.
@@ -1058,14 +1172,18 @@ async def sozawen_validate_key(request: Request):
     if not key.startswith("SOZA-") or len(key) != 19:
         return JSONResponse({"valid": False, "message": "Invalid key format"})
 
-    # Cached session listing (10-minute TTL)
+    # Cached listings for both sessions (Payment Links flow) and payment intents
+    # (embedded Payment Element flow). 10-minute TTL.
     now = time.time()
-    cache = getattr(app.state, "sozawen_sessions", None)
+
+    sessions = getattr(app.state, "sozawen_sessions", None)
+    pis = getattr(app.state, "sozawen_payment_intents", None)
     cache_time = getattr(app.state, "sozawen_sessions_at", 0)
-    if cache is None or now - cache_time > 600:
+
+    if sessions is None or pis is None or now - cache_time > 600:
+        # Sessions
         sessions = []
         starting_after = None
-        # Walk up to ~10 pages (1000 sessions) back
         for _ in range(10):
             params = {"limit": "100", "status": "complete"}
             if starting_after:
@@ -1079,11 +1197,30 @@ async def sozawen_validate_key(request: Request):
             if not page.get("has_more") or not page_data:
                 break
             starting_after = page_data[-1]["id"]
-        app.state.sozawen_sessions = sessions
-        app.state.sozawen_sessions_at = now
-        cache = sessions
 
-    for sess in cache:
+        # Payment Intents
+        pis = []
+        starting_after = None
+        for _ in range(10):
+            params = {"limit": "100"}
+            if starting_after:
+                params["starting_after"] = starting_after
+            try:
+                page = _stripe_get("/v1/payment_intents", params)
+            except Exception:
+                break
+            page_data = page.get("data", [])
+            pis.extend(page_data)
+            if not page.get("has_more") or not page_data:
+                break
+            starting_after = page_data[-1]["id"]
+
+        app.state.sozawen_sessions = sessions
+        app.state.sozawen_payment_intents = pis
+        app.state.sozawen_sessions_at = now
+
+    # Check checkout sessions
+    for sess in sessions:
         if sess.get("payment_status") != "paid":
             continue
         try:
@@ -1095,6 +1232,29 @@ async def sozawen_validate_key(request: Request):
                     "email": sess.get("customer_details", {}).get("email") or sess.get("customer_email"),
                     "type": meta.get("type", "self_purchase"),
                     "purchased_at": sess.get("created"),
+                })
+        except Exception:
+            continue
+
+    # Check payment intents
+    for pi in pis:
+        if pi.get("status") != "succeeded":
+            continue
+        try:
+            if _sozawen_derive_key(pi["id"]) == key:
+                meta = pi.get("metadata") or {}
+                email = pi.get("receipt_email")
+                if not email:
+                    for ch in (pi.get("charges", {}).get("data") or []):
+                        email = (ch.get("billing_details") or {}).get("email") or ch.get("receipt_email") or ""
+                        if email:
+                            break
+                return JSONResponse({
+                    "valid": True,
+                    "message": "License valid",
+                    "email": email,
+                    "type": meta.get("type", "self_purchase"),
+                    "purchased_at": pi.get("created"),
                 })
         except Exception:
             continue
