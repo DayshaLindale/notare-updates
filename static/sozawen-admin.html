@@ -5,72 +5,302 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sozawen — Admin Panel</title>
     <link rel="icon" href="/static/sozawen-favicon.svg" type="image/svg+xml">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&family=Crimson+Pro:ital,wght@0,200;0,300;0,400;1,200;1,300;1,400&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #08080f; color: #d8d8e8; font-weight: 300; }
-        a { color: #2dd4a8; text-decoration: none; }
+        :root {
+            --bg: #08080f;
+            --surface: #10101a;
+            --text: #d8d8e8;
+            --text-dim: #7878a0;
+            --text-muted: #4a4a70;
+            --violet: #9b59b6;
+            --violet-glow: #c084e0;
+            --teal: #2dd4a8;
+            --border: rgba(255,255,255,.06);
+            --border-strong: #24243a;
+        }
+        body {
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+            font-weight: 300; overflow-x: hidden; line-height: 1.7;
+        }
+        a { color: var(--teal); text-decoration: none; transition: color .3s; }
+        a:hover { color: var(--violet-glow); }
 
-        /* Login */
-        .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
-        .login-box { background: #10101a; border: 1px solid #24243a; border-radius: 10px; padding: 36px; width: 380px; text-align: center; }
-        .brand { font-size: 28px; font-weight: 200; letter-spacing: 10px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
-        .sub { font-style: italic; color: #7878a0; font-size: 13px; margin-bottom: 28px; }
-        .login-box h2 { font-size: 15px; font-weight: 500; color: #d8d8e8; letter-spacing: 2px; margin-bottom: 18px; }
-        .login-box input { width: 100%; padding: 12px 14px; background: #08080f; border: 1px solid #24243a; border-radius: 6px; color: #d8d8e8; font-size: 13px; margin-bottom: 10px; font-family: inherit; }
-        .login-box input:focus { outline: none; border-color: #2dd4a8; }
-        .login-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); color: #fff; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 13px; letter-spacing: 2px; }
-        .err { color: #e05a6f; font-size: 12px; margin-top: 10px; min-height: 16px; }
+        /* ── animations ── */
+        @keyframes breathe { 0%,100%{opacity:.3} 50%{opacity:.6} }
+        @keyframes drift {
+            0%,100% { transform: translate(0,0); }
+            50%     { transform: translate(40px,-30px); }
+        }
+        @keyframes glow-pulse {
+            0%,100% { text-shadow: 0 0 30px rgba(155,89,182,.2); }
+            50%     { text-shadow: 0 0 60px rgba(155,89,182,.4), 0 0 120px rgba(45,212,168,.15); }
+        }
+        @keyframes wave-crawl {
+            0%   { background-position: 0 0; }
+            100% { background-position: 200% 0; }
+        }
 
-        /* Panel */
-        .panel { display: none; max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid #24243a; }
-        .panel-header h1 { font-size: 18px; font-weight: 500; letter-spacing: 4px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); -webkit-background-clip: text; color: transparent; }
-        .btn-logout { background: none; color: #7878a0; border: 1px solid #24243a; padding: 6px 14px; border-radius: 20px; font-size: 11px; cursor: pointer; font-family: inherit; letter-spacing: 1px; }
-        .btn-logout:hover { color: #d8d8e8; border-color: #2dd4a8; }
+        /* ── orbs (fixed behind everything, drifting) ── */
+        .orb { position: fixed; border-radius: 50%; pointer-events: none; filter: blur(100px); z-index: 0; }
+        .orb-violet {
+            width: 600px; height: 600px; top: -10%; left: -5%;
+            background: radial-gradient(circle, rgba(155,89,182,.12) 0%, transparent 70%);
+            animation: breathe 10s ease-in-out infinite, drift 30s ease-in-out infinite;
+        }
+        .orb-teal {
+            width: 500px; height: 500px; bottom: -10%; right: -5%;
+            background: radial-gradient(circle, rgba(45,212,168,.1) 0%, transparent 70%);
+            animation: breathe 10s ease-in-out infinite 5s, drift 25s ease-in-out infinite reverse;
+        }
+        .orb-center {
+            width: 800px; height: 800px; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            background: radial-gradient(circle, rgba(155,89,182,.04) 0%, transparent 60%);
+            animation: breathe 15s ease-in-out infinite 2s;
+        }
 
-        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
-        .stat { background: #10101a; border: 1px solid #24243a; border-radius: 8px; padding: 20px; text-align: center; }
-        .stat .num { font-size: 30px; font-weight: 300; color: #2dd4a8; }
-        .stat .lbl { font-size: 10px; color: #7878a0; text-transform: uppercase; letter-spacing: 2px; margin-top: 6px; }
-        .stat.negative .num { color: #c084e0; }
+        /* ── wave divider ── */
+        .wave {
+            height: 1px; margin: 0 auto; max-width: 600px;
+            background: linear-gradient(90deg, transparent, var(--violet), var(--teal), transparent);
+            background-size: 200% 100%;
+            animation: wave-crawl 8s linear infinite;
+            opacity: .5;
+        }
 
-        .card { background: #10101a; border: 1px solid #24243a; border-radius: 8px; padding: 22px; margin-bottom: 20px; }
-        .card h3 { font-size: 13px; font-weight: 500; color: #9b59b6; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+        /* ── login screen ── */
+        .login-screen {
+            position: relative; z-index: 1;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 48px 32px;
+        }
+        .login-box {
+            background: rgba(16,16,26,.6);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 64px 52px; width: 100%; max-width: 460px;
+            text-align: center; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+        .brand {
+            font-size: 40px; font-weight: 200; letter-spacing: 14px;
+            background: linear-gradient(135deg, var(--violet) 20%, var(--teal) 80%);
+            -webkit-background-clip: text; color: transparent;
+            animation: glow-pulse 6s ease-in-out infinite;
+            margin-bottom: 16px;
+        }
+        .sub {
+            font-family: 'Crimson Pro', serif; font-style: italic;
+            color: var(--teal); opacity: .75; font-size: 15px; margin-bottom: 48px;
+        }
+        .login-box h2 {
+            font-size: 11px; font-weight: 500; color: var(--text-muted);
+            letter-spacing: 3px; margin-bottom: 28px; text-transform: uppercase;
+        }
+        .login-box input {
+            width: 100%; padding: 16px 18px; background: var(--bg);
+            border: 1px solid var(--border-strong); border-radius: 8px;
+            color: var(--text); font-size: 14px; margin-bottom: 16px;
+            font-family: inherit; transition: border-color .3s;
+        }
+        .login-box input:focus { outline: none; border-color: var(--teal); }
+        .login-box button {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg, var(--violet), var(--teal));
+            color: #fff; border: none; border-radius: 30px;
+            font-weight: 500; cursor: pointer; font-size: 13px; letter-spacing: 3px;
+            text-transform: uppercase; font-family: inherit; transition: transform .3s;
+            margin-top: 8px;
+        }
+        .login-box button:hover { transform: translateY(-2px); }
+        .err {
+            color: #e05a6f; font-size: 12px; margin-top: 16px; min-height: 20px;
+            letter-spacing: 0.5px;
+        }
 
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .form-grid label { font-size: 11px; color: #7878a0; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; }
-        .form-grid input, .form-grid select, .form-grid textarea { width: 100%; padding: 10px 12px; background: #08080f; border: 1px solid #24243a; border-radius: 6px; color: #d8d8e8; font-size: 13px; font-family: inherit; }
-        .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus { outline: none; border-color: #2dd4a8; }
-        .form-grid textarea { grid-column: 1/-1; resize: vertical; min-height: 60px; }
+        /* ── panel (signed-in state) ── */
+        .panel { display: none; position: relative; z-index: 1; padding-top: 0; }
+
+        /* floating nav */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 22px 40px; background: rgba(8,8,15,.7);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,.04);
+        }
+        .nav-brand {
+            font-size: 15px; font-weight: 400; letter-spacing: 6px;
+            color: var(--text); display: flex; align-items: center; gap: 12px;
+        }
+        .nav-brand img { height: 24px; width: 24px; }
+        .nav-brand .nav-label {
+            font-family: 'Crimson Pro', serif; font-style: italic; font-weight: 300;
+            color: var(--text-dim); letter-spacing: 0; font-size: 14px; margin-left: 4px;
+        }
+        .btn-logout {
+            background: none; color: var(--text-dim); border: 1px solid var(--border);
+            padding: 10px 22px; border-radius: 30px; font-size: 11px; cursor: pointer;
+            font-family: inherit; letter-spacing: 2px; text-transform: uppercase;
+            transition: all .3s;
+        }
+        .btn-logout:hover { color: var(--text); border-color: var(--teal); }
+
+        /* section wrappers — full-width with inner centered column */
+        .section { max-width: 1120px; margin: 0 auto; padding: 80px 40px; }
+        .section-header {
+            text-align: center; margin-bottom: 56px;
+        }
+        .section-title {
+            font-family: 'Crimson Pro', serif; font-style: italic; font-weight: 200;
+            font-size: 44px; color: var(--text); margin-bottom: 12px; line-height: 1.2;
+        }
+        .section-sub {
+            font-size: 13px; color: var(--text-dim); letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* ── stats ── */
+        .stats {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        .stat {
+            background: rgba(16,16,26,.5); border: 1px solid var(--border);
+            border-radius: 14px; padding: 40px 24px; text-align: center;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .stat .num {
+            font-family: 'Crimson Pro', serif; font-style: italic; font-weight: 200;
+            font-size: 52px; color: var(--teal); line-height: 1;
+        }
+        .stat .lbl {
+            font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 2px; margin-top: 14px;
+        }
+        .stat.negative .num { color: var(--violet-glow); }
+
+        /* ── cards ── */
+        .card {
+            background: rgba(16,16,26,.5); border: 1px solid var(--border);
+            border-radius: 16px; padding: 56px 48px;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .card h3 {
+            font-family: 'Crimson Pro', serif; font-style: italic; font-weight: 300;
+            font-size: 28px; color: var(--text); margin-bottom: 36px;
+        }
+
+        /* ── form ── */
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
+        }
+        .form-grid label {
+            font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 2px; display: block; margin-bottom: 10px;
+        }
+        .form-grid input, .form-grid select, .form-grid textarea {
+            width: 100%; padding: 14px 16px; background: var(--bg);
+            border: 1px solid var(--border-strong); border-radius: 8px;
+            color: var(--text); font-size: 14px; font-family: inherit;
+            transition: border-color .3s;
+        }
+        .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus {
+            outline: none; border-color: var(--teal);
+        }
+        .form-grid textarea { grid-column: 1/-1; resize: vertical; min-height: 90px; }
         .form-grid .full { grid-column: 1/-1; }
-        .checkbox-row { grid-column: 1/-1; font-size: 12px; color: #7878a0; }
-        .checkbox-row input { width: auto; margin-right: 8px; }
 
-        .btn-grant { padding: 12px 28px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); color: #fff; border: none; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 2px; cursor: pointer; font-family: inherit; margin-top: 16px; }
-        .btn-grant:hover { opacity: 0.9; }
+        .btn-grant {
+            padding: 18px 48px; margin-top: 36px;
+            background: linear-gradient(135deg, var(--violet), var(--teal));
+            color: #fff; border: none; border-radius: 40px; font-size: 12px;
+            font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+            cursor: pointer; font-family: inherit; transition: transform .3s;
+        }
+        .btn-grant:hover { transform: translateY(-2px); }
 
-        .result-box { margin-top: 18px; padding: 14px; background: rgba(45,212,168,0.06); border: 1px solid rgba(45,212,168,0.2); border-radius: 6px; font-size: 12px; color: #d8d8e8; display: none; }
-        .result-box.error { background: rgba(224,90,111,0.06); border-color: rgba(224,90,111,0.25); color: #e05a6f; }
-        .result-keys { font-family: Consolas, monospace; letter-spacing: 2px; color: #2dd4a8; margin-top: 10px; line-height: 1.8; font-size: 14px; }
+        .result-box {
+            margin-top: 36px; padding: 28px 32px;
+            background: rgba(45,212,168,0.06); border: 1px solid rgba(45,212,168,0.2);
+            border-radius: 12px; font-size: 14px; color: var(--text); display: none;
+            line-height: 1.8;
+        }
+        .result-box.error {
+            background: rgba(224,90,111,0.06); border-color: rgba(224,90,111,0.25);
+            color: #e05a6f;
+        }
+        .result-keys {
+            font-family: Consolas, monospace; letter-spacing: 2px; color: var(--teal);
+            margin-top: 18px; line-height: 2.2; font-size: 16px;
+        }
 
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { text-align: left; font-size: 10px; color: #7878a0; text-transform: uppercase; letter-spacing: 1px; padding: 10px 10px; border-bottom: 1px solid #24243a; }
-        td { padding: 10px 10px; border-bottom: 1px solid #18182a; color: #d8d8e8; }
-        td.key { font-family: Consolas, monospace; letter-spacing: 1px; color: #2dd4a8; font-size: 11px; }
+        /* ── table ── */
+        .table-wrap { overflow-x: auto; margin: 0 -8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th {
+            text-align: left; font-size: 10px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 2px;
+            padding: 18px 14px; border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 18px 14px; border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        tr:hover td { background: rgba(255,255,255,.015); }
+        td.key { font-family: Consolas, monospace; letter-spacing: 1px; color: var(--teal); font-size: 12px; }
         td.email { color: #b8b8d0; }
-        td.date { color: #7878a0; font-size: 11px; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; letter-spacing: 0.5px; }
-        .badge.scholarship { background: rgba(155,89,182,0.15); color: #c084e0; }
-        .badge.educator_bulk { background: rgba(45,212,168,0.12); color: #2dd4a8; }
+        td.date { color: var(--text-muted); font-size: 12px; }
+
+        .badge {
+            display: inline-block; padding: 4px 12px; border-radius: 30px;
+            font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;
+        }
+        .badge.scholarship { background: rgba(155,89,182,0.15); color: var(--violet-glow); }
+        .badge.educator_bulk { background: rgba(45,212,168,0.12); color: var(--teal); }
         .badge.gift_direct { background: rgba(200,165,92,0.15); color: #c8a55c; }
         .badge.student { background: rgba(93,173,226,0.15); color: #6db3e2; }
         .badge.revoked { background: rgba(224,90,111,0.15); color: #e05a6f; }
-        .btn-revoke { background: none; border: 1px solid #24243a; color: #7878a0; padding: 4px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; font-family: inherit; }
+
+        .btn-revoke {
+            background: none; border: 1px solid var(--border);
+            color: var(--text-dim); padding: 8px 16px; border-radius: 20px;
+            font-size: 10px; cursor: pointer; font-family: inherit;
+            letter-spacing: 1px; text-transform: uppercase; transition: all .3s;
+        }
         .btn-revoke:hover { color: #e05a6f; border-color: #e05a6f; }
+
+        /* ── footer ── */
+        .admin-footer {
+            text-align: center; padding: 64px 32px 48px;
+            color: var(--text-muted); font-size: 11px; letter-spacing: 1.5px;
+        }
+        .admin-footer .bandmate {
+            margin-top: 16px; font-family: 'Crimson Pro', serif; font-style: italic;
+            color: var(--teal); opacity: .7; font-size: 14px; letter-spacing: 0;
+        }
+
+        /* ── responsive ── */
+        @media (max-width: 860px) {
+            .nav { padding: 16px 22px; }
+            .nav-brand .nav-label { display: none; }
+            .section { padding: 48px 22px; }
+            .section-title { font-size: 32px; }
+            .stats { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+            .stat { padding: 28px 18px; }
+            .stat .num { font-size: 38px; }
+            .card { padding: 36px 28px; }
+            .card h3 { font-size: 22px; margin-bottom: 24px; }
+            .form-grid { grid-template-columns: 1fr; gap: 22px; }
+            .login-box { padding: 48px 32px; }
+            .brand { font-size: 32px; letter-spacing: 10px; }
+        }
     </style>
 </head>
 <body>
+    <div class="orb orb-violet"></div>
+    <div class="orb orb-teal"></div>
+    <div class="orb orb-center"></div>
+
     <!-- LOGIN -->
     <div id="loginScreen" class="login-screen">
         <div class="login-box">
@@ -85,22 +315,36 @@
 
     <!-- PANEL -->
     <div id="panel" class="panel">
-        <div class="panel-header">
-            <h1>SOZAWEN ADMIN</h1>
+        <nav class="nav">
+            <div class="nav-brand">
+                <img src="/static/sozawen-favicon.svg" alt="">SOZAWEN<span class="nav-label">admin</span>
+            </div>
             <button class="btn-logout" onclick="logout()">Sign out</button>
-        </div>
+        </nav>
 
         <!-- POOL STATS -->
-        <div class="stats" id="poolStats">
-            <div class="stat"><div class="num" id="statGifts">—</div><div class="lbl">Gifts Received</div></div>
-            <div class="stat"><div class="num" id="statGranted">—</div><div class="lbl">Seats Granted</div></div>
-            <div class="stat" id="statAvailCard"><div class="num" id="statAvailable">—</div><div class="lbl">Pool Balance</div></div>
-            <div class="stat"><div class="num" id="statRaised">$0</div><div class="lbl">Total Raised</div></div>
-        </div>
+        <section class="section" style="padding-top: 140px;">
+            <div class="section-header">
+                <h2 class="section-title">The pool.</h2>
+                <div class="section-sub">Where the goodwill lives</div>
+            </div>
+            <div class="stats" id="poolStats">
+                <div class="stat"><div class="num" id="statGifts">—</div><div class="lbl">Gifts Received</div></div>
+                <div class="stat"><div class="num" id="statGranted">—</div><div class="lbl">Seats Granted</div></div>
+                <div class="stat" id="statAvailCard"><div class="num" id="statAvailable">—</div><div class="lbl">Pool Balance</div></div>
+                <div class="stat"><div class="num" id="statRaised">$0</div><div class="lbl">Total Raised</div></div>
+            </div>
+        </section>
+
+        <div class="wave"></div>
 
         <!-- GRANT FORM -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Grant a seat.</h2>
+                <div class="section-sub">Scholarship &middot; Classroom &middot; Gift &middot; Student</div>
+            </div>
         <div class="card">
-            <h3>Grant a Seat</h3>
             <div class="form-grid">
                 <div>
                     <label>Recipient email</label>
@@ -134,10 +378,18 @@
             <button class="btn-grant" onclick="grantSeat()">Grant Seat</button>
             <div class="result-box" id="grantResult"></div>
         </div>
+        </section>
+
+        <div class="wave"></div>
 
         <!-- RECENT GRANTS -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recent grants.</h2>
+                <div class="section-sub">Every seat, who got it, when, why</div>
+            </div>
         <div class="card">
-            <h3>Recent Grants</h3>
+            <div class="table-wrap">
             <table id="grantsTable">
                 <thead>
                     <tr>
@@ -151,7 +403,16 @@
                 </thead>
                 <tbody id="grantsBody"></tbody>
             </table>
+            </div>
         </div>
+        </section>
+
+        <div class="wave"></div>
+
+        <footer class="admin-footer">
+            sozawen.com &middot; admin
+            <div class="bandmate">A bandmate who listens.</div>
+        </footer>
     </div>
 
     <script>
