@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — You're in.</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --navy: #0f1b2d;
+            --gold: #c8a55c;
+            --cream: #faf8f3;
+            --bg: #f7f5f2;
+            --text: #2a2a3a;
+            --text-muted: #6b6b7b;
+            --border: #e0ddd8;
+        }
+        body {
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+            font-weight: 300; line-height: 1.7; min-height: 100vh;
+        }
+        .wrap { max-width: 640px; margin: 0 auto; padding: 96px 32px 96px; text-align: center; }
+
+        .mark { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 500; letter-spacing: 8px; color: var(--gold); margin-bottom: 56px; display: block; }
+
+        h1 { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 500; color: var(--navy); margin-bottom: 24px; line-height: 1.2; }
+        .lede { font-size: 18px; color: var(--text-muted); margin-bottom: 48px; line-height: 1.7; }
+
+        .card {
+            background: #ffffff; border: 1px solid var(--border); border-radius: 8px;
+            padding: 36px 36px; margin-bottom: 24px; text-align: left;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+        }
+        .card h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; color: var(--navy); margin-bottom: 14px; }
+        .card p { color: var(--text-muted); font-size: 14px; margin-bottom: 12px; line-height: 1.85; }
+        .card p:last-child { margin-bottom: 0; }
+        .card strong { color: var(--text); font-weight: 500; }
+
+        .btn-download {
+            display: inline-block; padding: 14px 32px; background: var(--navy); color: var(--gold);
+            text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;
+            letter-spacing: 2px; text-transform: uppercase; margin-top: 8px;
+        }
+        .btn-download:hover { opacity: 0.92; }
+
+        .footer-note {
+            font-size: 12px; color: var(--text-muted); margin-top: 48px; line-height: 1.8;
+        }
+        .footer-note a { color: var(--gold); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <a href="/static/site.html" class="mark">NOTARE</a>
+
+        <h1>You're in.</h1>
+        <p class="lede">Your subscription is active. Welcome aboard — we'll take it from here.</p>
+
+        <div class="card">
+            <h3>Check your email</h3>
+            <p>Your <strong>license key</strong> and download instructions are on their way to the email you used at checkout. It usually arrives within a minute or two; if you don't see it, check your spam folder.</p>
+            <p>Subscription confirmation and receipt come from Stripe in a separate email.</p>
+        </div>
+
+        <div class="card">
+            <h3>Get the installer</h3>
+            <p>While you wait for the email, you can download the Notare installer right now:</p>
+            <p><a href="/static/download.html" class="btn-download">Download Notare</a></p>
+            <p>After installing, open Notare → <strong>Settings</strong> → <strong>License</strong> and paste the key from your email to activate.</p>
+        </div>
+
+        <div class="card">
+            <h3>Need help?</h3>
+            <p>If your key doesn't arrive, you have questions about the installer, or you need a profile customization, reach out anytime through <a href="/static/contact.html" style="color: var(--gold);">notarelegal.com/contact</a>.</p>
+            <p>Subscription auto-renews monthly. You can cancel anytime by replying to your welcome email.</p>
+        </div>
+
+        <p class="footer-note">
+            <a href="/static/site.html">notarelegal.com</a> &middot;
+            <a href="/static/terms.html">Terms</a> &middot;
+            <a href="/static/privacy.html">Privacy</a>
+        </p>
+    </div>
+</body>
+</html>

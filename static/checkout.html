@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notare — Checkout</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --navy: #0f1b2d;
+            --gold: #c8a55c;
+            --cream: #faf8f3;
+            --bg: #f7f5f2;
+            --text: #2a2a3a;
+            --text-body: #3d3d4e;
+            --text-muted: #6b6b7b;
+            --text-light: #9a9aaa;
+            --border: #e0ddd8;
+        }
+        body {
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+            font-weight: 300; line-height: 1.7; min-height: 100vh;
+        }
+        .wrap { max-width: 720px; margin: 0 auto; padding: 64px 32px 96px; }
+
+        .mark-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 64px; }
+        .mark { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500; letter-spacing: 6px; color: var(--gold); text-decoration: none; }
+        .mark-back { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; text-decoration: none; }
+        .mark-back:hover { color: var(--navy); }
+
+        h1 { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 500; color: var(--navy); margin-bottom: 12px; line-height: 1.2; }
+        .h1-sub { font-size: 15px; color: var(--text-muted); margin-bottom: 48px; line-height: 1.7; }
+
+        .card {
+            background: #ffffff; border: 1px solid var(--border); border-radius: 8px;
+            padding: 32px 32px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+        }
+        .card h3 {
+            font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500;
+            color: var(--navy); margin-bottom: 18px;
+        }
+
+        /* Tier picker */
+        .tier-list { display: flex; flex-direction: column; gap: 10px; }
+        .tier-btn {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; border: 1px solid var(--border); border-radius: 6px;
+            background: #ffffff; cursor: pointer; transition: all .2s;
+            font-family: inherit; text-align: left; width: 100%;
+        }
+        .tier-btn:hover { border-color: var(--gold); }
+        .tier-btn.active { border-color: var(--navy); background: var(--cream); border-width: 2px; padding: 15px 19px; }
+        .tier-name { font-size: 14px; font-weight: 500; color: var(--navy); }
+        .tier-price { font-size: 18px; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; }
+        .tier-price-period { font-size: 11px; color: var(--text-muted); font-weight: 400; letter-spacing: 1px; margin-left: 6px; }
+
+        /* Form */
+        .field { margin-bottom: 18px; }
+        .field label { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+        .field input {
+            width: 100%; padding: 12px 14px; background: #ffffff;
+            border: 1px solid var(--border); border-radius: 6px;
+            font-size: 14px; color: var(--text); font-family: inherit;
+        }
+        .field input:focus { outline: none; border-color: var(--navy); }
+
+        /* Summary */
+        .summary {
+            display: flex; justify-content: space-between; align-items: baseline;
+            padding: 18px 20px; background: var(--cream); border-radius: 6px; margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .summary-mode { color: var(--text-body); font-weight: 500; }
+        .summary-line strong { font-size: 20px; color: var(--navy); font-variant-numeric: tabular-nums; margin-left: 16px; }
+
+        /* Submit button */
+        #submit {
+            width: 100%; padding: 16px; background: var(--navy); color: var(--gold);
+            border: none; border-radius: 6px; font-weight: 600; font-size: 14px;
+            letter-spacing: 2px; text-transform: uppercase; cursor: pointer; font-family: inherit;
+            transition: opacity .2s; margin-top: 12px;
+        }
+        #submit:hover { opacity: 0.92; }
+        #submit:disabled { opacity: 0.5; cursor: not-allowed; }
+        .loader {
+            display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(200,165,92,0.3);
+            border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #payment-element { padding: 20px 0; }
+        #error-message { color: #b84040; font-size: 13px; margin-top: 12px; min-height: 18px; }
+
+        .trust {
+            text-align: center; font-size: 12px; color: var(--text-muted);
+            margin-top: 32px; line-height: 1.8;
+        }
+        .trust a { color: var(--gold); text-decoration: none; }
+        .trust a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="mark-row">
+            <a href="/static/site.html" class="mark">NOTARE</a>
+            <a href="/static/site.html" class="mark-back">&larr; Back</a>
+        </div>
+
+        <h1>Subscribe to Notare</h1>
+        <div class="h1-sub">Monthly subscription. Cancel anytime. Your first 7 days are a free trial — request a trial key from <a href="/static/contact.html" style="color: var(--gold);">contact</a> if you'd rather try before you subscribe.</div>
+
+        <!-- TIER PICKER -->
+        <div class="card">
+            <h3>1. Choose your plan</h3>
+            <div class="tier-list" id="tierList">
+                <div style="font-size: 13px; color: var(--text-muted); padding: 18px;">Loading plans&hellip;</div>
+            </div>
+        </div>
+
+        <!-- BUYER INFO -->
+        <div class="card">
+            <h3>2. Your information</h3>
+            <div class="field">
+                <label>Name</label>
+                <input type="text" id="buyerName" placeholder="Your name" autocomplete="name">
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="buyerEmail" placeholder="you@firm.com" autocomplete="email">
+            </div>
+            <div class="field">
+                <label>Firm or organization (optional)</label>
+                <input type="text" id="buyerOrg" placeholder="Your firm or agency" autocomplete="organization">
+            </div>
+        </div>
+
+        <!-- SUMMARY + PAYMENT -->
+        <div class="card">
+            <h3>3. Payment</h3>
+            <div class="summary">
+                <div class="summary-mode" id="sumLabel">Select a plan above</div>
+                <div class="summary-line"><strong id="sumTotal">—</strong></div>
+            </div>
+
+            <form id="payment-form">
+                <div id="payment-element">
+                    <div style="padding: 18px 0; text-align: center; color: var(--text-muted); font-size: 13px;">
+                        Choose a plan and enter your name + email to load the payment form.
+                    </div>
+                </div>
+
+                <button id="submit" type="submit" disabled>
+                    <span id="submit-label">Subscribe</span>
+                </button>
+                <div id="error-message"></div>
+            </form>
+
+            <div class="trust">
+                Subscription billing handled by <a href="https://stripe.com" target="_blank">Stripe</a>. We never see your card number.<br>
+                <a href="/static/terms.html">Terms</a> &middot; <a href="/static/privacy.html">Privacy</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (async function() {
+        const API_BASE = ''; // same-origin
+        let stripe = null;
+        let elements = null;
+        let clientSecret = null;
+        let selectedTier = null;
+        let tiers = [];
+
+        const tierList = document.getElementById('tierList');
+        const sumLabel = document.getElementById('sumLabel');
+        const sumTotal = document.getElementById('sumTotal');
+        const submitBtn = document.getElementById('submit');
+        const submitLabel = document.getElementById('submit-label');
+        const paymentEl = document.getElementById('payment-element');
+        const errBox = document.getElementById('error-message');
+        const buyerName = document.getElementById('buyerName');
+        const buyerEmail = document.getElementById('buyerEmail');
+        const buyerOrg = document.getElementById('buyerOrg');
+
+        // Load checkout config from server (publishable key + tiers)
+        try {
+            const r = await fetch(`${API_BASE}/api/notare/checkout-config`);
+            const cfg = await r.json();
+            if (!cfg.publishable_key) {
+                tierList.innerHTML = '<div style="color: #b84040; font-size: 13px;">Checkout is not yet configured. Please email contact for a manual invoice.</div>';
+                return;
+            }
+            stripe = Stripe(cfg.publishable_key);
+            tiers = cfg.tiers || [];
+            renderTiers();
+        } catch (e) {
+            tierList.innerHTML = '<div style="color: #b84040; font-size: 13px;">Could not load plans. Refresh to try again.</div>';
+        }
+
+        function fmtUSD(cents) {
+            const dollars = cents / 100;
+            return dollars >= 1000
+                ? `$${dollars.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                : `$${dollars.toFixed(2)}`;
+        }
+
+        function renderTiers() {
+            tierList.innerHTML = tiers.map(t => `
+                <button type="button" class="tier-btn" data-tier="${t.id}">
+                    <span class="tier-name">${t.label}</span>
+                    <span><span class="tier-price">${fmtUSD(t.amount_cents)}</span><span class="tier-price-period">/MO</span></span>
+                </button>
+            `).join('');
+            tierList.querySelectorAll('.tier-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tierList.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedTier = btn.dataset.tier;
+                    const t = tiers.find(x => x.id === selectedTier);
+                    sumLabel.textContent = t.label;
+                    sumTotal.textContent = `${fmtUSD(t.amount_cents)}/mo`;
+                    submitLabel.textContent = `Subscribe — ${fmtUSD(t.amount_cents)}/mo`;
+                    maybeInitPayment();
+                });
+            });
+        }
+
+        // URL param ?tier=bundle_5 preselects a plan
+        const urlTier = new URLSearchParams(location.search).get('tier');
+
+        // Init payment form once we have tier + buyer email + name
+        let lastInitKey = '';
+        async function maybeInitPayment() {
+            const name = buyerName.value.trim();
+            const email = buyerEmail.value.trim();
+            if (!selectedTier || !name || !email || !email.includes('@')) return;
+
+            const key = `${selectedTier}|${email}|${name}`;
+            if (key === lastInitKey) return;
+            lastInitKey = key;
+
+            paymentEl.innerHTML = `<div style="padding: 18px 0; text-align: center; color: var(--text-muted); font-size: 13px;"><span class="loader"></span>Loading payment form&hellip;</div>`;
+            errBox.textContent = '';
+            submitBtn.disabled = true;
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/notare/create-subscription`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        tier: selectedTier,
+                        name,
+                        email,
+                        org: buyerOrg.value.trim(),
+                    })
+                });
+                const data = await resp.json();
+                if (!data.client_secret) throw new Error(data.error || 'Could not initialize subscription');
+                clientSecret = data.client_secret;
+
+                elements = stripe.elements({
+                    clientSecret,
+                    appearance: {
+                        theme: 'stripe',
+                        variables: {
+                            colorPrimary: '#0f1b2d',
+                            colorBackground: '#ffffff',
+                            colorText: '#2a2a3a',
+                            colorDanger: '#b84040',
+                            fontFamily: 'Inter, system-ui, sans-serif',
+                            borderRadius: '6px',
+                        },
+                    },
+                });
+                paymentEl.innerHTML = '';
+                const pe = elements.create('payment', { layout: 'tabs' });
+                pe.mount('#payment-element');
+                pe.on('ready', () => { submitBtn.disabled = false; });
+            } catch (e) {
+                paymentEl.innerHTML = '';
+                errBox.textContent = 'Could not load payment form: ' + (e.message || e);
+            }
+        }
+
+        buyerName.addEventListener('blur', maybeInitPayment);
+        buyerEmail.addEventListener('blur', maybeInitPayment);
+
+        // Apply ?tier= URL param after tiers load
+        const checkUrlTier = setInterval(() => {
+            if (tiers.length > 0) {
+                clearInterval(checkUrlTier);
+                if (urlTier) {
+                    const btn = tierList.querySelector(`[data-tier="${urlTier}"]`);
+                    if (btn) btn.click();
+                }
+            }
+        }, 100);
+
+        // Submit
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!elements || !clientSecret) return;
+
+            submitBtn.disabled = true;
+            submitLabel.innerHTML = '<span class="loader"></span>Processing&hellip;';
+            errBox.textContent = '';
+
+            const { error } = await stripe.confirmPayment({
+                elements,
+                confirmParams: {
+                    return_url: `${location.origin}/static/thank-you-notare.html`,
+                    receipt_email: buyerEmail.value.trim(),
+                },
+            });
+            if (error) {
+                errBox.textContent = error.message || 'Payment could not be completed.';
+                submitBtn.disabled = false;
+                const t = tiers.find(x => x.id === selectedTier);
+                submitLabel.textContent = t ? `Subscribe — ${fmtUSD(t.amount_cents)}/mo` : 'Subscribe';
+            }
+            // On success, Stripe redirects — no code after this runs.
+        });
+    })();
+    </script>
+</body>
+</html>

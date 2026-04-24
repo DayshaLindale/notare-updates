@@ -1062,6 +1062,13 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 EMAIL_USER = os.environ.get("EMAIL_USER", "")
 EMAIL_APP_PASSWORD = os.environ.get("EMAIL_APP_PASSWORD", "")
 
+# Notare uses MOM's Stripe (not the platform's). Customers pay her directly,
+# subscription renewals run on her account, all funds land in her bank.
+# The keys here are restricted keys she generates in her own Stripe dashboard.
+NOTARE_STRIPE_SECRET_KEY = os.environ.get("NOTARE_STRIPE_SECRET_KEY", "")
+NOTARE_STRIPE_PUBLISHABLE_KEY = os.environ.get("NOTARE_STRIPE_PUBLISHABLE_KEY", "")
+NOTARE_STRIPE_WEBHOOK_SECRET = os.environ.get("NOTARE_STRIPE_WEBHOOK_SECRET", "")
+
 
 def _verify_stripe_signature(payload: bytes, sig_header: str, secret: str, tolerance: int = 300) -> bool:
     """Verify Stripe webhook signature manually (no stripe SDK dependency).
@@ -1910,6 +1917,397 @@ async def sozawen_validate_key(request: Request):
             continue
 
     return JSONResponse({"valid": False, "message": "Key not recognized. If you just purchased, wait 30 seconds and retry."})
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTARE — Customer Checkout + Subscriptions on Mom's Stripe
+# ═══════════════════════════════════════════════════════════════════════════
+# Customer-facing checkout for notarelegal.com. All Stripe API calls hit MOM'S
+# account (NOTARE_STRIPE_SECRET_KEY), so funds land in her balance directly.
+# No Stripe Connect — she's the merchant of record on the LLC, the platform
+# is just running her code. Family arrangement; revenue split is handled
+# off-Stripe between Terry and Mom.
+#
+# Subscriptions, monthly billing. Products and recurring Prices are lazily
+# created in her Stripe the first time a tier is sold; price IDs are cached
+# in app.state.notare_price_ids.
+# ---------------------------------------------------------------------------
+
+# Tier catalog — must match site.html and admin.html. Amounts in cents.
+NOTARE_TIER_CATALOG = {
+    "proofing_5":  {"label": "Proofreading — Up to 5/mo",            "amount_cents": 25000,  "ws": ["proofing"],            "profs": ["depo_direct"]},
+    "proofing_15": {"label": "Proofreading — Up to 15/mo",           "amount_cents": 67500,  "ws": ["proofing"],            "profs": ["depo_direct"]},
+    "proofing_30": {"label": "Proofreading — Up to 30/mo",           "amount_cents": 105000, "ws": ["proofing"],            "profs": ["depo_direct"]},
+    "asr_5":       {"label": "Transcribe + ASR Cleanup — Up to 5/mo",  "amount_cents": 30000,  "ws": ["asr", "asr_cleanup"], "profs": []},
+    "asr_15":      {"label": "Transcribe + ASR Cleanup — Up to 15/mo", "amount_cents": 80000,  "ws": ["asr", "asr_cleanup"], "profs": []},
+    "asr_30":      {"label": "Transcribe + ASR Cleanup — Up to 30/mo", "amount_cents": 125000, "ws": ["asr", "asr_cleanup"], "profs": []},
+    "bundle_5":    {"label": "Full Bundle — Up to 5/mo",             "amount_cents": 45000,  "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
+    "bundle_15":   {"label": "Full Bundle — Up to 15/mo",            "amount_cents": 120000, "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
+    "bundle_30":   {"label": "Full Bundle — Up to 30/mo",            "amount_cents": 185000, "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
+}
+
+
+def _notare_stripe_request(method: str, path: str, params=None) -> dict:
+    """Make a Stripe API call using Mom's restricted key. Returns parsed JSON.
+    Raises RuntimeError on HTTP / Stripe error so callers can return 500 cleanly."""
+    if not NOTARE_STRIPE_SECRET_KEY:
+        raise RuntimeError("NOTARE_STRIPE_SECRET_KEY not configured")
+    url = f"https://api.stripe.com{path}"
+    auth = _base64.b64encode(f"{NOTARE_STRIPE_SECRET_KEY}:".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {auth}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    if method == "GET":
+        if params:
+            url += "?" + _uparse.urlencode(params, doseq=True)
+        req = _ureq.Request(url, method="GET", headers=headers)
+    else:
+        body = _uparse.urlencode(params or [], doseq=True).encode() if isinstance(params, list) else _uparse.urlencode(params or {}, doseq=True).encode()
+        req = _ureq.Request(url, data=body, method=method, headers=headers)
+    try:
+        with _ureq.urlopen(req, timeout=20) as r:
+            return json.loads(r.read())
+    except _uerr.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")
+        try:
+            err_msg = json.loads(err_body).get("error", {}).get("message", err_body)
+        except Exception:
+            err_msg = err_body
+        raise RuntimeError(f"stripe {method} {path} -> {err_msg}")
+
+
+# Lazy product/price cache. Persisted lightly to disk so the cache survives
+# Render redeploys (the alternative is recreating products every boot, which
+# is harmless but clutters Mom's Stripe).
+NOTARE_PRICE_CACHE_PATH = Path(os.environ.get("NOTARE_PRICE_CACHE", "notare_price_cache.json"))
+
+
+def _notare_price_cache_load() -> dict:
+    if NOTARE_PRICE_CACHE_PATH.exists():
+        try:
+            return json.loads(NOTARE_PRICE_CACHE_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def _notare_price_cache_save(cache: dict) -> None:
+    try:
+        tmp = NOTARE_PRICE_CACHE_PATH.with_suffix(".tmp")
+        tmp.write_text(json.dumps(cache, indent=2), encoding="utf-8")
+        tmp.replace(NOTARE_PRICE_CACHE_PATH)
+    except Exception:
+        pass
+
+
+def _notare_get_or_create_price(tier_id: str) -> str:
+    """Return the Stripe price_id for a tier. Creates the Product+Price on
+    Mom's Stripe the first time a tier is sold, then caches it."""
+    if tier_id not in NOTARE_TIER_CATALOG:
+        raise RuntimeError(f"unknown tier: {tier_id}")
+    cache = _notare_price_cache_load()
+    if tier_id in cache and cache[tier_id].startswith("price_"):
+        return cache[tier_id]
+    spec = NOTARE_TIER_CATALOG[tier_id]
+    # Create Product
+    product = _notare_stripe_request("POST", "/v1/products", [
+        ("name", f"Notare — {spec['label']}"),
+        ("description", "Notare court reporting tooling. Monthly subscription."),
+        ("metadata[tier_id]", tier_id),
+        ("metadata[product]", "notare"),
+    ])
+    # Create recurring Price attached to the Product
+    price = _notare_stripe_request("POST", "/v1/prices", [
+        ("unit_amount", str(spec["amount_cents"])),
+        ("currency", "usd"),
+        ("recurring[interval]", "month"),
+        ("product", product["id"]),
+        ("metadata[tier_id]", tier_id),
+    ])
+    cache[tier_id] = price["id"]
+    _notare_price_cache_save(cache)
+    return price["id"]
+
+
+@app.get("/api/notare/checkout-config")
+async def notare_checkout_config():
+    """Frontend boot config — publishable key + tier catalog for the picker."""
+    return JSONResponse({
+        "publishable_key": NOTARE_STRIPE_PUBLISHABLE_KEY,
+        "tiers": [
+            {"id": tier_id, "label": spec["label"], "amount_cents": spec["amount_cents"]}
+            for tier_id, spec in NOTARE_TIER_CATALOG.items()
+        ],
+    })
+
+
+@app.post("/api/notare/create-subscription")
+async def notare_create_subscription(request: Request):
+    """Create a Stripe Customer + Subscription for the chosen tier on Mom's
+    Stripe account. Returns a PaymentIntent client_secret so the embedded
+    Payment Element can collect the first payment.
+
+    Body: { tier: "bundle_5", email: "...", name: "...", org: "..." }
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"error": "invalid JSON"}, status_code=400)
+
+    tier_id = (data.get("tier") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    name = (data.get("name") or "").strip()[:120]
+    org = (data.get("org") or "").strip()[:120]
+
+    if tier_id not in NOTARE_TIER_CATALOG:
+        return JSONResponse({"error": "invalid tier"}, status_code=400)
+    if not email or "@" not in email or "\n" in email or "\r" in email:
+        return JSONResponse({"error": "invalid email"}, status_code=400)
+    if not name:
+        return JSONResponse({"error": "name required"}, status_code=400)
+
+    if not NOTARE_STRIPE_SECRET_KEY:
+        return JSONResponse({"error": "NOTARE_STRIPE_SECRET_KEY not configured on server"}, status_code=500)
+
+    try:
+        # 1. Get/create the recurring price for this tier
+        price_id = _notare_get_or_create_price(tier_id)
+
+        # 2. Create a Customer record
+        customer = _notare_stripe_request("POST", "/v1/customers", [
+            ("email", email),
+            ("name", name),
+            ("metadata[org]", org),
+            ("metadata[tier_id]", tier_id),
+            ("metadata[product]", "notare"),
+        ])
+
+        # 3. Create the Subscription with payment_behavior=default_incomplete
+        # so the first invoice's PaymentIntent is created up-front and we can
+        # return its client_secret to the frontend for the Payment Element.
+        sub = _notare_stripe_request("POST", "/v1/subscriptions", [
+            ("customer", customer["id"]),
+            ("items[0][price]", price_id),
+            ("payment_behavior", "default_incomplete"),
+            ("payment_settings[save_default_payment_method]", "on_subscription"),
+            ("expand[]", "latest_invoice.payment_intent"),
+            ("metadata[tier_id]", tier_id),
+            ("metadata[email]", email),
+            ("metadata[name]", name),
+            ("metadata[org]", org),
+            ("metadata[product]", "notare"),
+        ])
+
+        invoice = sub.get("latest_invoice") or {}
+        pi = invoice.get("payment_intent") or {}
+        client_secret = pi.get("client_secret")
+        if not client_secret:
+            return JSONResponse({"error": "no client_secret returned by Stripe"}, status_code=500)
+
+        return JSONResponse({
+            "subscription_id": sub.get("id"),
+            "customer_id": customer.get("id"),
+            "client_secret": client_secret,
+            "amount_cents": NOTARE_TIER_CATALOG[tier_id]["amount_cents"],
+            "tier": tier_id,
+        })
+
+    except RuntimeError as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    except Exception as e:
+        return JSONResponse({"error": f"unexpected: {type(e).__name__}: {e}"}, status_code=500)
+
+
+def _notare_create_license_for_subscription(tier_id: str, customer_email: str, customer_name: str, org: str, subscription_id: str) -> dict:
+    """Generate a Notare license tied to a Stripe subscription. Returns the
+    license dict. Reuses the same admin_data.json store as the admin panel,
+    so the new license shows up there alongside hand-issued ones."""
+    spec = NOTARE_TIER_CATALOG.get(tier_id, {})
+    admin_data = _load_admin_data()
+
+    # Avoid duplicate licenses if the webhook fires twice for the same sub
+    for lic in admin_data.get("licenses", []):
+        if lic.get("stripe_subscription_id") == subscription_id:
+            return lic
+
+    existing_keys = {l.get("key", "").upper() for l in admin_data.get("licenses", [])}
+    for _ in range(50):
+        candidate = _generate_license_key()
+        if candidate.upper() not in existing_keys:
+            break
+    else:
+        raise RuntimeError("could not generate unique key")
+
+    # 30 days from now — license rolls forward each renewal via webhook
+    expires_dt = datetime.now() + timedelta(days=30)
+
+    new_lic = {
+        "key": candidate,
+        "customer_name": customer_name,
+        "email": customer_email,
+        "org": org,
+        "tier": tier_id,
+        "status": "active",
+        "created": datetime.now().strftime("%Y-%m-%d"),
+        "expires": expires_dt.strftime("%Y-%m-%d"),
+        "entitlements": {"workspaces": list(spec.get("ws", [])), "proof_profiles": list(spec.get("profs", []))},
+        "stripe_subscription_id": subscription_id,
+        "source": "notare_checkout",
+    }
+    admin_data.setdefault("licenses", []).append(new_lic)
+    _save_admin_data(admin_data)
+    return new_lic
+
+
+def _notare_extend_license_for_subscription(subscription_id: str) -> dict | None:
+    """Find the license tied to this subscription and push its expiry forward
+    by 30 days. Called on each successful renewal invoice."""
+    admin_data = _load_admin_data()
+    for lic in admin_data.get("licenses", []):
+        if lic.get("stripe_subscription_id") == subscription_id:
+            cur = lic.get("expires") or datetime.now().strftime("%Y-%m-%d")
+            try:
+                cur_dt = datetime.strptime(cur, "%Y-%m-%d")
+            except Exception:
+                cur_dt = datetime.now()
+            # Extend from whichever is later: current expiry or now
+            base = max(cur_dt, datetime.now())
+            new_expires = (base + timedelta(days=30)).strftime("%Y-%m-%d")
+            lic["expires"] = new_expires
+            lic["status"] = "active"
+            _save_admin_data(admin_data)
+            return lic
+    return None
+
+
+def _notare_deactivate_license_for_subscription(subscription_id: str) -> dict | None:
+    """Mark license inactive when subscription is canceled or payment fails
+    repeatedly. License stays in DB for history."""
+    admin_data = _load_admin_data()
+    for lic in admin_data.get("licenses", []):
+        if lic.get("stripe_subscription_id") == subscription_id:
+            lic["status"] = "inactive"
+            _save_admin_data(admin_data)
+            return lic
+    return None
+
+
+def _send_notare_welcome_email(to_email: str, name: str, key: str, tier_id: str) -> tuple[bool, str]:
+    """Send the 'welcome to Notare' email with the license key + download link."""
+    if not EMAIL_USER or not EMAIL_APP_PASSWORD:
+        return False, "email not configured"
+    if any(c in to_email for c in ("\r", "\n", "\t", "\0")):
+        return False, "invalid recipient"
+
+    import html as _html
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.utils import formataddr
+
+    spec = NOTARE_TIER_CATALOG.get(tier_id, {})
+    download_url = "https://notarelegal.com/static/download.html"
+
+    subject = f"Your Notare license — {spec.get('label', tier_id)}"
+    body_html = f"""
+<html><body style="font-family: Georgia, serif; color: #2a2a3a; background: #f7f5f2; padding: 32px; line-height: 1.7;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e0ddd8; border-radius: 8px; padding: 36px;">
+    <div style="font-size: 26px; letter-spacing: 4px; color: #c8a55c; font-weight: 600; margin-bottom: 6px;">NOTARE</div>
+    <div style="font-style: italic; color: #6b6b7b; margin-bottom: 28px; font-size: 14px;">Court reporting, the way it should work.</div>
+    <p>Hi {_html.escape(name)},</p>
+    <p>Welcome to Notare. Your <strong>{_html.escape(spec.get('label', tier_id))}</strong> subscription is active.</p>
+    <div style="background: #faf8f3; border: 1px solid #e0ddd8; border-radius: 6px; padding: 20px; margin: 24px 0;">
+      <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9aaa; margin-bottom: 8px;">Your license key</div>
+      <div style="font-family: Consolas, monospace; font-size: 18px; letter-spacing: 2px; color: #0f1b2d;">{_html.escape(key)}</div>
+    </div>
+    <p>
+      <a href="{download_url}" style="display: inline-block; padding: 14px 32px; background: #0f1b2d; color: #c8a55c; text-decoration: none; border-radius: 4px; font-weight: 600; letter-spacing: 1.5px;">Download Notare</a>
+    </p>
+    <p style="color: #6b6b7b; font-size: 14px;">After installing, open Notare → Settings → License and paste your key.</p>
+    <p style="color: #6b6b7b; font-size: 13px; margin-top: 36px;">Your subscription auto-renews monthly. You can cancel anytime by replying to this email or contacting us through notarelegal.com/contact. Renewal billing comes directly from Stripe — your records will show the charge as the LLC.</p>
+    <p style="color: #6b6b7b; font-size: 13px; margin-top: 32px;">Welcome aboard.<br>— The Notare Team</p>
+  </div>
+</body></html>""".strip()
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = formataddr(("Notare", EMAIL_USER))
+    msg["To"] = to_email
+    msg.attach(MIMEText(body_html, "html"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
+            server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
+            server.send_message(msg)
+        return True, "sent"
+    except Exception as e:
+        return False, f"smtp error: {type(e).__name__}"
+
+
+@app.post("/api/notare/stripe-webhook")
+async def notare_stripe_webhook(request: Request):
+    """Handle Stripe events for Notare subscriptions on Mom's account.
+    Important events:
+      - invoice.paid: first invoice means new license; subsequent means renewal
+      - customer.subscription.deleted: license deactivates
+      - invoice.payment_failed: warn (license stays active until grace expiry)
+    """
+    body = await request.body()
+    sig = request.headers.get("stripe-signature", "")
+    if not _verify_stripe_signature(body, sig, NOTARE_STRIPE_WEBHOOK_SECRET):
+        return JSONResponse({"error": "invalid signature"}, status_code=400)
+
+    try:
+        event = json.loads(body)
+    except Exception:
+        return JSONResponse({"error": "invalid JSON"}, status_code=400)
+
+    etype = event.get("type", "")
+    obj = event.get("data", {}).get("object", {}) or {}
+
+    if etype == "invoice.paid":
+        # Get the subscription this invoice belongs to
+        sub_id = obj.get("subscription") or ""
+        if not sub_id:
+            return JSONResponse({"ok": True, "skipped": "no subscription on invoice"})
+        # Pull the subscription to read metadata
+        try:
+            sub = _notare_stripe_request("GET", f"/v1/subscriptions/{sub_id}")
+        except Exception as e:
+            return JSONResponse({"ok": True, "skipped": f"sub fetch failed: {e}"})
+
+        meta = sub.get("metadata") or {}
+        tier_id = meta.get("tier_id") or ""
+        email = meta.get("email") or obj.get("customer_email") or ""
+        name = meta.get("name") or ""
+        org = meta.get("org") or ""
+
+        # billing_reason="subscription_create" = first payment, generate license
+        # billing_reason="subscription_cycle" = renewal, extend license
+        billing_reason = obj.get("billing_reason", "")
+
+        if billing_reason in ("subscription_create", "manual") or not _notare_extend_license_for_subscription(sub_id):
+            # First payment OR no existing license to extend — create one
+            try:
+                lic = _notare_create_license_for_subscription(tier_id, email, name, org, sub_id)
+            except Exception as e:
+                return JSONResponse({"ok": True, "skipped": f"license create failed: {e}"})
+            ok, msg = _send_notare_welcome_email(email, name, lic.get("key", ""), tier_id)
+            return JSONResponse({"ok": True, "action": "license_created", "key_tail": lic.get("key", "")[-8:], "email_sent": ok, "email_msg": msg})
+        else:
+            return JSONResponse({"ok": True, "action": "license_extended"})
+
+    elif etype == "customer.subscription.deleted":
+        sub_id = obj.get("id", "")
+        lic = _notare_deactivate_license_for_subscription(sub_id)
+        return JSONResponse({"ok": True, "action": "license_deactivated", "found": bool(lic)})
+
+    elif etype == "invoice.payment_failed":
+        # Don't deactivate immediately — Stripe will retry. Just log for now.
+        return JSONResponse({"ok": True, "action": "payment_failed_logged"})
+
+    return JSONResponse({"ok": True, "ignored": etype})
 
 
 # ---------------------------------------------------------------------------
