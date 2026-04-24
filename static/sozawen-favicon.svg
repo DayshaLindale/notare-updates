@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="burn" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#7b3fa0"/>
+      <stop offset="100%" stop-color="#c084e0"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2dd4a8"/>
+      <stop offset="100%" stop-color="#1a9a78"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#14142a"/>
+      <stop offset="100%" stop-color="#08080f"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Dark ground -->
+  <rect width="64" height="64" rx="14" fill="url(#glow)"/>
+
+  <!-- The burn — violet, rises from lower-left through center to upper-left -->
+  <path d="M 18 50 C 18 36, 46 40, 46 32 C 46 24, 18 28, 18 14"
+        stroke="url(#burn)" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- The flow — teal, falls from upper-right through center to lower-right -->
+  <path d="M 46 14 C 46 28, 18 24, 18 32 C 18 40, 46 36, 46 50"
+        stroke="url(#flow)" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- Where they meet — a soft bright point -->
+  <circle cx="32" cy="32" r="2.5" fill="#e4e4f0" opacity="0.5"/>
+</svg>
