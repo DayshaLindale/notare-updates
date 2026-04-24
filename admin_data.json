@@ -22,7 +22,21 @@
       "created": "2026-03-27",
       "expires": "",
       "master": true,
-      "support": true
+      "support": true,
+      "entitlements": {
+        "workspaces": [
+          "asr",
+          "asr_cleanup",
+          "proofing",
+          "realtime",
+          "reporting"
+        ],
+        "proof_profiles": [
+          "depo_direct",
+          "legacy_oregon",
+          "legacy_texas"
+        ]
+      }
     },
     {
       "key": "NOTARE-LEGACY-ADMIN-0001",
@@ -33,7 +47,21 @@
       "status": "active",
       "created": "2026-03-27",
       "expires": "",
-      "master": true
+      "master": true,
+      "entitlements": {
+        "workspaces": [
+          "asr",
+          "asr_cleanup",
+          "proofing",
+          "realtime",
+          "reporting"
+        ],
+        "proof_profiles": [
+          "depo_direct",
+          "legacy_oregon",
+          "legacy_texas"
+        ]
+      }
     },
     {
       "key": "NOTARE-ALLY-BETA-0001",
@@ -44,7 +72,21 @@
       "status": "active",
       "created": "2026-03-27",
       "expires": "",
-      "master": true
+      "master": true,
+      "entitlements": {
+        "workspaces": [
+          "asr",
+          "asr_cleanup",
+          "proofing",
+          "realtime",
+          "reporting"
+        ],
+        "proof_profiles": [
+          "depo_direct",
+          "legacy_oregon",
+          "legacy_texas"
+        ]
+      }
     },
     {
       "key": "NOTARE-GRACE-BETA-0001",
@@ -55,7 +97,21 @@
       "status": "active",
       "created": "2026-03-27",
       "expires": "",
-      "master": true
+      "master": true,
+      "entitlements": {
+        "workspaces": [
+          "asr",
+          "asr_cleanup",
+          "proofing",
+          "realtime",
+          "reporting"
+        ],
+        "proof_profiles": [
+          "depo_direct",
+          "legacy_oregon",
+          "legacy_texas"
+        ]
+      }
     },
     {
       "key": "NOTARE-9C1AD6DF-F13DE4F0-2988B865",
@@ -66,7 +122,21 @@
       "status": "active",
       "created": "2026-03-29",
       "expires": "",
-      "tester": true
+      "tester": true,
+      "entitlements": {
+        "workspaces": [
+          "asr",
+          "asr_cleanup",
+          "proofing",
+          "realtime",
+          "reporting"
+        ],
+        "proof_profiles": [
+          "depo_direct",
+          "legacy_oregon",
+          "legacy_texas"
+        ]
+      }
     },
     {
       "key": "NOTARE-KEVIN-BETA-0001",
@@ -85,7 +155,21 @@
       "status": "active",
       "type": "family",
       "expires": "",
-      "created": "2026-03-31"
+      "created": "2026-03-31",
+      "entitlements": {
+        "workspaces": [
+          "asr",
+          "asr_cleanup",
+          "proofing",
+          "realtime",
+          "reporting"
+        ],
+        "proof_profiles": [
+          "depo_direct",
+          "legacy_oregon",
+          "legacy_texas"
+        ]
+      }
     },
     {
       "key": "NOTARE-D41D1007-6EA4E603-F0789388",
