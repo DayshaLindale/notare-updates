@@ -15,6 +15,7 @@ Environment variables:
 import hashlib
 import json
 import os
+import secrets
 import shutil
 import time
 from datetime import datetime, timedelta
@@ -35,7 +36,6 @@ UPDATES_DIR.mkdir(exist_ok=True)
 
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 if not ADMIN_KEY:
-    import secrets
     ADMIN_KEY = secrets.token_hex(32)
     print(f"WARNING: No ADMIN_KEY set in environment. Generated temporary: {ADMIN_KEY[:16]}...")
     print("Set ADMIN_KEY in your hosting environment variables for persistence.")
@@ -699,9 +699,14 @@ async def update_info():
 # ---------------------------------------------------------------------------
 
 def _check_admin_key(authorization: str = None):
-    if not authorization:
+    """Constant-time admin-key check. Prevents timing side-channel extraction."""
+    if not authorization or not ADMIN_KEY:
         return False
-    return authorization == ADMIN_KEY or authorization == f"Bearer {ADMIN_KEY}"
+    import hmac
+    # Accept raw key or "Bearer <key>" — compare both in constant time,
+    # OR'd so both branches always run.
+    stripped = authorization[7:] if authorization.startswith("Bearer ") else authorization
+    return hmac.compare_digest(stripped, ADMIN_KEY)
 
 
 @app.post("/api/update/push")
@@ -1264,6 +1269,452 @@ async def sozawen_pool_balance(authorization: str = Header(None)):
     })
 
 
+# ---------------------------------------------------------------------------
+# Comp keys — scholarship, educator bulk, and direct gift grants
+# ---------------------------------------------------------------------------
+# Persistence: Postgres (DATABASE_URL) is the authoritative store. If
+# DATABASE_URL is unset (local dev), falls back to sozawen_comp_keys.json on
+# the local filesystem. Production on Render uses Render Postgres, which
+# survives container restarts and deploys with automatic daily backups.
+#
+# Stripe-derived keys are deterministic HMACs of session IDs (see
+# _sozawen_derive_key) — they don't need persistent storage because Stripe
+# is the source of truth. Comp keys are random and therefore MUST persist.
+
+import re as _re
+from collections import defaultdict as _defaultdict
+from threading import Lock as _Lock
+
+COMP_KEYS_PATH = Path(os.environ.get("SOZAWEN_COMP_KEYS", "sozawen_comp_keys.json"))
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+_COMP_KEY_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"  # no 0/O/1/I — easier to read over phone
+_COMP_FILE_LOCK = _Lock()  # used only in file-fallback mode
+
+# In-memory per-IP rate limiter (per-process — fine for Render's single-worker setup).
+# Reset on deploy, which is acceptable for abuse mitigation.
+_rate_buckets: dict[str, list[float]] = _defaultdict(list)
+_RATE_LIMIT_MAX = 60        # 60 admin grants per hour per IP
+_RATE_LIMIT_WINDOW = 3600
+
+
+def _rate_limit_ok(ip: str) -> bool:
+    now = time.time()
+    cutoff = now - _RATE_LIMIT_WINDOW
+    bucket = [t for t in _rate_buckets[ip] if t > cutoff]
+    if len(bucket) >= _RATE_LIMIT_MAX:
+        _rate_buckets[ip] = bucket
+        return False
+    bucket.append(now)
+    _rate_buckets[ip] = bucket
+    return True
+
+
+# Intentionally conservative — rejects RFC-legal but risky edge cases
+# (quoted locals, IP literals) in favor of rejecting header-injection bytes.
+_EMAIL_RE = _re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$")
+
+
+def _is_safe_email(email: str) -> bool:
+    """Well-formed AND free of bytes that could enable SMTP header injection."""
+    if not email or len(email) > 254:
+        return False
+    if any(c in email for c in ("\r", "\n", "\t", "\0")):
+        return False
+    return bool(_EMAIL_RE.match(email))
+
+
+# --- Database pool (lazy) ---
+_db_pool = None
+
+
+async def _get_db():
+    """Return asyncpg pool, or None if DATABASE_URL is unset (file fallback)."""
+    global _db_pool
+    if not DATABASE_URL:
+        return None
+    if _db_pool is None:
+        import asyncpg
+        _db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5, command_timeout=10)
+    return _db_pool
+
+
+async def _init_db_schema():
+    """Create tables if missing. Safe to call every startup."""
+    pool = await _get_db()
+    if pool is None:
+        return
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS sozawen_comp_keys (
+                key TEXT PRIMARY KEY,
+                email TEXT NOT NULL,
+                type TEXT NOT NULL,
+                granted_at BIGINT NOT NULL,
+                note TEXT DEFAULT '',
+                batch_id TEXT,
+                seat_index INTEGER,
+                revoked_at BIGINT
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_comp_keys_email ON sozawen_comp_keys(email)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_comp_keys_batch ON sozawen_comp_keys(batch_id)")
+
+
+# --- Storage operations (DB preferred, file fallback) ---
+
+def _comp_keys_load_file() -> list[dict]:
+    if COMP_KEYS_PATH.exists():
+        try:
+            return json.loads(COMP_KEYS_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+
+def _comp_keys_save_file(entries: list[dict]) -> None:
+    """Atomic write: tempfile + rename."""
+    try:
+        tmp = COMP_KEYS_PATH.with_suffix(".tmp")
+        tmp.write_text(json.dumps(entries, indent=2), encoding="utf-8")
+        tmp.replace(COMP_KEYS_PATH)
+    except Exception:
+        pass
+
+
+async def _comp_key_lookup(key: str) -> dict | None:
+    pool = await _get_db()
+    if pool is not None:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT * FROM sozawen_comp_keys WHERE key = $1", key)
+            return dict(row) if row else None
+    with _COMP_FILE_LOCK:
+        for e in _comp_keys_load_file():
+            if e.get("key") == key:
+                return e
+        return None
+
+
+async def _comp_keys_list(limit: int = 100) -> list[dict]:
+    pool = await _get_db()
+    if pool is not None:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT * FROM sozawen_comp_keys ORDER BY granted_at DESC LIMIT $1", limit
+            )
+            return [dict(r) for r in rows]
+    with _COMP_FILE_LOCK:
+        entries = _comp_keys_load_file()
+        entries.sort(key=lambda e: e.get("granted_at") or 0, reverse=True)
+        return entries[:limit]
+
+
+async def _comp_keys_total() -> int:
+    pool = await _get_db()
+    if pool is not None:
+        async with pool.acquire() as conn:
+            return await conn.fetchval("SELECT COUNT(*) FROM sozawen_comp_keys")
+    with _COMP_FILE_LOCK:
+        return len(_comp_keys_load_file())
+
+
+async def _comp_keys_insert_batch(entries: list[dict]) -> None:
+    """Insert a batch atomically. Raises on duplicate PK (extremely rare)."""
+    pool = await _get_db()
+    if pool is not None:
+        async with pool.acquire() as conn:
+            async with conn.transaction():
+                for e in entries:
+                    await conn.execute("""
+                        INSERT INTO sozawen_comp_keys
+                            (key, email, type, granted_at, note, batch_id, seat_index, revoked_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    """, e["key"], e["email"], e["type"], e["granted_at"],
+                         e.get("note", ""), e.get("batch_id"), e.get("seat_index"),
+                         e.get("revoked_at"))
+        return
+    with _COMP_FILE_LOCK:
+        existing = _comp_keys_load_file()
+        existing_keys = {x.get("key") for x in existing}
+        for e in entries:
+            if e["key"] in existing_keys:
+                raise ValueError("duplicate key")
+        existing.extend(entries)
+        _comp_keys_save_file(existing)
+
+
+async def _comp_key_revoke(key: str) -> tuple[bool, str]:
+    pool = await _get_db()
+    if pool is not None:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT revoked_at FROM sozawen_comp_keys WHERE key = $1", key)
+            if not row:
+                return False, "key not found"
+            if row["revoked_at"] is not None:
+                return False, "already revoked"
+            await conn.execute(
+                "UPDATE sozawen_comp_keys SET revoked_at = $1 WHERE key = $2",
+                int(time.time()), key
+            )
+            return True, "revoked"
+    with _COMP_FILE_LOCK:
+        entries = _comp_keys_load_file()
+        for entry in entries:
+            if entry.get("key") == key:
+                if entry.get("revoked_at"):
+                    return False, "already revoked"
+                entry["revoked_at"] = int(time.time())
+                _comp_keys_save_file(entries)
+                return True, "revoked"
+        return False, "key not found"
+
+
+async def _comp_key_unrevoke(key: str) -> tuple[bool, str]:
+    """Undo a mistaken revocation."""
+    pool = await _get_db()
+    if pool is not None:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT revoked_at FROM sozawen_comp_keys WHERE key = $1", key)
+            if not row:
+                return False, "key not found"
+            if row["revoked_at"] is None:
+                return False, "not revoked"
+            await conn.execute(
+                "UPDATE sozawen_comp_keys SET revoked_at = NULL WHERE key = $1", key
+            )
+            return True, "unrevoked"
+    with _COMP_FILE_LOCK:
+        entries = _comp_keys_load_file()
+        for entry in entries:
+            if entry.get("key") == key:
+                if not entry.get("revoked_at"):
+                    return False, "not revoked"
+                entry["revoked_at"] = None
+                _comp_keys_save_file(entries)
+                return True, "unrevoked"
+        return False, "key not found"
+
+
+def _generate_comp_key() -> str:
+    """Generate a random SOZA-XXXX-XXXX-XXXX key. Uniqueness enforced by DB PK."""
+    parts = ["".join(secrets.choice(_COMP_KEY_ALPHABET) for _ in range(4)) for _ in range(3)]
+    return f"SOZA-{parts[0]}-{parts[1]}-{parts[2]}"
+
+
+def _send_comp_email(to_email: str, keys: list[str], grant_type: str, note: str = "") -> tuple[bool, str]:
+    """Send license-grant email. Caller MUST have validated `to_email` via _is_safe_email."""
+    if not EMAIL_USER or not EMAIL_APP_PASSWORD:
+        return False, "email not configured"
+
+    import html as _html
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.utils import formataddr
+
+    download_url = "https://github.com/DayshaLindale/sozawen/releases/download/v1.0.0/SozawenSetup_v1.0.0.exe"
+
+    if grant_type == "scholarship":
+        subject = "Your Sozawen license — no strings attached"
+        opening = "No one should be kept from making music because of money. Here's your seat. Everything in Sozawen is yours — forever."
+    elif grant_type == "educator_bulk":
+        subject = f"Your Sozawen classroom license — {len(keys)} seats"
+        opening = f"Your {len(keys)}-seat classroom license is ready. Distribute these keys to your students — each one activates one install."
+    elif grant_type == "student":
+        subject = "Your Sozawen student license"
+        opening = "You're in. One license, yours forever. Go make the thing."
+    else:
+        subject = "Your Sozawen license"
+        opening = "You're in. Here's your Sozawen license key."
+
+    keys_html = "".join(
+        f'<div style="font-family: Consolas, monospace; font-size: 20px; letter-spacing: 3px; color: #2dd4a8; padding: 8px 14px; background: rgba(45,212,168,.06); border: 1px solid rgba(45,212,168,.2); border-radius: 6px; margin: 6px 0;">{_html.escape(k)}</div>'
+        for k in keys
+    )
+    key_label = "Your license key" if len(keys) == 1 else f"Your {len(keys)} license keys"
+
+    body_html = f"""
+<html><body style="font-family: -apple-system, Segoe UI, sans-serif; color: #d8d8e8; background: #08080f; padding: 32px; line-height: 1.7;">
+  <div style="max-width: 560px; margin: 0 auto;">
+    <div style="font-size: 32px; letter-spacing: 10px; font-weight: 200; background: linear-gradient(135deg, #9b59b6, #2dd4a8); -webkit-background-clip: text; color: transparent; margin-bottom: 8px;">SOZAWEN</div>
+    <div style="font-style: italic; color: #2dd4a8; margin-bottom: 32px;">Born from the burn. Built by feeling.</div>
+    <p>{_html.escape(opening)}</p>
+    <div style="background: rgba(45,212,168,.02); border: 1px solid rgba(45,212,168,.15); border-radius: 8px; padding: 18px; margin: 24px 0;">
+      <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #7878a0; margin-bottom: 10px;">{key_label}</div>
+      {keys_html}
+    </div>
+    <p>
+      <a href="{download_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); color: #fff; text-decoration: none; border-radius: 30px; font-weight: 500; letter-spacing: 2px;">Download Sozawen</a>
+    </p>
+    <p style="color: #7878a0; font-size: 14px;">Windows 10/11, ~1.2 GB. Install, launch, open Preferences, paste your key to activate. The app works without activation too — keys just mark you as a supporter and unlock any future paid-only features.</p>
+    <p style="color: #7878a0; font-size: 13px; margin-top: 48px;">Go make the thing.<br>— Daysha Lindale</p>
+  </div>
+</body></html>""".strip()
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = formataddr(("Sozawen", EMAIL_USER))
+    msg["To"] = to_email
+    msg.attach(MIMEText(body_html, "html"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
+            server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
+            server.send_message(msg)
+        return True, "sent"
+    except Exception as e:
+        return False, f"smtp error: {type(e).__name__}"
+
+
+@app.on_event("startup")
+async def _startup_sozawen_db():
+    """Initialize Sozawen DB schema on app startup. Safe if DATABASE_URL unset."""
+    try:
+        await _init_db_schema()
+        if DATABASE_URL:
+            print("[sozawen] DB schema ready — using Postgres for comp keys.")
+        else:
+            print("[sozawen] DATABASE_URL unset — using file-based comp key storage (NOT persistent across Render deploys).")
+    except Exception as e:
+        print(f"[sozawen] DB init error: {e} — falling back to file storage.")
+
+
+@app.post("/api/sozawen/grant-seat")
+async def sozawen_grant_seat(request: Request, authorization: str = Header(None)):
+    """Admin: grant one or more Sozawen seats.
+
+    Body: { email, type, quantity=1, note="", send_email=true }
+    Types: scholarship | educator_bulk | gift_direct | student
+    """
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    client_ip = request.client.host if request.client else "unknown"
+    if not _rate_limit_ok(client_ip):
+        return JSONResponse({"error": "rate limit exceeded; try again later"}, status_code=429)
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"error": "invalid JSON"}, status_code=400)
+
+    email = (data.get("email") or "").strip().lower()
+    grant_type = (data.get("type") or "scholarship").strip()
+    quantity_raw = data.get("quantity", 1)
+    note = (data.get("note") or "").strip()[:2000]
+    send_email = bool(data.get("send_email", True))
+
+    if not _is_safe_email(email):
+        return JSONResponse({"error": "invalid email"}, status_code=400)
+    if grant_type not in ("scholarship", "educator_bulk", "gift_direct", "student"):
+        return JSONResponse({"error": "type must be scholarship|educator_bulk|gift_direct|student"}, status_code=400)
+    try:
+        quantity = int(quantity_raw)
+    except (TypeError, ValueError):
+        return JSONResponse({"error": "quantity must be an integer"}, status_code=400)
+    if quantity < 1 or quantity > 200:
+        return JSONResponse({"error": "quantity must be 1-200"}, status_code=400)
+
+    batch_id = f"b_{secrets.token_hex(6)}"
+    now = int(time.time())
+
+    def _build_entries():
+        return [{
+            "key": _generate_comp_key(),
+            "email": email,
+            "type": grant_type,
+            "granted_at": now,
+            "note": note,
+            "batch_id": batch_id,
+            "seat_index": (i + 1) if quantity > 1 else None,
+            "revoked_at": None,
+        } for i in range(quantity)]
+
+    new_entries = _build_entries()
+    try:
+        await _comp_keys_insert_batch(new_entries)
+    except Exception:
+        # Retry once with fresh keys (PK collision is astronomical but possible)
+        new_entries = _build_entries()
+        try:
+            await _comp_keys_insert_batch(new_entries)
+        except Exception as e:
+            return JSONResponse({"error": "failed to persist keys", "detail": type(e).__name__}, status_code=500)
+
+    # Mirror into the ledger so /pool-balance includes the grant (best-effort; ledger is file-based)
+    for e in new_entries:
+        _ledger_append({
+            "session_id": f"comp_{e['key']}",
+            "key": e["key"],
+            "email": email,
+            "type": grant_type,
+            "pool": "granted",
+            "amount_cents": 0,
+            "at": now,
+            "batch_id": batch_id,
+        })
+
+    email_ok, email_msg = False, "skipped"
+    if send_email:
+        keys_list = [e["key"] for e in new_entries]
+        email_ok, email_msg = _send_comp_email(email, keys_list, grant_type, note)
+
+    return JSONResponse({
+        "ok": True,
+        "keys": [e["key"] for e in new_entries],
+        "batch_id": batch_id,
+        "quantity": quantity,
+        "email_sent": email_ok,
+        "email_msg": email_msg,
+    })
+
+
+@app.post("/api/sozawen/revoke-key")
+async def sozawen_revoke_key(request: Request, authorization: str = Header(None)):
+    """Admin: revoke a comp key (e.g., educator refund, misissue)."""
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"error": "invalid JSON"}, status_code=400)
+    key = (data.get("key") or "").strip().upper()
+    if not key or not key.startswith("SOZA-"):
+        return JSONResponse({"error": "valid SOZA- key required"}, status_code=400)
+    ok, msg = await _comp_key_revoke(key)
+    if not ok:
+        return JSONResponse({"error": msg}, status_code=404 if msg == "key not found" else 409)
+    return JSONResponse({"ok": True, "key": key})
+
+
+@app.post("/api/sozawen/unrevoke-key")
+async def sozawen_unrevoke_key(request: Request, authorization: str = Header(None)):
+    """Admin: undo a mistaken revocation."""
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"error": "invalid JSON"}, status_code=400)
+    key = (data.get("key") or "").strip().upper()
+    if not key or not key.startswith("SOZA-"):
+        return JSONResponse({"error": "valid SOZA- key required"}, status_code=400)
+    ok, msg = await _comp_key_unrevoke(key)
+    if not ok:
+        return JSONResponse({"error": msg}, status_code=404 if msg == "key not found" else 409)
+    return JSONResponse({"ok": True, "key": key})
+
+
+@app.get("/api/sozawen/list-grants")
+async def sozawen_list_grants(authorization: str = Header(None), limit: int = 100):
+    """Admin: list recent comp-key grants, newest first."""
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    limit = max(1, min(500, limit))
+    grants = await _comp_keys_list(limit)
+    total = await _comp_keys_total()
+    return JSONResponse({"grants": grants, "total": total})
+
+
 @app.post("/api/sozawen/create-payment-intent")
 async def sozawen_create_payment_intent(request: Request):
     """Create a Stripe PaymentIntent for embedded checkout (Payment Elements).
@@ -1278,16 +1729,26 @@ async def sozawen_create_payment_intent(request: Request):
     except Exception:
         body = {}
     ptype = body.get("type", "self_purchase")
-    if ptype not in ("self_purchase", "gift"):
+    if ptype not in ("self_purchase", "gift", "student"):
         return JSONResponse({"error": "invalid type"}, status_code=400)
+
+    # Pricing, server-side (never trust a client-supplied amount)
+    amount_by_type = {
+        "self_purchase": 7900,   # $79
+        "gift":          7900,   # $79 — funds a scholarship seat
+        "student":       1900,   # $19 — honor-system student tier
+    }
+    amount = amount_by_type[ptype]
     pool = "scholarship" if ptype == "gift" else "revenue"
-    description = (
-        "Sozawen — pay-it-forward (funds a free license for a musician in need)"
-        if ptype == "gift" else "Sozawen — lifetime license, one-time purchase"
-    )
+    descriptions = {
+        "self_purchase": "Sozawen — lifetime license, one-time purchase",
+        "gift":          "Sozawen — pay-it-forward (funds a free license for a musician in need)",
+        "student":       "Sozawen — student license, lifetime, one-time purchase",
+    }
+    description = descriptions[ptype]
 
     params = [
-        ("amount", "7900"),
+        ("amount", str(amount)),
         ("currency", "usd"),
         ("automatic_payment_methods[enabled]", "true"),
         ("metadata[type]", ptype),
@@ -1346,6 +1807,20 @@ async def sozawen_validate_key(request: Request):
     key = str(body.get("key", "")).strip().upper()
     if not key.startswith("SOZA-") or len(key) != 19:
         return JSONResponse({"valid": False, "message": "Invalid key format"})
+
+    # Comp keys (scholarship / educator / gift / student) are checked first —
+    # a single indexed Postgres SELECT, no Stripe call required.
+    comp_entry = await _comp_key_lookup(key)
+    if comp_entry:
+        if comp_entry.get("revoked_at"):
+            return JSONResponse({"valid": False, "message": "This key has been revoked."})
+        return JSONResponse({
+            "valid": True,
+            "message": "License valid",
+            "email": comp_entry.get("email"),
+            "type": comp_entry.get("type", "gift_direct"),
+            "purchased_at": comp_entry.get("granted_at"),
+        })
 
     # Cached listings for both sessions (Payment Links flow) and payment intents
     # (embedded Payment Element flow). 10-minute TTL.

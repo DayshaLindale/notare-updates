@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sozawen — Admin Panel</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #08080f; color: #d8d8e8; font-weight: 300; }
+        a { color: #2dd4a8; text-decoration: none; }
+
+        /* Login */
+        .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+        .login-box { background: #10101a; border: 1px solid #24243a; border-radius: 10px; padding: 36px; width: 380px; text-align: center; }
+        .brand { font-size: 28px; font-weight: 200; letter-spacing: 10px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+        .sub { font-style: italic; color: #7878a0; font-size: 13px; margin-bottom: 28px; }
+        .login-box h2 { font-size: 15px; font-weight: 500; color: #d8d8e8; letter-spacing: 2px; margin-bottom: 18px; }
+        .login-box input { width: 100%; padding: 12px 14px; background: #08080f; border: 1px solid #24243a; border-radius: 6px; color: #d8d8e8; font-size: 13px; margin-bottom: 10px; font-family: inherit; }
+        .login-box input:focus { outline: none; border-color: #2dd4a8; }
+        .login-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); color: #fff; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 13px; letter-spacing: 2px; }
+        .err { color: #e05a6f; font-size: 12px; margin-top: 10px; min-height: 16px; }
+
+        /* Panel */
+        .panel { display: none; max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid #24243a; }
+        .panel-header h1 { font-size: 18px; font-weight: 500; letter-spacing: 4px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); -webkit-background-clip: text; color: transparent; }
+        .btn-logout { background: none; color: #7878a0; border: 1px solid #24243a; padding: 6px 14px; border-radius: 20px; font-size: 11px; cursor: pointer; font-family: inherit; letter-spacing: 1px; }
+        .btn-logout:hover { color: #d8d8e8; border-color: #2dd4a8; }
+
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
+        .stat { background: #10101a; border: 1px solid #24243a; border-radius: 8px; padding: 20px; text-align: center; }
+        .stat .num { font-size: 30px; font-weight: 300; color: #2dd4a8; }
+        .stat .lbl { font-size: 10px; color: #7878a0; text-transform: uppercase; letter-spacing: 2px; margin-top: 6px; }
+        .stat.negative .num { color: #c084e0; }
+
+        .card { background: #10101a; border: 1px solid #24243a; border-radius: 8px; padding: 22px; margin-bottom: 20px; }
+        .card h3 { font-size: 13px; font-weight: 500; color: #9b59b6; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-grid label { font-size: 11px; color: #7878a0; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+        .form-grid input, .form-grid select, .form-grid textarea { width: 100%; padding: 10px 12px; background: #08080f; border: 1px solid #24243a; border-radius: 6px; color: #d8d8e8; font-size: 13px; font-family: inherit; }
+        .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus { outline: none; border-color: #2dd4a8; }
+        .form-grid textarea { grid-column: 1/-1; resize: vertical; min-height: 60px; }
+        .form-grid .full { grid-column: 1/-1; }
+        .checkbox-row { grid-column: 1/-1; font-size: 12px; color: #7878a0; }
+        .checkbox-row input { width: auto; margin-right: 8px; }
+
+        .btn-grant { padding: 12px 28px; background: linear-gradient(135deg, #9b59b6, #2dd4a8); color: #fff; border: none; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 2px; cursor: pointer; font-family: inherit; margin-top: 16px; }
+        .btn-grant:hover { opacity: 0.9; }
+
+        .result-box { margin-top: 18px; padding: 14px; background: rgba(45,212,168,0.06); border: 1px solid rgba(45,212,168,0.2); border-radius: 6px; font-size: 12px; color: #d8d8e8; display: none; }
+        .result-box.error { background: rgba(224,90,111,0.06); border-color: rgba(224,90,111,0.25); color: #e05a6f; }
+        .result-keys { font-family: Consolas, monospace; letter-spacing: 2px; color: #2dd4a8; margin-top: 10px; line-height: 1.8; font-size: 14px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; font-size: 10px; color: #7878a0; text-transform: uppercase; letter-spacing: 1px; padding: 10px 10px; border-bottom: 1px solid #24243a; }
+        td { padding: 10px 10px; border-bottom: 1px solid #18182a; color: #d8d8e8; }
+        td.key { font-family: Consolas, monospace; letter-spacing: 1px; color: #2dd4a8; font-size: 11px; }
+        td.email { color: #b8b8d0; }
+        td.date { color: #7878a0; font-size: 11px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; letter-spacing: 0.5px; }
+        .badge.scholarship { background: rgba(155,89,182,0.15); color: #c084e0; }
+        .badge.educator_bulk { background: rgba(45,212,168,0.12); color: #2dd4a8; }
+        .badge.gift_direct { background: rgba(200,165,92,0.15); color: #c8a55c; }
+        .badge.student { background: rgba(93,173,226,0.15); color: #6db3e2; }
+        .badge.revoked { background: rgba(224,90,111,0.15); color: #e05a6f; }
+        .btn-revoke { background: none; border: 1px solid #24243a; color: #7878a0; padding: 4px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; font-family: inherit; }
+        .btn-revoke:hover { color: #e05a6f; border-color: #e05a6f; }
+    </style>
+</head>
+<body>
+    <!-- LOGIN -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <div class="brand">SOZAWEN</div>
+            <div class="sub">Born from the burn. Built by feeling.</div>
+            <h2>ADMIN</h2>
+            <input type="password" id="adminKey" placeholder="Admin key" autofocus>
+            <button onclick="login()">Sign in</button>
+            <div class="err" id="loginErr"></div>
+        </div>
+    </div>
+
+    <!-- PANEL -->
+    <div id="panel" class="panel">
+        <div class="panel-header">
+            <h1>SOZAWEN ADMIN</h1>
+            <button class="btn-logout" onclick="logout()">Sign out</button>
+        </div>
+
+        <!-- POOL STATS -->
+        <div class="stats" id="poolStats">
+            <div class="stat"><div class="num" id="statGifts">—</div><div class="lbl">Gifts Received</div></div>
+            <div class="stat"><div class="num" id="statGranted">—</div><div class="lbl">Seats Granted</div></div>
+            <div class="stat" id="statAvailCard"><div class="num" id="statAvailable">—</div><div class="lbl">Pool Balance</div></div>
+            <div class="stat"><div class="num" id="statRaised">$0</div><div class="lbl">Total Raised</div></div>
+        </div>
+
+        <!-- GRANT FORM -->
+        <div class="card">
+            <h3>Grant a Seat</h3>
+            <div class="form-grid">
+                <div>
+                    <label>Recipient email</label>
+                    <input type="email" id="grantEmail" placeholder="recipient@example.com">
+                </div>
+                <div>
+                    <label>Grant type</label>
+                    <select id="grantType">
+                        <option value="scholarship">Scholarship (free, no questions)</option>
+                        <option value="educator_bulk">Educator classroom (bulk)</option>
+                        <option value="gift_direct">Direct gift</option>
+                        <option value="student">Student license</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Quantity</label>
+                    <input type="number" id="grantQty" value="1" min="1" max="200">
+                </div>
+                <div>
+                    <label>Send email?</label>
+                    <select id="grantSendEmail">
+                        <option value="true" selected>Yes, email the recipient</option>
+                        <option value="false">No, just generate keys</option>
+                    </select>
+                </div>
+                <div class="full">
+                    <label>Internal note (optional)</label>
+                    <textarea id="grantNote" placeholder="e.g., Applied via scholarship form 2026-04-25 — single mother in Portland, taught herself guitar"></textarea>
+                </div>
+            </div>
+            <button class="btn-grant" onclick="grantSeat()">Grant Seat</button>
+            <div class="result-box" id="grantResult"></div>
+        </div>
+
+        <!-- RECENT GRANTS -->
+        <div class="card">
+            <h3>Recent Grants</h3>
+            <table id="grantsTable">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Email</th>
+                        <th>Type</th>
+                        <th>Granted</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="grantsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API = ''; // same-origin; Render serves the API on the same host
+        let adminKey = sessionStorage.getItem('soz_admin_key') || '';
+
+        // HTML-escape user-supplied content before interpolating into innerHTML.
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => (
+                {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+            ));
+        }
+
+        if (adminKey) {
+            verifyAndShow();
+        }
+
+        async function login() {
+            const k = document.getElementById('adminKey').value.trim();
+            if (!k) return;
+            adminKey = k;
+            await verifyAndShow(true);
+        }
+
+        async function verifyAndShow(freshLogin = false) {
+            try {
+                const r = await fetch('/api/sozawen/pool-balance', {
+                    headers: { 'Authorization': 'Bearer ' + adminKey }
+                });
+                if (r.status === 401) {
+                    document.getElementById('loginErr').textContent = freshLogin ? 'Wrong admin key' : '';
+                    adminKey = '';
+                    sessionStorage.removeItem('soz_admin_key');
+                    return;
+                }
+                if (!r.ok) throw new Error('status ' + r.status);
+                const data = await r.json();
+                sessionStorage.setItem('soz_admin_key', adminKey);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('panel').style.display = 'block';
+                renderStats(data);
+                await loadGrants();
+            } catch (e) {
+                document.getElementById('loginErr').textContent = 'Connection error — ' + e.message;
+            }
+        }
+
+        function logout() {
+            adminKey = '';
+            sessionStorage.removeItem('soz_admin_key');
+            location.reload();
+        }
+
+        function renderStats(data) {
+            document.getElementById('statGifts').textContent = data.gifts_received ?? 0;
+            document.getElementById('statGranted').textContent = data.seats_granted ?? 0;
+            const avail = data.seats_available ?? 0;
+            document.getElementById('statAvailable').textContent = avail;
+            document.getElementById('statAvailCard').classList.toggle('negative', avail < 0);
+            const dollars = Math.floor((data.gifts_total_cents ?? 0) / 100);
+            document.getElementById('statRaised').textContent = '$' + dollars.toLocaleString();
+        }
+
+        async function grantSeat() {
+            const email = document.getElementById('grantEmail').value.trim();
+            const type = document.getElementById('grantType').value;
+            const quantity = parseInt(document.getElementById('grantQty').value, 10) || 1;
+            const note = document.getElementById('grantNote').value.trim();
+            const send_email = document.getElementById('grantSendEmail').value === 'true';
+            const out = document.getElementById('grantResult');
+
+            if (!email || !email.includes('@')) {
+                out.style.display = 'block';
+                out.classList.add('error');
+                out.innerHTML = 'Enter a valid email address.';
+                return;
+            }
+
+            out.style.display = 'block';
+            out.classList.remove('error');
+            out.innerHTML = 'Generating…';
+
+            try {
+                const r = await fetch('/api/sozawen/grant-seat', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + adminKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, type, quantity, note, send_email })
+                });
+                const data = await r.json();
+                if (!r.ok || data.error) {
+                    out.classList.add('error');
+                    out.innerHTML = 'Error: ' + (data.error || 'unknown');
+                    return;
+                }
+                const keyRows = data.keys.map(k => `<div>${esc(k)}</div>`).join('');
+                const emailLine = send_email
+                    ? (data.email_sent
+                        ? `<div style="color: #2dd4a8; margin-top: 10px; font-size: 11px;">✓ Email sent to ${esc(email)}</div>`
+                        : `<div style="color: #c8903c; margin-top: 10px; font-size: 11px;">⚠ Email not sent: ${esc(data.email_msg)}</div>`)
+                    : `<div style="color: #7878a0; margin-top: 10px; font-size: 11px;">Email skipped per request.</div>`;
+                out.innerHTML = `
+                    <div>Granted ${data.quantity} seat${data.quantity > 1 ? 's' : ''} to ${esc(email)}.</div>
+                    <div style="color: #7878a0; font-size: 10px; letter-spacing: 1px; margin-top: 8px;">BATCH ${esc(data.batch_id.toUpperCase())}</div>
+                    <div class="result-keys">${keyRows}</div>
+                    ${emailLine}
+                `;
+                // refresh
+                document.getElementById('grantEmail').value = '';
+                document.getElementById('grantNote').value = '';
+                document.getElementById('grantQty').value = '1';
+                const poolR = await fetch('/api/sozawen/pool-balance', {
+                    headers: { 'Authorization': 'Bearer ' + adminKey }
+                });
+                if (poolR.ok) renderStats(await poolR.json());
+                await loadGrants();
+            } catch (e) {
+                out.classList.add('error');
+                out.innerHTML = 'Network error: ' + e.message;
+            }
+        }
+
+        async function loadGrants() {
+            try {
+                const r = await fetch('/api/sozawen/list-grants?limit=50', {
+                    headers: { 'Authorization': 'Bearer ' + adminKey }
+                });
+                if (!r.ok) return;
+                const data = await r.json();
+                const body = document.getElementById('grantsBody');
+                if (!data.grants || !data.grants.length) {
+                    body.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#7878a0; padding:32px 0;">No grants yet. Above is the form to create the first one.</td></tr>';
+                    return;
+                }
+                body.innerHTML = data.grants.map(g => {
+                    const dt = g.granted_at ? new Date(g.granted_at * 1000).toLocaleString() : '—';
+                    const revoked = !!g.revoked_at;
+                    // Whitelist the type before using it as a CSS class to prevent attribute injection
+                    const safeType = ['scholarship','educator_bulk','gift_direct','student'].includes(g.type) ? g.type : 'gift_direct';
+                    const typeLabel = safeType.replace('_', ' ');
+                    // data-key on button so we never inline user data into an onclick handler
+                    const revokeBtn = revoked
+                        ? `<button class="btn-revoke" data-action="unrevoke" data-key="${esc(g.key)}" data-email="${esc(g.email || '')}">Unrevoke</button>`
+                        : `<button class="btn-revoke" data-action="revoke" data-key="${esc(g.key)}" data-email="${esc(g.email || '')}">Revoke</button>`;
+                    return `
+                        <tr>
+                            <td class="key">${esc(g.key)}</td>
+                            <td class="email">${esc(g.email || '—')}</td>
+                            <td><span class="badge ${safeType}">${esc(typeLabel)}</span></td>
+                            <td class="date">${esc(dt)}</td>
+                            <td>${revoked ? '<span class="badge revoked">revoked</span>' : '<span style="color:#2dd4a8;">active</span>'}</td>
+                            <td>${revokeBtn}</td>
+                        </tr>
+                    `;
+                }).join('');
+                // Re-bind click handlers (event delegation via querySelectorAll)
+                body.querySelectorAll('button[data-action]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const action = btn.getAttribute('data-action');
+                        const key = btn.getAttribute('data-key');
+                        const email = btn.getAttribute('data-email') || '(no email)';
+                        if (action === 'revoke') revokeKey(key, email);
+                        else if (action === 'unrevoke') unrevokeKey(key, email);
+                    });
+                });
+            } catch (e) { /* silent */ }
+        }
+
+        async function revokeKey(key, email) {
+            if (!confirm(
+                `Revoke this key?\n\n  ${key}\n  ${email}\n\n` +
+                `The key will stop validating immediately. You can unrevoke it later from this same table.`
+            )) return;
+            try {
+                const r = await fetch('/api/sozawen/revoke-key', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + adminKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ key })
+                });
+                const data = await r.json();
+                if (!r.ok) { alert('Error: ' + (data.error || 'unknown')); return; }
+                await loadGrants();
+            } catch (e) {
+                alert('Network error: ' + e.message);
+            }
+        }
+
+        async function unrevokeKey(key, email) {
+            if (!confirm(
+                `Unrevoke this key?\n\n  ${key}\n  ${email}\n\n` +
+                `The key will start validating again.`
+            )) return;
+            try {
+                const r = await fetch('/api/sozawen/unrevoke-key', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + adminKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ key })
+                });
+                const data = await r.json();
+                if (!r.ok) { alert('Error: ' + (data.error || 'unknown')); return; }
+                await loadGrants();
+            } catch (e) {
+                alert('Network error: ' + e.message);
+            }
+        }
+
+        // Allow Enter to submit the login
+        document.getElementById('adminKey').addEventListener('keydown', e => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
