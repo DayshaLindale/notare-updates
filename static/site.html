@@ -235,6 +235,49 @@
     </div>
 </section>
 
+<section style="background: var(--cream); padding: 80px 24px;" id="workspaces">
+    <div class="inner">
+        <div class="label">How It Works</div>
+        <h2 style="font-size: 30px; max-width: 600px; margin-bottom: 16px;">Four workspaces. One pipeline. Pay only for what you use.</h2>
+        <p style="max-width: 680px; font-size: 15px; color: var(--text-body); line-height: 1.8; margin-bottom: 40px;">Notare splits transcript production into discrete stages. Each stage is a separate workspace with its own tools &mdash; and its own license. Small shops buy just the workspaces they need; bigger operations bundle all three and save.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px; margin-top: 20px;">
+            <!-- WS1 -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 24px; border-top: 4px solid var(--gold);">
+                <div style="font-size: 11px; color: var(--gold); letter-spacing: 2px; font-weight: 600; margin-bottom: 6px;">WORKSPACE 1</div>
+                <h3 style="font-size: 19px; margin-bottom: 10px; font-family: 'Inter', sans-serif; color: var(--navy);">Transcribe</h3>
+                <p style="font-size: 13.5px; color: var(--text-body); line-height: 1.7; margin-bottom: 12px;">Audio file in &rarr; rough-draft <code>.docx</code> out. AssemblyAI or local Whisper, speaker diarization, optional timestamps.</p>
+                <div style="font-size: 11.5px; color: var(--text-light); line-height: 1.6;">Audio &rarr; transcript</div>
+            </div>
+            <!-- WS2 -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 24px; border-top: 4px solid var(--gold);">
+                <div style="font-size: 11px; color: var(--gold); letter-spacing: 2px; font-weight: 600; margin-bottom: 6px;">WORKSPACE 2</div>
+                <h3 style="font-size: 19px; margin-bottom: 10px; font-family: 'Inter', sans-serif; color: var(--navy);">ASR Cleanup</h3>
+                <p style="font-size: 13.5px; color: var(--text-body); line-height: 1.7; margin-bottom: 12px;">Raw ASR in &rarr; transcriber-ready draft out. Map speaker names, apply legal capitalization, remove fillers, normalize punctuation.</p>
+                <div style="font-size: 11.5px; color: var(--text-light); line-height: 1.6;">Rough &rarr; readable</div>
+            </div>
+            <!-- WS3 -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 24px; border-top: 4px solid var(--gold);">
+                <div style="font-size: 11px; color: var(--gold); letter-spacing: 2px; font-weight: 600; margin-bottom: 6px;">WORKSPACE 3</div>
+                <h3 style="font-size: 19px; margin-bottom: 10px; font-family: 'Inter', sans-serif; color: var(--navy);">Proofing</h3>
+                <p style="font-size: 13.5px; color: var(--text-body); line-height: 1.7; margin-bottom: 12px;">Finished transcript in &rarr; Word-commented copy out. Auto-fixes applied inline; every judgment-call flagged as a Word Comment for the proofreader to review.</p>
+                <div style="font-size: 11.5px; color: var(--text-light); line-height: 1.6;">Human&rsquo;s work &rarr; checked</div>
+            </div>
+            <!-- WS4 (coming soon) -->
+            <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 24px; border-top: 4px solid var(--border); opacity: 0.75;">
+                <div style="font-size: 11px; color: var(--text-muted); letter-spacing: 2px; font-weight: 600; margin-bottom: 6px;">WORKSPACE 4</div>
+                <h3 style="font-size: 19px; margin-bottom: 10px; font-family: 'Inter', sans-serif; color: var(--navy);">Realtime Reporting</h3>
+                <p style="font-size: 13.5px; color: var(--text-body); line-height: 1.7; margin-bottom: 12px;">Live audio streaming into a rolling transcript for realtime court reporters. Designed for the live-reporting workflow.</p>
+                <div style="font-size: 11.5px; color: var(--gold); font-weight: 600; letter-spacing: 1px;">COMING SOON</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 36px; padding: 20px; background: white; border: 1px solid var(--border); border-radius: 8px;">
+            <p style="font-size: 13.5px; color: var(--text-body); line-height: 1.8;"><strong style="color: var(--navy);">Don't need a workspace?</strong> Don't pay for it. A firm that only proofs transcripts others produce pays for Proofing only. A small shop that records and hands to a transcriber pays for Transcribe + Cleanup. Full-pipeline operations save with the Bundle. See <a href="#pricing" style="color: var(--gold); font-weight: 500;">pricing</a> for volume tiers.</p>
+        </div>
+    </div>
+</section>
+
 <section class="features" id="features">
     <div class="inner">
         <div class="label">Capabilities</div>
@@ -403,97 +446,64 @@
 <section class="pricing" id="pricing">
     <div class="inner">
         <div class="label">Pricing</div>
-        <h2 style="font-size: 28px;">Unlimited transcription. No per-minute charges. No surprises.</h2>
-        <p style="color: var(--text-muted); max-width: 550px; margin-top: 8px;">Every tier includes unlimited local transcription. You pay for features, not usage. No one gets cut off mid-job.</p>
+        <h2 style="font-size: 28px;">Pay for the workspace you need. Scale up as your volume grows.</h2>
+        <p style="color: var(--text-muted); max-width: 620px; margin-top: 8px;">Every tier includes all the tooling for the workspace. Pick the workspace or bundle that fits, then the volume tier that matches your month.
+            For audio transcription you bring your own AssemblyAI API key — <strong>your first 185 hours there are free</strong> with AssemblyAI's signup credit, and after that it's pennies per minute billed directly by them. Notare never touches your audio costs.</p>
 
-        <!-- Tier grid: consolidated pricing -->
-        <div class="pricing-grid" style="margin-top: 40px;">
-
-            <!-- Solo -->
-            <div class="price-card">
-                <h3>Solo</h3>
-                <div class="price">$89<span>/mo</span></div>
-                <p class="desc">Transcription &amp; proofing for the working reporter</p>
-                <ul>
-                    <li>Three capture modes (remote, multi-mic, room mic)</li>
-                    <li>Unlimited local transcription</li>
-                    <li>Zoom, Teams &amp; WebEx meeting import</li>
-                    <li>Live CC-style rolling transcript</li>
-                    <li>15 export formats with preview</li>
-                    <li>Jurisdiction profiles &amp; proofing rules</li>
-                    <li>Voice-based speaker detection</li>
-                    <li>Intelligent document extraction</li>
-                    <li>Automatic updates</li>
-                    <li>Email support</li>
-                </ul>
-                <p style="font-size: 11px; color: var(--text-light); margin-top: 8px;">Annual: pay 10 months, get 12 ($890/yr)</p>
-                <a href="/static/contact.html" class="btn btn-outline">Get Started</a>
-            </div>
-
-            <!-- Professional -->
-            <div class="price-card featured">
-                <h3>Professional</h3>
-                <div class="price">$149<span>/mo</span></div>
-                <p class="desc">Full production &amp; delivery for professional operations</p>
-                <ul>
-                    <li>Everything in Solo</li>
-                    <li>Batch processing (Mode D) for pre-recorded files</li>
-                    <li>Branded cover pages (logo, stamps, watermarks)</li>
-                    <li>Signature management &amp; digital PDF signing</li>
-                    <li>Exhibit uploads with bidirectional hyperlinks</li>
-                    <li>Header/footer graphics, cover letters &amp; disc labels</li>
-                    <li>Auto-optimized line spacing &amp; errata comparison</li>
-                    <li>Neural speaker detection &amp; reanalysis</li>
-                    <li>Case management &amp; tracking</li>
-                    <li>Voice profiles &amp; speaker database across sessions</li>
-                    <li>Document comparison &amp; redline</li>
-                    <li>2-seat collaborative editing with segment locking</li>
-                    <li>Local network live sharing (view &amp; edit)</li>
-                    <li>Multi-volume consolidation &amp; master index</li>
-                    <li>Dedicated support</li>
-                </ul>
-                <p style="font-size: 11px; color: var(--text-light); margin-top: 8px;">Annual: pay 10 months, get 12 ($1,490/yr)</p>
-                <a href="/static/contact.html" class="btn btn-fill">Get Started</a>
-            </div>
-
-            <!-- Agency -->
-            <div class="price-card">
-                <h3>Agency</h3>
-                <div class="price">$249<span>/mo</span></div>
-                <p class="desc">Up to 5 seats, shared workflow</p>
-                <ul>
-                    <li>Everything in Professional</li>
-                    <li>5 concurrent users</li>
-                    <li>Shared profiles &amp; speaker database</li>
-                    <li>Multi-reporter job queue</li>
-                    <li>Dedicated support</li>
-                </ul>
-                <p style="font-size: 11px; color: var(--text-light); margin-top: 8px;">Annual: pay 10 months, get 12 ($2,490/yr)</p>
-                <a href="/static/contact.html" class="btn btn-outline">Get Started</a>
-            </div>
+        <!-- Tier table: new workspace-based pricing -->
+        <div style="margin-top: 40px; overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: white; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); overflow: hidden;">
+                <thead>
+                    <tr style="background: var(--navy); color: white;">
+                        <th style="text-align:left; padding: 16px 20px; font-weight: 600; letter-spacing: 0.5px;">Workspace</th>
+                        <th style="padding: 16px 20px; font-weight: 600; letter-spacing: 0.5px;">Up to 5 / month</th>
+                        <th style="padding: 16px 20px; font-weight: 600; letter-spacing: 0.5px;">Up to 15 / month</th>
+                        <th style="padding: 16px 20px; font-weight: 600; letter-spacing: 0.5px;">Up to 30 / month</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 18px 20px;">
+                            <div style="font-weight: 600; color: var(--navy); font-size: 15px;">Proofreading (WS3)</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Upload a .docx, get back auto-fixes + flagged issues as Word comments.</div>
+                        </td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 600; font-size: 17px; color: var(--navy);">$250</td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 600; font-size: 17px; color: var(--navy);">$675</td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 600; font-size: 17px; color: var(--navy);">$1,050</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 18px 20px;">
+                            <div style="font-weight: 600; color: var(--navy); font-size: 15px;">Transcribe + ASR Cleanup (WS1+2)</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Audio → rough draft → cleaned transcript ready for your transcriber.</div>
+                        </td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 600; font-size: 17px; color: var(--navy);">$300</td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 600; font-size: 17px; color: var(--navy);">$800</td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 600; font-size: 17px; color: var(--navy);">$1,250</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border); background: rgba(200,165,92,0.05);">
+                        <td style="padding: 18px 20px;">
+                            <div style="font-weight: 700; color: var(--navy); font-size: 15px;">Full Bundle (WS1&ndash;3) <span style="font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 1px; margin-left: 6px;">BEST VALUE</span></div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">All three workspaces &mdash; the complete pipeline from audio to delivered transcript.</div>
+                        </td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 700; font-size: 17px; color: var(--gold);">$450</td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 700; font-size: 17px; color: var(--gold);">$1,200</td>
+                        <td style="text-align:center; padding: 18px 20px; font-weight: 700; font-size: 17px; color: var(--gold);">$1,850</td>
+                    </tr>
+                    <tr style="opacity: 0.6;">
+                        <td style="padding: 18px 20px;">
+                            <div style="font-weight: 600; color: var(--navy); font-size: 15px;">Realtime Reporting (WS4)</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Live court reporting with streaming transcription. For realtime court reporters.</div>
+                        </td>
+                        <td colspan="3" style="text-align:center; padding: 18px 20px; font-size: 14px; color: var(--text-muted); font-weight: 500; letter-spacing: 1px;">COMING SOON</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 12px; color: var(--text-light); margin-top: 14px; text-align: center;">Pricing is per month. Contact sales for annual pre-pay, multi-seat, or enterprise terms. Every paid tier includes your own proofing &amp; cleanup profiles &mdash; customization is part of onboarding.</p>
         </div>
 
-        <!-- Enterprise + Academic -->
-        <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 16px; max-width: 740px; margin-left: auto; margin-right: auto;">
-
-            <div class="price-card" style="text-align: center;">
-                <h3>Enterprise / Court Systems</h3>
-                <div class="price" style="font-size: 28px;">Custom</div>
-                <p class="desc">Unlimited users. Annual offline licensing. Dedicated onboarding. Pricing tailored to your organization. <span style="color:#c8a55c;">Coming soon:</span> court-administered profiles.</p>
-                <a href="/static/contact.html" class="btn btn-outline">Contact Sales</a>
-            </div>
-
-            <div class="price-card" style="text-align: center;">
-                <h3>Academic</h3>
-                <div class="price" style="font-size: 28px;">Custom</div>
-                <p class="desc">Court reporting programs &amp; training institutions. Batch licensing, instructor tools, student pricing.</p>
-                <a href="/static/contact.html" class="btn btn-outline">Contact Sales</a>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin-top: 24px; padding: 20px; background: var(--cream); border-radius: 8px;">
+        <div style="text-align: center; margin-top: 32px; padding: 20px; background: var(--cream); border-radius: 8px;">
             <p style="font-size: 14px; color: var(--navy); font-weight: 600; margin-bottom: 8px;">Try Notare free for 7 days.</p>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Download the installer, then request a trial key. Full Professional access, no payment, no credit card.</p>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Download the installer, then request a trial key. Full access to any workspace, no payment, no credit card.</p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                 <a href="/static/download.html" class="btn-primary" style="background: var(--navy); color: var(--gold); padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 14px;">Download Installer</a>
                 <a href="/static/contact.html" class="btn-secondary" style="color: var(--navy); padding: 12px 24px; text-decoration: none; font-weight: 500; font-size: 14px; border: 1px solid var(--border); border-radius: 4px;">Request Trial Key</a>

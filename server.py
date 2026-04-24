@@ -17,7 +17,7 @@ import json
 import os
 import shutil
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Header, Request
@@ -200,12 +200,21 @@ async def validate_license_post(request: Request):
             if save_needed:
                 admin_file.write_text(json.dumps(admin_data, indent=2), encoding="utf-8")
 
+            # Return entitlements so the Notare app can show/hide workspaces
+            # and proof profiles based on what the customer actually bought.
+            # Entitlements default to an empty shape if not set on the license
+            # (old licenses from before per-workspace entitlements were added).
+            entitlements = lic.get("entitlements") or {}
             return JSONResponse({
                 "valid": True,
                 "tier": lic.get("tier", "solo"),
                 "expires": lic.get("expires", ""),
                 "customer": lic.get("customer_name", ""),
                 "bound": bool(lic.get("machine_id")),
+                "entitlements": {
+                    "workspaces":     entitlements.get("workspaces", []),
+                    "proof_profiles": entitlements.get("proof_profiles", []),
+                },
             })
     except Exception:
         pass
@@ -304,6 +313,172 @@ async def sync_admin_data(request: Request):
         return JSONResponse({"ok": True, "licenses": len(data.get("licenses", []))})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ---------------------------------------------------------------------------
+# Admin CRUD endpoints — called by /static/admin.html via authFetch.
+# Auth: for now we reuse the ADMIN_KEY bearer check. Long-term this should
+# be per-admin sessions from an admin-login endpoint.
+# ---------------------------------------------------------------------------
+
+def _load_admin_data():
+    admin_file = BASE_DIR / "admin_data.json"
+    if not admin_file.exists():
+        return {"admins": [], "licenses": []}
+    try:
+        return json.loads(admin_file.read_text(encoding="utf-8"))
+    except Exception:
+        return {"admins": [], "licenses": []}
+
+
+def _save_admin_data(data):
+    admin_file = BASE_DIR / "admin_data.json"
+    admin_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _generate_license_key():
+    """Generate a NOTARE-XXXXXXXX-XXXXXXXX-XXXXXXXX key. Uniqueness is
+    enforced by the admin_data.json uniqueness check in generate_license."""
+    import secrets
+    def chunk():
+        return ''.join(secrets.choice("0123456789ABCDEF") for _ in range(8))
+    return f"NOTARE-{chunk()}-{chunk()}-{chunk()}"
+
+
+@app.post("/api/admin/license/generate")
+async def admin_license_generate(request: Request):
+    """Generate a new license key with workspace + profile entitlements.
+    Called by the admin panel's New License modal."""
+    auth = request.headers.get("authorization", "") or request.headers.get("Authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+
+    customer_name = (data.get("customer_name") or "").strip()
+    email         = (data.get("email") or "").strip()
+    org           = (data.get("org") or "").strip()
+    tier          = (data.get("tier") or "proofing_5").strip()
+    duration_days = int(data.get("duration_days") or 365)
+    entitlements  = data.get("entitlements") or {}
+    # Shape the entitlements object defensively — only two keys are used.
+    entitlements = {
+        "workspaces":     [str(x) for x in (entitlements.get("workspaces") or [])],
+        "proof_profiles": [str(x) for x in (entitlements.get("proof_profiles") or [])],
+    }
+
+    if not customer_name:
+        return JSONResponse({"error": "customer_name is required"}, status_code=400)
+
+    admin_data = _load_admin_data()
+    existing_keys = {l.get("key", "").upper() for l in admin_data.get("licenses", [])}
+
+    # Generate a unique key
+    for _ in range(50):
+        candidate = _generate_license_key()
+        if candidate.upper() not in existing_keys:
+            break
+    else:
+        return JSONResponse({"error": "Could not generate a unique key"}, status_code=500)
+
+    # Compute expires
+    if duration_days and duration_days > 0:
+        expires_dt = datetime.now() + timedelta(days=duration_days)
+        expires_str = expires_dt.strftime("%Y-%m-%d")
+    else:
+        expires_str = ""  # unlimited
+
+    new_lic = {
+        "key":           candidate,
+        "customer_name": customer_name,
+        "email":         email,
+        "org":           org,
+        "tier":          tier,
+        "status":        "active",
+        "created":       datetime.now().strftime("%Y-%m-%d"),
+        "expires":       expires_str,
+        "entitlements":  entitlements,
+    }
+    admin_data.setdefault("licenses", []).append(new_lic)
+    _save_admin_data(admin_data)
+
+    return JSONResponse({
+        "ok": True,
+        "key": candidate,
+        "customer_name": customer_name,
+        "tier": tier,
+        "expires": expires_str,
+        "entitlements": entitlements,
+    })
+
+
+@app.get("/api/admin/licenses")
+async def admin_list_licenses(request: Request):
+    """List every license (for the admin panel table)."""
+    auth = request.headers.get("authorization", "") or request.headers.get("Authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    data = _load_admin_data()
+    return JSONResponse({"licenses": data.get("licenses", [])})
+
+
+@app.post("/api/admin/license/{key}/deactivate")
+async def admin_license_deactivate(key: str, request: Request):
+    """Flip a license's status to 'inactive' (and release machine binding)."""
+    auth = request.headers.get("authorization", "") or request.headers.get("Authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    admin_data = _load_admin_data()
+    for lic in admin_data.get("licenses", []):
+        if lic.get("key", "").upper() == key.upper():
+            lic["status"] = "inactive"
+            lic.pop("machine_id", None)
+            _save_admin_data(admin_data)
+            return JSONResponse({"ok": True, "key": key})
+    return JSONResponse({"error": "Key not found"}, status_code=404)
+
+
+@app.post("/api/admin/license/{key}/activate")
+async def admin_license_activate(key: str, request: Request):
+    """Flip a license's status back to 'active'."""
+    auth = request.headers.get("authorization", "") or request.headers.get("Authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    admin_data = _load_admin_data()
+    for lic in admin_data.get("licenses", []):
+        if lic.get("key", "").upper() == key.upper():
+            lic["status"] = "active"
+            _save_admin_data(admin_data)
+            return JSONResponse({"ok": True, "key": key})
+    return JSONResponse({"error": "Key not found"}, status_code=404)
+
+
+@app.post("/api/admin/license/{key}/update-entitlements")
+async def admin_license_update_entitlements(key: str, request: Request):
+    """Change the entitlements on an existing license (upgrade/downgrade)."""
+    auth = request.headers.get("authorization", "") or request.headers.get("Authorization", "")
+    if not _check_admin_key(auth):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+    new_ent = {
+        "workspaces":     [str(x) for x in (data.get("workspaces") or [])],
+        "proof_profiles": [str(x) for x in (data.get("proof_profiles") or [])],
+    }
+    admin_data = _load_admin_data()
+    for lic in admin_data.get("licenses", []):
+        if lic.get("key", "").upper() == key.upper():
+            lic["entitlements"] = new_ent
+            if "tier" in data:
+                lic["tier"] = data["tier"]
+            _save_admin_data(admin_data)
+            return JSONResponse({"ok": True, "key": key, "entitlements": new_ent})
+    return JSONResponse({"error": "Key not found"}, status_code=404)
 
 
 # ---------------------------------------------------------------------------

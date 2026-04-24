@@ -122,109 +122,72 @@
         <!-- Plan Reference -->
         <div class="tab-content" id="tab-plans">
             <h2 style="font-size: 20px; margin-bottom: 16px;">Plan Reference</h2>
-            <p style="font-size: 13px; color: #6b6b7b; margin-bottom: 20px;">Complete breakdown of all tiers. Use this when generating licenses or answering customer questions about what's included.</p>
+            <p style="font-size: 13px; color: #6b6b7b; margin-bottom: 20px;">Pricing reference for sales conversations and license generation.</p>
 
             <div class="card">
-                <h3>Tier Breakdown</h3>
+                <h3>Pricing Grid</h3>
+                <p style="font-size:12px; color:#6b6b7b; margin-bottom:10px;">Monthly pricing. Per-month volume tiers are &ldquo;up to N transcripts.&rdquo; Audio cost (AssemblyAI API) is BYO key &mdash; customer pays AssemblyAI directly.</p>
                 <table>
                     <thead>
-                        <tr><th>Tier</th><th>Code</th><th>Price</th><th>Seats</th><th>Includes</th></tr>
+                        <tr>
+                            <th>Workspace</th>
+                            <th>Code</th>
+                            <th>Up to 5 / mo</th>
+                            <th>Up to 15 / mo</th>
+                            <th>Up to 30 / mo</th>
+                        </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><strong>Solo</strong></td>
-                            <td style="font-family: monospace;">solo</td>
-                            <td>$89/mo ($890/yr)</td>
-                            <td>1</td>
-                            <td>Transcription &amp; proofing: capture modes A/B/C, unlimited local transcription, Zoom/Teams/WebEx import, live CC-style rolling transcript, 15 export formats with preview, jurisdiction profiles and proofing, voice-based speaker detection, document extraction, context-aware accuracy review, automatic updates, email support</td>
+                            <td><strong>Proofing (WS3)</strong></td>
+                            <td style="font-family: monospace;">proofing_*</td>
+                            <td>$250 &middot; <code>proofing_5</code></td>
+                            <td>$675 &middot; <code>proofing_15</code></td>
+                            <td>$1,050 &middot; <code>proofing_30</code></td>
                         </tr>
                         <tr>
-                            <td><strong>Professional</strong></td>
-                            <td style="font-family: monospace;">professional</td>
-                            <td>$149/mo ($1,490/yr)</td>
-                            <td>1</td>
-                            <td>Full production &amp; delivery: everything in Solo + batch processing (Mode D), branded cover pages, signature management &amp; digital signing, exhibit uploads with hyperlinks, header/footer graphics, cover letters &amp; disc labels, auto-optimized line spacing, errata comparison, neural speaker detection, case management, voice profiles &amp; speaker DB, document comparison &amp; redline, 2-seat collaborative editing, local network live sharing, multi-volume consolidation, dedicated support</td>
+                            <td><strong>Transcribe + ASR Cleanup (WS1+2)</strong></td>
+                            <td style="font-family: monospace;">asr_*</td>
+                            <td>$300 &middot; <code>asr_5</code></td>
+                            <td>$800 &middot; <code>asr_15</code></td>
+                            <td>$1,250 &middot; <code>asr_30</code></td>
                         </tr>
-                        <tr>
-                            <td><strong>Agency</strong></td>
-                            <td style="font-family: monospace;">agency</td>
-                            <td>$249/mo ($2,490/yr)</td>
-                            <td>5</td>
-                            <td>Everything in Professional + 5 concurrent users, shared profiles and speaker database, multi-reporter job queue, dedicated support</td>
+                        <tr style="background: rgba(200,165,92,0.08);">
+                            <td><strong>Full Bundle (WS1&ndash;3)</strong></td>
+                            <td style="font-family: monospace;">bundle_*</td>
+                            <td>$450 &middot; <code>bundle_5</code></td>
+                            <td>$1,200 &middot; <code>bundle_15</code></td>
+                            <td>$1,850 &middot; <code>bundle_30</code></td>
                         </tr>
-                        <tr>
-                            <td><strong>Enterprise</strong></td>
+                        <tr style="opacity:0.6;">
+                            <td><strong>Realtime Reporting (WS4)</strong></td>
+                            <td style="font-family: monospace;">realtime_*</td>
+                            <td colspan="3" style="text-align:center; font-weight:500; color:#6b6b7b;">COMING SOON</td>
+                        </tr>
+                        <tr style="border-top:2px solid #e0ddd8;">
+                            <td><strong>Enterprise / Court Systems</strong></td>
                             <td style="font-family: monospace;">enterprise</td>
-                            <td>Custom (negotiable)</td>
-                            <td>Unlimited</td>
-                            <td>Everything in Agency + unlimited users, annual offline licensing, dedicated onboarding. <em style="color:#c8a55c;">Coming soon:</em> court-administered profiles</td>
+                            <td colspan="3" style="text-align:center;">Custom &mdash; full suite, unlimited, offline licensing, dedicated onboarding</td>
                         </tr>
                         <tr>
                             <td><strong>Academic</strong></td>
                             <td style="font-family: monospace;">academic</td>
-                            <td>Custom</td>
-                            <td>Custom</td>
-                            <td>Court reporting programs and training institutions. Batch licensing, instructor tools, student pricing.</td>
+                            <td colspan="3" style="text-align:center;">Custom &mdash; batch licensing for training programs, student pricing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Support / Internal</strong></td>
+                            <td style="font-family: monospace;">support</td>
+                            <td colspan="3" style="text-align:center;">Internal tester/support key &mdash; full access, no expiry</td>
                         </tr>
                         <tr>
                             <td><strong>Trial</strong></td>
                             <td style="font-family: monospace;">trial</td>
-                            <td>Free</td>
-                            <td>1</td>
-                            <td>Full Professional access for 7 days. No payment required. Converts to paid or deactivates.</td>
+                            <td colspan="3" style="text-align:center;">Free 7-day full-suite evaluation</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="card">
-                <h3>Feature Matrix</h3>
-                <table>
-                    <thead>
-                        <tr><th>Feature</th><th>Solo</th><th>Pro</th><th>Agency</th><th>Enterprise</th></tr>
-                    </thead>
-                    <tbody>
-                        <!-- Solo: Transcription & Proofing -->
-                        <tr><td>Capture modes A/B/C (remote, multi-mic, room mic)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Unlimited local transcription</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Zoom, Teams &amp; WebEx meeting import</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>15 export formats with preview</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Word template export with macros</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Condensed PDF and video sync</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Standard deposition export</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Jurisdiction profiles and proofing</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Voice-based speaker detection</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Document extraction</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Context-aware accuracy review</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Automatic updates (OTA patches)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Smart update banners</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Bundled Whisper models (local transcription)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <!-- Pro: Full Production & Delivery -->
-                        <tr style="border-top: 2px solid #e0ddd8;"><td><strong>Batch processing (Mode D)</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Branded cover pages (logo, stamps, watermark)</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Signature management &amp; digital PDF signing</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Exhibit uploads with bidirectional hyperlinks</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Header/footer graphics</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Cover letter &amp; disc label export</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Auto-optimized line spacing</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Errata comparison (auto-populated)</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Sign any PDF from toolbar</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Exhibit file uploads (docs, photos, video, audio)</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Neural speaker detection &amp; reanalysis (pyannote)</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Case management &amp; tracking</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Voice profiles &amp; speaker database</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Document comparison &amp; redline</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>2-seat collaborative editing</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Local network live sharing (view &amp; edit)</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td><strong>Multi-volume consolidation &amp; master index</strong></td><td>—</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr style="border-top: 2px solid #e0ddd8;"><td>Multi-seat (5 users)</td><td>—</td><td>—</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Shared profiles and speaker DB</td><td>—</td><td>—</td><td>&#10003;</td><td>&#10003;</td></tr>
-                        <tr><td>Offline annual licensing</td><td>—</td><td>—</td><td>—</td><td>&#10003;</td></tr>
-                        <tr><td>Court-administered profiles <span style="font-size:10px;color:#c8a55c;font-weight:600;">COMING SOON</span></td><td>—</td><td>—</td><td>—</td><td>&#10003;</td></tr>
-                        <tr style="border-top: 2px solid #e0ddd8;"><td>Email support</td><td>&#10003;</td><td>Dedicated</td><td>Dedicated</td><td>Dedicated</td></tr>
-                    </tbody>
-                </table>
-            </div>
 
             <div class="card">
                 <h3>Quick Reference — License Generation</h3>
@@ -474,18 +437,76 @@
         <label>Organization</label>
         <input type="text" id="licOrg">
         <label>Tier</label>
-        <select id="licTier">
-            <option value="solo">Solo ($89/mo)</option>
-            <option value="professional">Professional ($149/mo)</option>
-            <option value="agency">Agency ($249/mo)</option>
-            <option value="enterprise">Enterprise (Custom)</option>
-            <option value="academic">Academic (Custom)</option>
-            <option value="support">Support / Internal (Tester)</option>
-            <option value="trial">Trial (7 days)</option>
+        <select id="licTier" onchange="onTierChange()">
+            <optgroup label="Proofing (WS3)">
+                <option value="proofing_5">Proofing — Up to 5/mo ($250)</option>
+                <option value="proofing_15">Proofing — Up to 15/mo ($675)</option>
+                <option value="proofing_30">Proofing — Up to 30/mo ($1,050)</option>
+            </optgroup>
+            <optgroup label="ASR Suite (WS1+2)">
+                <option value="asr_5">ASR Suite — Up to 5/mo ($300)</option>
+                <option value="asr_15">ASR Suite — Up to 15/mo ($800)</option>
+                <option value="asr_30">ASR Suite — Up to 30/mo ($1,250)</option>
+            </optgroup>
+            <optgroup label="Full Bundle (WS1–3)">
+                <option value="bundle_5">Full Bundle — Up to 5/mo ($450)</option>
+                <option value="bundle_15">Full Bundle — Up to 15/mo ($1,200)</option>
+                <option value="bundle_30">Full Bundle — Up to 30/mo ($1,850)</option>
+            </optgroup>
+            <optgroup label="Other">
+                <option value="enterprise">Enterprise / Court Systems (Custom)</option>
+                <option value="academic">Academic (Custom)</option>
+                <option value="support">Support / Internal (Tester)</option>
+                <option value="trial">Trial (7 days, full suite)</option>
+            </optgroup>
         </select>
-        <label>Duration</label>
+
+        <label style="margin-top:12px;">Workspace Entitlements</label>
+        <p style="font-size:11px; color:#6b6b7b; margin:-4px 0 6px 0;">Auto-selected by tier. Override for custom SKUs.</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:10px; background:#f7f5f2; border-radius:4px;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" id="entTranscribe" style="width:14px; height:14px;">
+                <span>WS1 Transcribe</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" id="entCleanup" style="width:14px; height:14px;">
+                <span>WS2 ASR Cleanup</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" id="entProofing" style="width:14px; height:14px;">
+                <span>WS3 Proofing</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; opacity:0.55;">
+                <input type="checkbox" id="entRealtime" style="width:14px; height:14px;" disabled>
+                <span>WS4 Realtime <em style="font-size:10px; color:#c8a55c;">(soon)</em></span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" id="entReporting" style="width:14px; height:14px;">
+                <span>Legacy Reporting dashboard</span>
+            </label>
+        </div>
+
+        <label style="margin-top:12px;">Bundled Proof Profiles</label>
+        <p style="font-size:11px; color:#6b6b7b; margin:-4px 0 6px 0;">Only applies if Proofing workspace is entitled. Unchecked = customer can upload their own profiles but sees no bundled ones.</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; padding:10px; background:#f7f5f2; border-radius:4px;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" id="profDepoDirect" style="width:14px; height:14px;">
+                <span>DepoDirect</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" id="profLegacyOR" style="width:14px; height:14px;">
+                <span>Legacy Oregon</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" id="profLegacyTX" style="width:14px; height:14px;">
+                <span>Legacy Texas/Florida</span>
+            </label>
+        </div>
+
+        <label style="margin-top:12px;">Duration</label>
         <select id="licDuration">
-            <option value="30">7-days</option>
+            <option value="7">7 days (trial)</option>
+            <option value="30">30 days</option>
             <option value="90">90 days</option>
             <option value="365" selected>1 year</option>
             <option value="0">Unlimited</option>
@@ -763,10 +784,61 @@ async function loadSystem() {
     `).join('');
 }
 
-function showNewLicense() { document.getElementById('licenseModal').classList.add('active'); }
+function showNewLicense() {
+    document.getElementById('licenseModal').classList.add('active');
+    // Prime entitlements from the default tier
+    onTierChange();
+}
+
+// Map tier → default entitlement pattern. Admin can override before generating.
+const TIER_ENTITLEMENTS = {
+    proofing_5:  { ws: ['proofing'], profs: ['depo_direct'] },
+    proofing_15: { ws: ['proofing'], profs: ['depo_direct'] },
+    proofing_30: { ws: ['proofing'], profs: ['depo_direct'] },
+    asr_5:       { ws: ['asr', 'asr_cleanup'], profs: [] },
+    asr_15:      { ws: ['asr', 'asr_cleanup'], profs: [] },
+    asr_30:      { ws: ['asr', 'asr_cleanup'], profs: [] },
+    bundle_5:    { ws: ['asr', 'asr_cleanup', 'proofing'], profs: ['depo_direct'] },
+    bundle_15:   { ws: ['asr', 'asr_cleanup', 'proofing'], profs: ['depo_direct'] },
+    bundle_30:   { ws: ['asr', 'asr_cleanup', 'proofing'], profs: ['depo_direct'] },
+    enterprise:  { ws: ['asr', 'asr_cleanup', 'proofing', 'realtime', 'reporting'], profs: ['depo_direct', 'legacy_oregon', 'legacy_texas'] },
+    academic:    { ws: ['asr', 'asr_cleanup', 'proofing', 'reporting'], profs: ['depo_direct', 'legacy_oregon', 'legacy_texas'] },
+    support:     { ws: ['asr', 'asr_cleanup', 'proofing', 'realtime', 'reporting'], profs: ['depo_direct', 'legacy_oregon', 'legacy_texas'] },
+    trial:       { ws: ['asr', 'asr_cleanup', 'proofing'], profs: ['depo_direct', 'legacy_oregon', 'legacy_texas'] },
+};
+
+function onTierChange() {
+    const tier = document.getElementById('licTier').value;
+    const e = TIER_ENTITLEMENTS[tier] || { ws: [], profs: [] };
+    document.getElementById('entTranscribe').checked = e.ws.includes('asr');
+    document.getElementById('entCleanup').checked    = e.ws.includes('asr_cleanup');
+    document.getElementById('entProofing').checked   = e.ws.includes('proofing');
+    document.getElementById('entReporting').checked  = e.ws.includes('reporting');
+    document.getElementById('profDepoDirect').checked = e.profs.includes('depo_direct');
+    document.getElementById('profLegacyOR').checked   = e.profs.includes('legacy_oregon');
+    document.getElementById('profLegacyTX').checked   = e.profs.includes('legacy_texas');
+    // Auto-pick a sensible duration
+    const dur = document.getElementById('licDuration');
+    if (tier === 'trial') dur.value = '7';
+    else if (tier === 'enterprise' || tier === 'support') dur.value = '0';
+}
 function showNewAdmin() { document.getElementById('adminModal').classList.add('active'); }
 
 async function generateLicense() {
+    // Collect workspace entitlements from checkboxes
+    const workspaces = [];
+    if (document.getElementById('entTranscribe').checked) workspaces.push('asr');
+    if (document.getElementById('entCleanup').checked)    workspaces.push('asr_cleanup');
+    if (document.getElementById('entProofing').checked)   workspaces.push('proofing');
+    if (document.getElementById('entReporting').checked)  workspaces.push('reporting');
+    if (document.getElementById('entRealtime').checked)   workspaces.push('realtime');
+
+    // Bundled proof profiles the customer gets access to
+    const proof_profiles = [];
+    if (document.getElementById('profDepoDirect').checked) proof_profiles.push('depo_direct');
+    if (document.getElementById('profLegacyOR').checked)   proof_profiles.push('legacy_oregon');
+    if (document.getElementById('profLegacyTX').checked)   proof_profiles.push('legacy_texas');
+
     const r = await authFetch(`${API}/license/generate`, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -775,6 +847,10 @@ async function generateLicense() {
             org: document.getElementById('licOrg').value,
             tier: document.getElementById('licTier').value,
             duration_days: parseInt(document.getElementById('licDuration').value),
+            entitlements: {
+                workspaces: workspaces,
+                proof_profiles: proof_profiles,
+            },
         }),
     });
     const data = await r.json();

@@ -1,6 +1,6 @@
 {
-  "current_version": "2.0.14",
-  "released": "2026-04-22 19:20",
+  "current_version": "2.0.17",
+  "released": "2026-04-22 19:40",
   "updates": [
     {
       "version": "2.0.12",
@@ -241,6 +241,27 @@
       "size": 115917,
       "checksum": "7bd4dd87f7d1557210e6cb8a89e0db0cfe59fec842cf6800d26ab5f63b96ec7c",
       "notes": "NEW: Report mode for imported transcripts. Per Elizabeth's feedback - Notare should flag errors, not change formatting. Two buttons on the dashboard: 'Import & Proof' (prior behavior, applies rules and rewrites) and 'Report Only' (parses just enough to run detection, leaves source file untouched, downloads a findings report listing issues with original text, suggested correction, and context). New endpoint /api/job/{id}/export-report emits the report docx. Internally: _detect_proofing_issues() mirrors _apply_proofing_rules() in detection-only form. The import-transcript route accepts a new 'mode' form param ('proof' default, 'report' new) so existing integrations are unaffected. Cumulative with 2.0.13."
+    },
+    {
+      "version": "2.0.15",
+      "released": "2026-04-22 19:30",
+      "size": 11569,
+      "checksum": "417b3274c1b8e52fb56f1e516e5febf307d9e085679b9ad74aa156be74dcb49c",
+      "notes": "Report Only v2: fully bypasses the editor and segment parser. The 'Report Only' button on the dashboard now POSTs directly to /api/report (new endpoint) which reads the .docx paragraph by paragraph, runs 17 lint rules against the text, and streams back a findings-only sidecar docx. No job is created, no speaker splitter runs, no editor opens, no re-export. The source file is copied unchanged to reports/<timestamp>/ for audit and acknowledged as bit-identical on return. This matches Elizabeth's explicit request: \"leave the file as is and just run the proof code.\" Cumulative with 2.0.14."
+    },
+    {
+      "version": "2.0.16",
+      "released": "2026-04-22 19:35",
+      "size": 116718,
+      "checksum": "b0a2459c424f39775a4c03a8b169fe5cae74123f3b9e2a5d109101e8437ee85d",
+      "notes": "CRITICAL FIX \u2014 stops the startup fork-bomb that every install from 2.0.x onward was hitting. Two separate bugs compounded: (1) app.py had APP_CODE_VERSION hardcoded to '1.2.0' and reset settings.json version to 1.2.0 on every startup. The auto_update plugin read 1.2.0 from SETTINGS, hit the server, server said 'update available to 2.0.x', plugin downloaded + applied \u2014 and next launch app.py reset the version back to 1.2.0, infinite loop. app.py now reads _internal/_notare_version.txt (OTA-authoritative) and never resets the settings version. (2) wasapi_bootstrap.py called subprocess.run([sys.executable, '-m', 'pip', 'install', 'PyAudioWPatch']). In a frozen exe sys.executable IS Notare.exe, which ignored the pip args and just launched a fresh Notare. Each child hit the same bootstrap, spawned another child, etc. Now if no real Python venv is found (_cpu_env/_gpu_env), the plugin logs a warning and returns instead of spawning. Also carries forward 2.0.15's Report Only endpoint and dashboard button. Cumulative with 2.0.15."
+    },
+    {
+      "version": "2.0.17",
+      "released": "2026-04-22 19:40",
+      "size": 11868,
+      "checksum": "06857fd3c16a222d3a444708bbb6b075c5c0b6ac6aae080cfe1945c4f4943e9b",
+      "notes": "Report Only UX polish: (1) button is now a solid teal-to-green gradient with dark text, strong shadow, easy to spot on the dashboard. (2) After the findings report is generated, os.startfile() opens it in the user's default .docx handler (typically Word) so the review starts immediately \u2014 no hunting in the Downloads folder. Browser download still fires as backup. Cumulative with 2.0.16."
     }
   ]
 }
