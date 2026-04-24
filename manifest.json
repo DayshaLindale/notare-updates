@@ -1,267 +1,390 @@
 {
-  "current_version": "2.0.17",
-  "released": "2026-04-22 19:40",
+  "current_version": "2.0.39",
+  "released": "2026-04-23 20:47",
   "updates": [
     {
-      "version": "2.0.12",
-      "released": "2026-04-21",
-      "size": 116299,
-      "checksum": "b2cfa3f91b6800dd8560bb04fa0d3c2359e4a5b6c423ac202a6bcec4f815d093",
-      "notes": "CRITICAL fixes for imported-transcript workflow (Elizabeth's case). (1) Synthetic caption block (Case No. / Imported Transcript / Date / Location / Reported by) is now always suppressed when the job was created from an uploaded source \u2014 imports already carry their own caption from the source document, stacking Notare's on top produced an empty header block above the transcript. (2) Ships the preamble-skip in import_qa_fix.py that was written but never packaged: segments now start at '(Proceedings convened\u2026)' or the first speaker designation, so the pre-proceedings text (court caption, APPEARANCES, INDEX, EXHIBITS, MISCELLANEOUS) no longer gets crushed into segment 0 as a single monolithic paragraph. (3) Also carries forward the 2.0.11 newCount fix. Existing imports created before 2.0.12 will still show the mashed segment 0 \u2014 re-import to regenerate segments cleanly. Cumulative with 2.0.10."
-    },
-    {
-      "version": "2.0.11",
-      "released": "2026-04-21",
-      "size": 9779,
-      "checksum": "49183cc3260c0699e4b6992855e8f42b1f43e6fb13e62379dff2f36aa6f46132",
-      "notes": "CRITICAL: Real fix for 'newCount is not defined' on DOCX upload. The v2.0.2 'fix' never shipped \u2014 the declaration existed in the dev source but was missing from the update_server copy, so every OTA from 2.0.2 through 2.0.10 re-delivered the broken new_job.html to clients. 2.0.11 ships the actually-fixed new_job.html. Minimal bundle (only the one file) to avoid collateral regressions. Cumulative with 2.0.10."
-    },
-    {
-      "version": "2.0.10",
-      "released": "2026-04-21",
-      "size": 239585,
-      "checksum": "dafe78e8c4bbe07f03a14b80480e56d4a24d5eb66e7116cc6b91483f494edd13",
-      "notes": "Import-transcript now skips the preamble (Case No./APPEARANCES/INDEX/court headers) and starts segments at '(Proceedings convened\u2026)' or the first speaker designation. Elizabeth's source header no longer ends up as paragraph 0 of the export. Also: /api/job/{id}/update-title now accepts case_number, case_caption, court_name, reporter_name, proceeding_type, date, location, time_in, time_out, job_number, jurisdiction_profile \u2014 not just title. Cumulative with 2.0.9."
-    },
-    {
-      "version": "2.0.9",
-      "released": "2026-04-21",
-      "size": 234541,
-      "checksum": "e40745f0aa472e6d97c7c28f711977f350bd8deea7b07c1bc9a19295856c40d1",
-      "notes": "Caption-skip condition simplified \u2014 export now skips the synthetic header block whenever court_name/case_caption/case_number are all empty, regardless of proceeding_type. 2.0.8's condition was too narrow (required proceeding_type literally = 'Imported Transcript') and Elizabeth's imports came through as 'Hearing'. Cumulative with 2.0.8."
-    },
-    {
-      "version": "2.0.8",
-      "released": "2026-04-21",
-      "size": 234499,
-      "checksum": "d2ef6f473ecf968aba65c0aaae8c93c36e1aaee51c6f100e0f18a6979fd19d96",
-      "notes": "Proof tab restored in navigation across all 12 in-app pages (uniform). Three proofing profiles ship bundled: DepoDirect, Legacy Oregon, Legacy Texas. OTA safety filter now permits _internal/proof_scripts/*.py delivery. DOCX exports with no real case metadata skip the synthetic 'Imported Transcript / Case No. / Date' caption block, giving Elizabeth's workflow a clean pass-through. sys.exit/input guards in proof handler still active (from 2.0.7) so no proof script can take down the app. Cumulative with all prior fixes."
-    },
-    {
-      "version": "2.0.7",
-      "released": "2026-04-21",
-      "size": 168279,
-      "checksum": "17f48ab6c930105e54186436de520d4eefaf0e7ce3d1111b825394a5ac8529e8",
-      "notes": "SUPERSEDED by 2.0.8 \u2014 hid Proof tab as interim shield. 2.0.8 restores it with the feature fully working. The 2.0.7 proof handler sys.exit/input guards remain in effect."
-    },
-    {
-      "version": "2.0.5",
-      "released": "2026-04-21",
-      "size": 161769,
-      "checksum": "87f5c3b0212ee42401747a2ec0a2dd7cf446428b38aa5d7ae2d5b6bcd50034d3",
-      "notes": "CRITICAL: fixes OTA patches landing in _internal/ while the exe served from root/ \u2014 installs now mirror _internal to root on every startup (auto-heals any patch since 2.0.2 that looked installed but never displayed). Also: OTA no longer blocks _internal/app.py from extraction, every bundle carries a _notare_version.txt stamp with rollback if it mismatches the manifest, cumulative with 2.0.4 hardening and all prior fixes."
-    },
-    {
-      "version": "2.0.4",
-      "released": "2026-04-21",
-      "size": 157055,
-      "checksum": "c745ec465badfa530c06b5bbe8615b01f92efafc5b7da12c231af0bb61185529",
-      "notes": "Hardening: no-store cache headers for static HTML (kills WebView2 stale-UI bug), global unhandledrejection + error handler surfaces silent fetch failures as visible banners, plus 2.0.3 Word-preservation and 2.0.2 DOCX/Whisper fixes."
-    },
-    {
-      "version": "2.0.3",
-      "released": "2026-04-21",
-      "size": 155070,
-      "checksum": "6c96779f0815511be6fd2736fa38d13da732f828ea6674cfd7a218b93cdc48ad",
-      "notes": "CRITICAL: Word Live and PDF preview no longer attach to the user's running Microsoft Word. Uses DispatchEx to spawn a dedicated Word process, so opening Notare while Word has unsaved work will never close the user's document. Also cumulative with 2.0.2 fixes."
-    },
-    {
-      "version": "2.0.2",
-      "released": "2026-04-21",
-      "size": 147033,
-      "checksum": "754e1e44adc95fcd0e11ee6e060a8175805d399aad64f4bc201b345d1a8b88e5",
-      "notes": "Fixes: DOCX upload newCount error, Whisper install auto-failover to AssemblyAI, error-job click now shows error instead of blank editor, proofing workflow next-step prompt, proofreader mode gate for live-reporting controls, new Proof landing page."
-    },
-    {
-      "version": "1.8.2",
-      "released": "2026-04-14",
-      "size": 30468,
-      "checksum": "7271cc345b1e0c7232d0b7605995d1ecf213eb2cc38538c0401c949e480256df"
-    },
-    {
-      "version": "1.8.1",
-      "released": "2026-04-09",
-      "size": 9754,
-      "checksum": "ce7605ee9e8f3f094366bd852e43ce35ecc86347194bbdfdd095a8bab9045b5d"
-    },
-    {
-      "version": "1.8.0",
-      "released": "2026-04-09",
-      "size": 41000,
-      "checksum": "5685c461b7f2726c0f825ce2ab1dc3b436669f38d0617a8fb586347e8bb95c23"
-    },
-    {
-      "version": "1.7.9",
-      "released": "2026-04-09",
-      "size": 41012,
-      "checksum": "4231833cdd67bbb2ffeffd31e98cf477d6d491efac1760bfc425aa8c8f929e8d"
-    },
-    {
-      "version": "1.7.8",
-      "released": "2026-04-09",
-      "size": 40970,
-      "checksum": "d50625f9d4b4294f9d2878d9ce43ce865e8d369d5af05ab5bbbb3654ee90b7cd"
-    },
-    {
-      "version": "1.7.7",
-      "released": "2026-04-09",
-      "size": 15988,
-      "checksum": "60b2e94dffd3f951e30e19697ed66080edefc3fefc4c6c507ccdf5f94e3bc7e3"
-    },
-    {
-      "version": "1.7.6",
-      "released": "2026-04-09",
-      "size": 5225,
-      "checksum": "41315b10f7a7048594e384def1d5163b690b14c574d4f1c4c44088dd8187a221"
-    },
-    {
-      "version": "1.7.5",
-      "released": "2026-04-09",
-      "size": 40988,
-      "checksum": "9632a2b5102894bcb03c5f25c805eda65d07be16e64f1c731225d3e0786a60aa"
-    },
-    {
-      "version": "1.7.4",
-      "released": "2026-04-09",
-      "size": 12454,
-      "checksum": "c5973e13e6b752331b27b3babfe8d1fb101d4f5b01aa7601dfc736a356bc868f"
-    },
-    {
-      "version": "1.7.3",
-      "released": "2026-04-09",
-      "size": 200328,
-      "checksum": "e1c2e118054bba8a8072d19218799b1a28351a2fda5045848638f515ffd08acf"
-    },
-    {
-      "version": "1.7.2",
-      "released": "2026-04-09",
-      "size": 134288,
-      "checksum": "d3fc76e90371d77dbe58dc6e7c1611c2f568dd7801402365059aca47a85b0cbd"
-    },
-    {
-      "version": "1.7.1",
-      "released": "2026-04-09",
-      "size": 21332,
-      "checksum": "22b07fc57c3e47dc5fd4518e53190fa8f6561446e8b17f2301e053175ba6e18e"
-    },
-    {
-      "version": "1.7.0",
-      "released": "2026-04-08",
-      "size": 11746,
-      "checksum": "51079ed7177e77f08c323c8b59f9e8df2409ec4463a68e01e0958b8996d0f380"
-    },
-    {
-      "version": "1.6.0",
-      "released": "2026-04-08",
-      "size": 172153,
-      "checksum": "8b8d64e9738b206f240a8998ae824e37d756e49d53c1e4610e5d3fa25f45cc3a"
-    },
-    {
-      "version": "1.5.5",
-      "released": "2026-04-08",
-      "size": 163030,
-      "checksum": "31a24711631647c3d3cf79ee4af7f057da359419315fd30d9ce646613d726625"
-    },
-    {
-      "version": "1.5.4",
-      "released": "2026-04-08",
-      "size": 163787,
-      "checksum": "09c07a19683b51dc514c2ffa512d204ca63fd12f0fe627ee7fa7553550a739a1"
-    },
-    {
-      "version": "1.5.3",
-      "released": "2026-04-08",
-      "size": 162305,
-      "checksum": "e229efa6bb20e9e95577ac116b95994fec95864ce7e34fd8859beb6ef2bf773e"
-    },
-    {
-      "version": "1.5.2",
-      "released": "2026-04-08",
-      "size": 157724,
-      "checksum": "5789dd698da93403f58f5399035d10f2f91a4f904cb972c120b1550ef60af343"
-    },
-    {
-      "version": "1.5.1",
-      "released": "2026-04-08",
-      "size": 156646,
-      "checksum": "f3fdbbfd1b0ac9b27b29d49d427dbf3c437812c1ebf05666278068d186db311f"
-    },
-    {
-      "version": "1.5.0",
-      "released": "2026-04-08",
-      "size": 153396,
-      "checksum": "cdeee97ce12f4fc5b36ed7f2f2fa4f9c85abfa3dcd844932977fa94b473d381d"
-    },
-    {
-      "version": "1.4.6",
-      "released": "2026-04-08",
-      "size": 11353,
-      "checksum": "8a0e6d2de28be2955a05422b425fe99689633bd6e889ef357a79aa38a28e676e"
-    },
-    {
-      "version": "1.4.5",
-      "released": "2026-04-08",
-      "size": 11223,
-      "checksum": "3d3ecd6930706ffe449c98c446bcca7286caa58a7833539135931ad265eb0211"
-    },
-    {
-      "version": "1.4.4",
-      "released": "2026-04-08",
-      "size": 10738,
-      "checksum": "bad86b4d2dd5d5627f86acaac4554a81d1087460c4345c73d58bbc30a396ad54"
-    },
-    {
-      "version": "1.4.3",
-      "released": "2026-04-08",
-      "size": 10668,
-      "checksum": "3efaae1ca3d4c6b2c640206f3d5c9784e13bfaad5b4924133f5283282a559e7a"
-    },
-    {
-      "version": "1.4.2",
-      "released": "2026-04-08",
-      "size": 7767,
-      "checksum": "19b5fbd29a84107051361bf6072a7230fbd7e68f3b0952d0e1a58565ddf0ce77"
-    },
-    {
       "version": "1.4.1",
-      "released": "2026-04-07",
+      "released": "2026-04-07 15:15",
       "size": 294055,
       "checksum": "3636313d77e03b4a62e4e403283cdf755c650446c54cba4f1307fd7fd257d16a"
     },
     {
+      "version": "1.4.2",
+      "released": "2026-04-08 14:14",
+      "size": 7767,
+      "checksum": "19b5fbd29a84107051361bf6072a7230fbd7e68f3b0952d0e1a58565ddf0ce77"
+    },
+    {
+      "version": "1.4.3",
+      "released": "2026-04-08 15:19",
+      "size": 10668,
+      "checksum": "3efaae1ca3d4c6b2c640206f3d5c9784e13bfaad5b4924133f5283282a559e7a"
+    },
+    {
+      "version": "1.4.4",
+      "released": "2026-04-08 15:41",
+      "size": 10738,
+      "checksum": "bad86b4d2dd5d5627f86acaac4554a81d1087460c4345c73d58bbc30a396ad54"
+    },
+    {
+      "version": "1.4.5",
+      "released": "2026-04-08 16:09",
+      "size": 11223,
+      "checksum": "3d3ecd6930706ffe449c98c446bcca7286caa58a7833539135931ad265eb0211"
+    },
+    {
+      "version": "1.4.6",
+      "released": "2026-04-08 17:28",
+      "size": 11353,
+      "checksum": "8a0e6d2de28be2955a05422b425fe99689633bd6e889ef357a79aa38a28e676e"
+    },
+    {
+      "version": "1.5.0",
+      "released": "2026-04-08 17:44",
+      "size": 153396,
+      "checksum": "cdeee97ce12f4fc5b36ed7f2f2fa4f9c85abfa3dcd844932977fa94b473d381d"
+    },
+    {
+      "version": "1.5.1",
+      "released": "2026-04-08 18:12",
+      "size": 156646,
+      "checksum": "f3fdbbfd1b0ac9b27b29d49d427dbf3c437812c1ebf05666278068d186db311f"
+    },
+    {
+      "version": "1.5.2",
+      "released": "2026-04-08 18:17",
+      "size": 157724,
+      "checksum": "5789dd698da93403f58f5399035d10f2f91a4f904cb972c120b1550ef60af343"
+    },
+    {
+      "version": "1.5.3",
+      "released": "2026-04-08 18:35",
+      "size": 162305,
+      "checksum": "e229efa6bb20e9e95577ac116b95994fec95864ce7e34fd8859beb6ef2bf773e"
+    },
+    {
+      "version": "1.5.4",
+      "released": "2026-04-08 18:39",
+      "size": 163787,
+      "checksum": "09c07a19683b51dc514c2ffa512d204ca63fd12f0fe627ee7fa7553550a739a1"
+    },
+    {
+      "version": "1.5.5",
+      "released": "2026-04-08 18:40",
+      "size": 163030,
+      "checksum": "31a24711631647c3d3cf79ee4af7f057da359419315fd30d9ce646613d726625"
+    },
+    {
+      "version": "1.6.0",
+      "released": "2026-04-08 18:57",
+      "size": 172153,
+      "checksum": "8b8d64e9738b206f240a8998ae824e37d756e49d53c1e4610e5d3fa25f45cc3a"
+    },
+    {
+      "version": "1.7.0",
+      "released": "2026-04-08 19:24",
+      "size": 11746,
+      "checksum": "51079ed7177e77f08c323c8b59f9e8df2409ec4463a68e01e0958b8996d0f380"
+    },
+    {
+      "version": "1.7.1",
+      "released": "2026-04-09 13:47",
+      "size": 21332,
+      "checksum": "22b07fc57c3e47dc5fd4518e53190fa8f6561446e8b17f2301e053175ba6e18e"
+    },
+    {
+      "version": "1.7.2",
+      "released": "2026-04-09 15:05",
+      "size": 134288,
+      "checksum": "d3fc76e90371d77dbe58dc6e7c1611c2f568dd7801402365059aca47a85b0cbd"
+    },
+    {
+      "version": "1.7.3",
+      "released": "2026-04-09 15:26",
+      "size": 200328,
+      "checksum": "e1c2e118054bba8a8072d19218799b1a28351a2fda5045848638f515ffd08acf"
+    },
+    {
+      "version": "1.7.4",
+      "released": "2026-04-09 15:32",
+      "size": 12454,
+      "checksum": "c5973e13e6b752331b27b3babfe8d1fb101d4f5b01aa7601dfc736a356bc868f"
+    },
+    {
+      "version": "1.7.5",
+      "released": "2026-04-09 15:51",
+      "size": 40988,
+      "checksum": "9632a2b5102894bcb03c5f25c805eda65d07be16e64f1c731225d3e0786a60aa"
+    },
+    {
+      "version": "1.7.6",
+      "released": "2026-04-09 16:03",
+      "size": 5225,
+      "checksum": "41315b10f7a7048594e384def1d5163b690b14c574d4f1c4c44088dd8187a221"
+    },
+    {
+      "version": "1.7.7",
+      "released": "2026-04-09 17:53",
+      "size": 15988,
+      "checksum": "60b2e94dffd3f951e30e19697ed66080edefc3fefc4c6c507ccdf5f94e3bc7e3"
+    },
+    {
+      "version": "1.7.8",
+      "released": "2026-04-09 18:02",
+      "size": 40970,
+      "checksum": "d50625f9d4b4294f9d2878d9ce43ce865e8d369d5af05ab5bbbb3654ee90b7cd"
+    },
+    {
+      "version": "1.7.9",
+      "released": "2026-04-09 18:05",
+      "size": 41012,
+      "checksum": "4231833cdd67bbb2ffeffd31e98cf477d6d491efac1760bfc425aa8c8f929e8d"
+    },
+    {
+      "version": "1.8.0",
+      "released": "2026-04-09 18:08",
+      "size": 41000,
+      "checksum": "5685c461b7f2726c0f825ce2ab1dc3b436669f38d0617a8fb586347e8bb95c23"
+    },
+    {
+      "version": "1.8.1",
+      "released": "2026-04-09 18:31",
+      "size": 9754,
+      "checksum": "ce7605ee9e8f3f094366bd852e43ce35ecc86347194bbdfdd095a8bab9045b5d"
+    },
+    {
+      "version": "1.8.2",
+      "released": "2026-04-14 23:53",
+      "size": 30468,
+      "checksum": "7271cc345b1e0c7232d0b7605995d1ecf213eb2cc38538c0401c949e480256df"
+    },
+    {
+      "version": "2.0.2",
+      "released": "2026-04-21 15:09",
+      "size": 147033,
+      "checksum": "754e1e44adc95fcd0e11ee6e060a8175805d399aad64f4bc201b345d1a8b88e5"
+    },
+    {
+      "version": "2.0.3",
+      "released": "2026-04-21 15:34",
+      "size": 155070,
+      "checksum": "6c96779f0815511be6fd2736fa38d13da732f828ea6674cfd7a218b93cdc48ad"
+    },
+    {
+      "version": "2.0.4",
+      "released": "2026-04-21 15:45",
+      "size": 157055,
+      "checksum": "c745ec465badfa530c06b5bbe8615b01f92efafc5b7da12c231af0bb61185529"
+    },
+    {
+      "version": "2.0.5",
+      "released": "2026-04-21 16:00",
+      "size": 161769,
+      "checksum": "87f5c3b0212ee42401747a2ec0a2dd7cf446428b38aa5d7ae2d5b6bcd50034d3"
+    },
+    {
+      "version": "2.0.6",
+      "released": "2026-04-21 16:12",
+      "size": 162429,
+      "checksum": "c7e735da6b4490e6461315c4491284041b8424413fbed1ce04f47809fea7c0a4"
+    },
+    {
+      "version": "2.0.7",
+      "released": "2026-04-21 17:25",
+      "size": 168279,
+      "checksum": "17f48ab6c930105e54186436de520d4eefaf0e7ce3d1111b825394a5ac8529e8"
+    },
+    {
+      "version": "2.0.8",
+      "released": "2026-04-21 17:39",
+      "size": 234499,
+      "checksum": "d2ef6f473ecf968aba65c0aaae8c93c36e1aaee51c6f100e0f18a6979fd19d96"
+    },
+    {
+      "version": "2.0.9",
+      "released": "2026-04-21 17:45",
+      "size": 234541,
+      "checksum": "e40745f0aa472e6d97c7c28f711977f350bd8deea7b07c1bc9a19295856c40d1"
+    },
+    {
+      "version": "2.0.10",
+      "released": "2026-04-21 18:00",
+      "size": 239585,
+      "checksum": "dafe78e8c4bbe07f03a14b80480e56d4a24d5eb66e7116cc6b91483f494edd13"
+    },
+    {
+      "version": "2.0.11",
+      "released": "2026-04-21 19:20",
+      "size": 9779,
+      "checksum": "49183cc3260c0699e4b6992855e8f42b1f43e6fb13e62379dff2f36aa6f46132"
+    },
+    {
+      "version": "2.0.12",
+      "released": "2026-04-21 20:57",
+      "size": 116299,
+      "checksum": "b2cfa3f91b6800dd8560bb04fa0d3c2359e4a5b6c423ac202a6bcec4f815d093"
+    },
+    {
       "version": "2.0.13",
-      "released": "2026-04-22 19:08",
+      "released": "2026-04-22 14:57",
       "size": 106947,
-      "checksum": "b1bd77a63fd368f44ce6799cb4dd45f07c56a051b0bc88b0b93f959ae8d1e919",
-      "notes": "CRITICAL fix to imported-transcript speaker splitting. (1) import_qa_fix.py's mid-line speaker detector no longer requires a '.?!' before the speaker label, so transitions like '-- THE COURT:' and mid-word interjections are correctly split into separate segments. (2) Regex tightened to all-caps \u2014 dropped the IGNORECASE flag that caused prose like 'the Plaintiff' to false-match as a speaker and chew through to the next colon. (3) Preamble skip now slices within a single run-on caption paragraph instead of discarding it wholesale, so the first proceeding line (THE CLERK 'We're on the record', THE COURT opening remarks) is preserved when the source .docx collapses case caption + APPEARANCES + INDEX + (Proceedings convened...) + first turns into one line. Verified on Elizabeth's A189340 JWilmot hearing: 218 run-on paragraphs \u2192 688 clean speaker segments with zero residual mid-paragraph labels. Re-import previously-broken transcripts to regenerate segments. Cumulative with 2.0.12."
+      "checksum": "b1bd77a63fd368f44ce6799cb4dd45f07c56a051b0bc88b0b93f959ae8d1e919"
     },
     {
       "version": "2.0.14",
-      "released": "2026-04-22 19:20",
+      "released": "2026-04-22 15:26",
       "size": 115917,
-      "checksum": "7bd4dd87f7d1557210e6cb8a89e0db0cfe59fec842cf6800d26ab5f63b96ec7c",
-      "notes": "NEW: Report mode for imported transcripts. Per Elizabeth's feedback - Notare should flag errors, not change formatting. Two buttons on the dashboard: 'Import & Proof' (prior behavior, applies rules and rewrites) and 'Report Only' (parses just enough to run detection, leaves source file untouched, downloads a findings report listing issues with original text, suggested correction, and context). New endpoint /api/job/{id}/export-report emits the report docx. Internally: _detect_proofing_issues() mirrors _apply_proofing_rules() in detection-only form. The import-transcript route accepts a new 'mode' form param ('proof' default, 'report' new) so existing integrations are unaffected. Cumulative with 2.0.13."
+      "checksum": "7bd4dd87f7d1557210e6cb8a89e0db0cfe59fec842cf6800d26ab5f63b96ec7c"
     },
     {
       "version": "2.0.15",
-      "released": "2026-04-22 19:30",
+      "released": "2026-04-22 19:21",
       "size": 11569,
-      "checksum": "417b3274c1b8e52fb56f1e516e5febf307d9e085679b9ad74aa156be74dcb49c",
-      "notes": "Report Only v2: fully bypasses the editor and segment parser. The 'Report Only' button on the dashboard now POSTs directly to /api/report (new endpoint) which reads the .docx paragraph by paragraph, runs 17 lint rules against the text, and streams back a findings-only sidecar docx. No job is created, no speaker splitter runs, no editor opens, no re-export. The source file is copied unchanged to reports/<timestamp>/ for audit and acknowledged as bit-identical on return. This matches Elizabeth's explicit request: \"leave the file as is and just run the proof code.\" Cumulative with 2.0.14."
+      "checksum": "417b3274c1b8e52fb56f1e516e5febf307d9e085679b9ad74aa156be74dcb49c"
     },
     {
       "version": "2.0.16",
-      "released": "2026-04-22 19:35",
+      "released": "2026-04-22 19:37",
       "size": 116718,
-      "checksum": "b0a2459c424f39775a4c03a8b169fe5cae74123f3b9e2a5d109101e8437ee85d",
-      "notes": "CRITICAL FIX \u2014 stops the startup fork-bomb that every install from 2.0.x onward was hitting. Two separate bugs compounded: (1) app.py had APP_CODE_VERSION hardcoded to '1.2.0' and reset settings.json version to 1.2.0 on every startup. The auto_update plugin read 1.2.0 from SETTINGS, hit the server, server said 'update available to 2.0.x', plugin downloaded + applied \u2014 and next launch app.py reset the version back to 1.2.0, infinite loop. app.py now reads _internal/_notare_version.txt (OTA-authoritative) and never resets the settings version. (2) wasapi_bootstrap.py called subprocess.run([sys.executable, '-m', 'pip', 'install', 'PyAudioWPatch']). In a frozen exe sys.executable IS Notare.exe, which ignored the pip args and just launched a fresh Notare. Each child hit the same bootstrap, spawned another child, etc. Now if no real Python venv is found (_cpu_env/_gpu_env), the plugin logs a warning and returns instead of spawning. Also carries forward 2.0.15's Report Only endpoint and dashboard button. Cumulative with 2.0.15."
+      "checksum": "b0a2459c424f39775a4c03a8b169fe5cae74123f3b9e2a5d109101e8437ee85d"
     },
     {
       "version": "2.0.17",
-      "released": "2026-04-22 19:40",
+      "released": "2026-04-22 19:39",
       "size": 11868,
-      "checksum": "06857fd3c16a222d3a444708bbb6b075c5c0b6ac6aae080cfe1945c4f4943e9b",
-      "notes": "Report Only UX polish: (1) button is now a solid teal-to-green gradient with dark text, strong shadow, easy to spot on the dashboard. (2) After the findings report is generated, os.startfile() opens it in the user's default .docx handler (typically Word) so the review starts immediately \u2014 no hunting in the Downloads folder. Browser download still fires as backup. Cumulative with 2.0.16."
+      "checksum": "06857fd3c16a222d3a444708bbb6b075c5c0b6ac6aae080cfe1945c4f4943e9b"
+    },
+    {
+      "version": "2.0.18",
+      "released": "2026-04-22 20:12",
+      "size": 18812,
+      "checksum": "b8cbe91ed8d48250c8e44e3428c7afa62a98a4862adc541be0310608e60766f1"
+    },
+    {
+      "version": "2.0.19",
+      "released": "2026-04-22 20:17",
+      "size": 14544,
+      "checksum": "5858d03cddf36caf0d743a731c0d8dd9ed53cc77310d90871efe6c211ab0bc32"
+    },
+    {
+      "version": "2.0.20",
+      "released": "2026-04-22 20:24",
+      "size": 20353,
+      "checksum": "d7a9546c4d93d867f2d935d0513fa27589bea3ce53eb565188bed8ec2a0d299b"
+    },
+    {
+      "version": "2.0.21",
+      "released": "2026-04-22 20:27",
+      "size": 20573,
+      "checksum": "5c5fc34ff37f5243a281a34aa3938bf9ea0c740dcb508dc0dbffed5e3271ee54"
+    },
+    {
+      "version": "2.0.22",
+      "released": "2026-04-22 20:30",
+      "size": 20701,
+      "checksum": "3b0199b1a87835727f7f7c4843e34005bc4a1814cbca03b25c6188032487fac2"
+    },
+    {
+      "version": "2.0.23",
+      "released": "2026-04-23 16:32",
+      "size": 54478,
+      "checksum": "097438d87cb13a8c2672f4e79203a6fad7e1530b3e827ee6c3d4f3cac13937ec"
+    },
+    {
+      "version": "2.0.24",
+      "released": "2026-04-23 16:44",
+      "size": 55314,
+      "checksum": "95440ac819e4d0ee4fd9b2fa56b0896724a1746a6de1449fdf449fc20e1785c3"
+    },
+    {
+      "version": "2.0.25",
+      "released": "2026-04-23 16:51",
+      "size": 55689,
+      "checksum": "210e6e8ae2c09e7a187d653dfe19b8d165df60e6178c01da45a99f35eb51eb69"
+    },
+    {
+      "version": "2.0.26",
+      "released": "2026-04-23 17:07",
+      "size": 56511,
+      "checksum": "1b8b95154fa769b33513c3be1839faf97bbd8bc8536cae24e57d8e72fe79f46b"
+    },
+    {
+      "version": "2.0.27",
+      "released": "2026-04-23 17:30",
+      "size": 78659,
+      "checksum": "efa5773973283f80c2c3ad42a02ce49595fddbab760b29208c5f6903e2c5c589"
+    },
+    {
+      "version": "2.0.28",
+      "released": "2026-04-23 17:42",
+      "size": 81985,
+      "checksum": "915a26385473181c501a92e684a0b8d60543304f783366d7279d78473504d1f7"
+    },
+    {
+      "version": "2.0.29",
+      "released": "2026-04-23 17:46",
+      "size": 82447,
+      "checksum": "611ae8a601156b31e5f2ec2428c7ef942263e4db3e9629f5dde88d8247497898"
+    },
+    {
+      "version": "2.0.30",
+      "released": "2026-04-23 17:51",
+      "size": 84305,
+      "checksum": "bbc29e57febf5ef566c59084bc8fdd30d9cb4bca8966b8716cc2c3dc15e62ae7"
+    },
+    {
+      "version": "2.0.31",
+      "released": "2026-04-23 18:50",
+      "size": 84739,
+      "checksum": "8d4758f8a53cede9e44cdb815f258be2f7741db44684b50a98392f622ba795c1"
+    },
+    {
+      "version": "2.0.32",
+      "released": "2026-04-23 19:04",
+      "size": 101928,
+      "checksum": "919f8fce32c347bf1280d1574b9ba52de9a2a082481a50d7d1da80de1230edfd"
+    },
+    {
+      "version": "2.0.33",
+      "released": "2026-04-23 19:07",
+      "size": 110396,
+      "checksum": "77129e98bc7a592ea26f54e23ffa3f67270be71ba217aab898fe655d36668b23"
+    },
+    {
+      "version": "2.0.34",
+      "released": "2026-04-23 19:28",
+      "size": 133111,
+      "checksum": "35586139ee0542762284a7895740920beca3caa3feb6a5d9248304d8492df763"
+    },
+    {
+      "version": "2.0.35",
+      "released": "2026-04-23 19:45",
+      "size": 134122,
+      "checksum": "66c09bb04fabbfe25697a5e223988c1e104abfd9f1d385e2dc9d1a3c1527f8ec"
+    },
+    {
+      "version": "2.0.36",
+      "released": "2026-04-23 19:49",
+      "size": 137827,
+      "checksum": "1b4eb576db2a619e5f700d0a001b956b7660af4fb5ad19fc6b5db14349d1f894"
+    },
+    {
+      "version": "2.0.37",
+      "released": "2026-04-23 20:07",
+      "size": 143446,
+      "checksum": "e98c5f696f51b563100be606196fdae6f160f350b1b70318adf61a2b95551c8c"
+    },
+    {
+      "version": "2.0.38",
+      "released": "2026-04-23 20:15",
+      "size": 149810,
+      "checksum": "8c9e7e7d65190b916d92da4c2cb47f4b423b2eaf2fee4d0e30aa851dcac94d98"
+    },
+    {
+      "version": "2.0.39",
+      "released": "2026-04-23 20:47",
+      "size": 151232,
+      "checksum": "1a2dfc9c3a5ed13084d1b4c3cd8be816998089a7dd89cec129187bcd79ee3618"
     }
   ]
 }
