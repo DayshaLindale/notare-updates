@@ -182,6 +182,14 @@
         let stripe = null;
         let elements = null;
         let clientSecret = null;
+        // Tiers available for purchase RIGHT NOW. WS4 (Live Capture) and WS5
+        // (Production & Delivery) are still being built — anything that depends
+        // on them is filtered out so we don't sell what we can't yet deliver.
+        const AVAILABLE_TIERS = new Set([
+            'ws12_only', 'ws12_only_annual',
+            'ws3_only',  'ws3_only_annual',
+        ]);
+
         let selectedTier = null;
         let tiers = [];
         let billingMode = 'monthly';  // toggled by setBilling()
@@ -224,8 +232,11 @@
         }
 
         function renderTiers() {
-            // Filter to current billing mode (monthly vs annual)
-            const visible = tiers.filter(t => billingMode === 'annual' ? tierIsAnnual(t) : !tierIsAnnual(t));
+            // Filter to current billing mode (monthly vs annual) AND to tiers that
+            // are actually shippable today (see AVAILABLE_TIERS).
+            const visible = tiers
+                .filter(t => AVAILABLE_TIERS.has(t.id))
+                .filter(t => billingMode === 'annual' ? tierIsAnnual(t) : !tierIsAnnual(t));
             // Sort: bundles first (transcription, reporter, full), then standalones
             const order = (id) => {
                 if (id.startsWith('full_suite')) return 1;
@@ -298,9 +309,10 @@
             renderTiers();
         };
 
-        // URL param ?tier=foo preselects a plan; if foo is _annual, default to annual mode
+        // URL param ?tier=foo preselects a plan; if foo is _annual, default to annual mode.
+        // Ignore preselect if the tier isn't currently available (coming-soon hardlinks).
         const urlTier = new URLSearchParams(location.search).get('tier');
-        if (urlTier && urlTier.endsWith('_annual')) {
+        if (urlTier && AVAILABLE_TIERS.has(urlTier) && urlTier.endsWith('_annual')) {
             billingMode = 'annual';
             // Update toggle visuals after DOM is ready (deferred so HTML elements exist)
             setTimeout(() => setBilling('annual'), 0);
