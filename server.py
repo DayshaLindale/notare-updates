@@ -2086,11 +2086,15 @@ async def notare_create_subscription(request: Request):
         # 3. Create the Subscription with payment_behavior=default_incomplete
         # so the first invoice's PaymentIntent is created up-front and we can
         # return its client_secret to the frontend for the Payment Element.
+        # Stripe API >= 2024-09-30 returns the secret as
+        # invoice.confirmation_secret.client_secret instead of the legacy
+        # invoice.payment_intent.client_secret. Try both for compatibility.
         sub = _notare_stripe_request("POST", "/v1/subscriptions", [
             ("customer", customer["id"]),
             ("items[0][price]", price_id),
             ("payment_behavior", "default_incomplete"),
             ("payment_settings[save_default_payment_method]", "on_subscription"),
+            ("expand[]", "latest_invoice.confirmation_secret"),
             ("expand[]", "latest_invoice.payment_intent"),
             ("metadata[tier_id]", tier_id),
             ("metadata[email]", email),
@@ -2100,8 +2104,12 @@ async def notare_create_subscription(request: Request):
         ])
 
         invoice = sub.get("latest_invoice") or {}
-        pi = invoice.get("payment_intent") or {}
-        client_secret = pi.get("client_secret")
+        # New API (>= 2024-09-30): confirmation_secret on the invoice
+        client_secret = ((invoice.get("confirmation_secret") or {}).get("client_secret"))
+        # Legacy API: payment_intent on the invoice
+        if not client_secret:
+            pi = invoice.get("payment_intent") or {}
+            client_secret = pi.get("client_secret") if isinstance(pi, dict) else None
         if not client_secret:
             return JSONResponse({"error": "no client_secret returned by Stripe"}, status_code=500)
 
