@@ -1938,12 +1938,17 @@ async def sozawen_validate_key(request: Request):
 # Each tier defaults to monthly; *_annual variants set interval=year.
 NOTARE_TIER_CATALOG = {
     # ─── Standalone single-workspace (per-user, flat) ──────────────────────
-    "ws4_only":        {"label": "Live Capture (WS4)",                  "amount_cents": 8000,   "interval": "month", "ws": ["realtime"],                                  "profs": []},
-    "ws4_only_annual": {"label": "Live Capture (WS4) — annual",         "amount_cents": 88000,  "interval": "year",  "ws": ["realtime"],                                  "profs": []},
-    "ws5_only":        {"label": "Production & Delivery (WS5)",         "amount_cents": 7000,   "interval": "month", "ws": ["agency_suite"],                              "profs": []},
-    "ws5_only_annual": {"label": "Production & Delivery (WS5) — annual","amount_cents": 77000,  "interval": "year",  "ws": ["agency_suite"],                              "profs": []},
+    # Annual = 11x monthly across the board (one month free).
+    "ws12_only":        {"label": "Transcribe + ASR Cleanup (WS1+2)",         "amount_cents": 5000,   "interval": "month", "ws": ["asr", "asr_cleanup"],   "profs": []},
+    "ws12_only_annual": {"label": "Transcribe + ASR Cleanup (WS1+2) — annual","amount_cents": 55000,  "interval": "year",  "ws": ["asr", "asr_cleanup"],   "profs": []},
+    "ws3_only":         {"label": "Proofreading (WS3)",                       "amount_cents": 5000,   "interval": "month", "ws": ["proofing"],             "profs": ["depo_direct"]},
+    "ws3_only_annual":  {"label": "Proofreading (WS3) — annual",              "amount_cents": 55000,  "interval": "year",  "ws": ["proofing"],             "profs": ["depo_direct"]},
+    "ws4_only":         {"label": "Live Capture (WS4)",                       "amount_cents": 8000,   "interval": "month", "ws": ["realtime"],             "profs": []},
+    "ws4_only_annual":  {"label": "Live Capture (WS4) — annual",              "amount_cents": 88000,  "interval": "year",  "ws": ["realtime"],             "profs": []},
+    "ws5_only":         {"label": "Production & Delivery (WS5)",              "amount_cents": 7000,   "interval": "month", "ws": ["agency_suite"],         "profs": []},
+    "ws5_only_annual":  {"label": "Production & Delivery (WS5) — annual",     "amount_cents": 77000,  "interval": "year",  "ws": ["agency_suite"],         "profs": []},
 
-    # ─── Bundle tiers — flat per-user (no transcript-volume metering) ───────
+    # ─── Bundle tiers — flat per-license (no transcript-volume metering) ────
     # Transcription Bundle: WS1+WS2+WS3+WS5 (no Live capture). Audio comes
     # from courts/clients; the agency does ASR, cleanup, proofing, delivery.
     "transcription_bundle":        {"label": "Transcription Suite (WS1+2+3+5)",         "amount_cents": 15000,  "interval": "month", "ws": ["asr", "asr_cleanup", "proofing", "agency_suite"],            "profs": ["depo_direct"]},
@@ -1952,12 +1957,12 @@ NOTARE_TIER_CATALOG = {
     # Reporter Bundle: WS2+WS3+WS4 (no upload-side WS1, no agency delivery WS5).
     # Solo reporter capturing live and producing a clean transcript that gets
     # handed to whoever they work for.
-    "reporter_bundle":         {"label": "Reporter Suite (WS2+3+4)",        "amount_cents": 14900,  "interval": "month", "ws": ["asr_cleanup", "proofing", "realtime"],                       "profs": ["depo_direct"]},
-    "reporter_bundle_annual":  {"label": "Reporter Suite (WS2+3+4) — annual","amount_cents": 163900, "interval": "year",  "ws": ["asr_cleanup", "proofing", "realtime"],                       "profs": ["depo_direct"]},
+    "reporter_bundle":         {"label": "Reporter Suite (WS2+3+4)",        "amount_cents": 15000,  "interval": "month", "ws": ["asr_cleanup", "proofing", "realtime"],                       "profs": ["depo_direct"]},
+    "reporter_bundle_annual":  {"label": "Reporter Suite (WS2+3+4) — annual","amount_cents": 165000, "interval": "year",  "ws": ["asr_cleanup", "proofing", "realtime"],                       "profs": ["depo_direct"]},
 
     # Full Suite: all 5 workspaces. Agencies running end-to-end pipelines.
-    "full_suite":              {"label": "Full Suite — all 5 workspaces",   "amount_cents": 19900,  "interval": "month", "ws": ["asr", "asr_cleanup", "proofing", "realtime", "agency_suite"], "profs": ["depo_direct", "legacy_oregon", "legacy_texas"]},
-    "full_suite_annual":       {"label": "Full Suite — all 5 (annual)",     "amount_cents": 218900, "interval": "year",  "ws": ["asr", "asr_cleanup", "proofing", "realtime", "agency_suite"], "profs": ["depo_direct", "legacy_oregon", "legacy_texas"]},
+    "full_suite":              {"label": "Full Suite — all 5 workspaces",   "amount_cents": 20000,  "interval": "month", "ws": ["asr", "asr_cleanup", "proofing", "realtime", "agency_suite"], "profs": ["depo_direct", "legacy_oregon", "legacy_texas"]},
+    "full_suite_annual":       {"label": "Full Suite — all 5 (annual)",     "amount_cents": 220000, "interval": "year",  "ws": ["asr", "asr_cleanup", "proofing", "realtime", "agency_suite"], "profs": ["depo_direct", "legacy_oregon", "legacy_texas"]},
 
     # ─── LEGACY volume-tier bundles (kept for existing customers; not
     # shown on new checkout flows). Pre-flat-pricing model. New buyers get

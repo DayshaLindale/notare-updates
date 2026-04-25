@@ -115,6 +115,17 @@
         <!-- TIER PICKER -->
         <div class="card">
             <h3>1. Choose your plan</h3>
+            <!-- Monthly / Annual toggle -->
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                <button id="billingMonthly" type="button" onclick="setBilling('monthly')"
+                    style="padding: 8px 20px; font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; border: 1px solid var(--border); border-radius: 4px 0 0 4px; background: var(--navy); color: white;">
+                    MONTHLY
+                </button>
+                <button id="billingAnnual" type="button" onclick="setBilling('annual')"
+                    style="padding: 8px 20px; font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; border: 1px solid var(--border); border-left: none; border-radius: 0 4px 4px 0; background: white; color: var(--text-body);">
+                    ANNUAL <span style="color: var(--gold); font-weight: 700;">— save 1 month</span>
+                </button>
+            </div>
             <div class="tier-list" id="tierList">
                 <div style="font-size: 13px; color: var(--text-muted); padding: 18px;">Loading plans&hellip;</div>
             </div>
@@ -173,6 +184,7 @@
         let clientSecret = null;
         let selectedTier = null;
         let tiers = [];
+        let billingMode = 'monthly';  // toggled by setBilling()
 
         const tierList = document.getElementById('tierList');
         const sumLabel = document.getElementById('sumLabel');
@@ -207,29 +219,92 @@
                 : `$${dollars.toFixed(2)}`;
         }
 
+        function tierIsAnnual(t) {
+            return t.interval === 'year' || (t.id || '').endsWith('_annual');
+        }
+
         function renderTiers() {
-            tierList.innerHTML = tiers.map(t => `
+            // Filter to current billing mode (monthly vs annual)
+            const visible = tiers.filter(t => billingMode === 'annual' ? tierIsAnnual(t) : !tierIsAnnual(t));
+            // Sort: bundles first (transcription, reporter, full), then standalones
+            const order = (id) => {
+                if (id.startsWith('full_suite')) return 1;
+                if (id.startsWith('transcription_bundle')) return 2;
+                if (id.startsWith('reporter_bundle')) return 3;
+                if (id.startsWith('ws4_only')) return 4;
+                if (id.startsWith('ws5_only')) return 5;
+                return 9;
+            };
+            visible.sort((a, b) => order(a.id) - order(b.id));
+
+            tierList.innerHTML = visible.map(t => {
+                const periodLabel = tierIsAnnual(t) ? '/YR' : '/MO';
+                return `
                 <button type="button" class="tier-btn" data-tier="${t.id}">
-                    <span class="tier-name">${t.label}</span>
-                    <span><span class="tier-price">${fmtUSD(t.amount_cents)}</span><span class="tier-price-period">/MO</span></span>
-                </button>
-            `).join('');
+                    <span class="tier-name">${t.label.replace(' — annual', '')}</span>
+                    <span><span class="tier-price">${fmtUSD(t.amount_cents)}</span><span class="tier-price-period">${periodLabel}</span></span>
+                </button>`;
+            }).join('');
+
             tierList.querySelectorAll('.tier-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     tierList.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     selectedTier = btn.dataset.tier;
                     const t = tiers.find(x => x.id === selectedTier);
+                    const period = tierIsAnnual(t) ? '/yr' : '/mo';
                     sumLabel.textContent = t.label;
-                    sumTotal.textContent = `${fmtUSD(t.amount_cents)}/mo`;
-                    submitLabel.textContent = `Subscribe — ${fmtUSD(t.amount_cents)}/mo`;
+                    sumTotal.textContent = `${fmtUSD(t.amount_cents)}${period}`;
+                    submitLabel.textContent = `Subscribe — ${fmtUSD(t.amount_cents)}${period}`;
                     maybeInitPayment();
                 });
             });
+
+            // Re-select if previously selected tier still visible (across toggle)
+            if (selectedTier) {
+                const stillVisible = visible.find(t => t.id === selectedTier);
+                if (stillVisible) {
+                    tierList.querySelector(`[data-tier="${selectedTier}"]`)?.click();
+                } else {
+                    // Try to map monthly→annual or vice versa for the same bundle
+                    const base = selectedTier.replace('_annual', '');
+                    const target = billingMode === 'annual' ? `${base}_annual` : base;
+                    if (visible.find(t => t.id === target)) {
+                        const btn = tierList.querySelector(`[data-tier="${target}"]`);
+                        if (btn) btn.click();
+                    } else {
+                        selectedTier = null;
+                    }
+                }
+            }
         }
 
-        // URL param ?tier=bundle_5 preselects a plan
+        window.setBilling = function(mode) {
+            const monthlyBtn = document.getElementById('billingMonthly');
+            const annualBtn  = document.getElementById('billingAnnual');
+            const isAnnual = (mode === 'annual');
+            billingMode = mode;
+            if (isAnnual) {
+                annualBtn.style.background = 'var(--navy)';
+                annualBtn.style.color = 'white';
+                monthlyBtn.style.background = 'white';
+                monthlyBtn.style.color = 'var(--text-body)';
+            } else {
+                monthlyBtn.style.background = 'var(--navy)';
+                monthlyBtn.style.color = 'white';
+                annualBtn.style.background = 'white';
+                annualBtn.style.color = 'var(--text-body)';
+            }
+            renderTiers();
+        };
+
+        // URL param ?tier=foo preselects a plan; if foo is _annual, default to annual mode
         const urlTier = new URLSearchParams(location.search).get('tier');
+        if (urlTier && urlTier.endsWith('_annual')) {
+            billingMode = 'annual';
+            // Update toggle visuals after DOM is ready (deferred so HTML elements exist)
+            setTimeout(() => setBilling('annual'), 0);
+        }
 
         // Init payment form once we have tier + buyer email + name
         let lastInitKey = '';
