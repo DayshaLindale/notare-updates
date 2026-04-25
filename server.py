@@ -1934,16 +1934,44 @@ async def sozawen_validate_key(request: Request):
 # ---------------------------------------------------------------------------
 
 # Tier catalog — must match site.html and admin.html. Amounts in cents.
+# `interval` = "month" or "year". Yearly prices = 11x monthly (1 month free).
+# Each tier defaults to monthly; *_annual variants set interval=year.
 NOTARE_TIER_CATALOG = {
-    "proofing_5":  {"label": "Proofreading — Up to 5/mo",            "amount_cents": 25000,  "ws": ["proofing"],            "profs": ["depo_direct"]},
-    "proofing_15": {"label": "Proofreading — Up to 15/mo",           "amount_cents": 67500,  "ws": ["proofing"],            "profs": ["depo_direct"]},
-    "proofing_30": {"label": "Proofreading — Up to 30/mo",           "amount_cents": 105000, "ws": ["proofing"],            "profs": ["depo_direct"]},
-    "asr_5":       {"label": "Transcribe + ASR Cleanup — Up to 5/mo",  "amount_cents": 30000,  "ws": ["asr", "asr_cleanup"], "profs": []},
-    "asr_15":      {"label": "Transcribe + ASR Cleanup — Up to 15/mo", "amount_cents": 80000,  "ws": ["asr", "asr_cleanup"], "profs": []},
-    "asr_30":      {"label": "Transcribe + ASR Cleanup — Up to 30/mo", "amount_cents": 125000, "ws": ["asr", "asr_cleanup"], "profs": []},
-    "bundle_5":    {"label": "Full Bundle — Up to 5/mo",             "amount_cents": 45000,  "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
-    "bundle_15":   {"label": "Full Bundle — Up to 15/mo",            "amount_cents": 120000, "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
-    "bundle_30":   {"label": "Full Bundle — Up to 30/mo",            "amount_cents": 185000, "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
+    # ─── Standalone single-workspace (per-user, flat) ──────────────────────
+    "ws4_only":        {"label": "Live Capture (WS4)",                  "amount_cents": 8000,   "interval": "month", "ws": ["realtime"],                                  "profs": []},
+    "ws4_only_annual": {"label": "Live Capture (WS4) — annual",         "amount_cents": 88000,  "interval": "year",  "ws": ["realtime"],                                  "profs": []},
+    "ws5_only":        {"label": "Production & Delivery (WS5)",         "amount_cents": 7000,   "interval": "month", "ws": ["agency_suite"],                              "profs": []},
+    "ws5_only_annual": {"label": "Production & Delivery (WS5) — annual","amount_cents": 77000,  "interval": "year",  "ws": ["agency_suite"],                              "profs": []},
+
+    # ─── Bundle tiers — flat per-user (no transcript-volume metering) ───────
+    # Transcription Bundle: WS1+WS2+WS3+WS5 (no Live capture). Audio comes
+    # from courts/clients; the agency does ASR, cleanup, proofing, delivery.
+    "transcription_bundle":        {"label": "Transcription Suite (WS1+2+3+5)",         "amount_cents": 15000,  "interval": "month", "ws": ["asr", "asr_cleanup", "proofing", "agency_suite"],            "profs": ["depo_direct"]},
+    "transcription_bundle_annual": {"label": "Transcription Suite (WS1+2+3+5) — annual","amount_cents": 165000, "interval": "year",  "ws": ["asr", "asr_cleanup", "proofing", "agency_suite"],            "profs": ["depo_direct"]},
+
+    # Reporter Bundle: WS2+WS3+WS4 (no upload-side WS1, no agency delivery WS5).
+    # Solo reporter capturing live and producing a clean transcript that gets
+    # handed to whoever they work for.
+    "reporter_bundle":         {"label": "Reporter Suite (WS2+3+4)",        "amount_cents": 14900,  "interval": "month", "ws": ["asr_cleanup", "proofing", "realtime"],                       "profs": ["depo_direct"]},
+    "reporter_bundle_annual":  {"label": "Reporter Suite (WS2+3+4) — annual","amount_cents": 163900, "interval": "year",  "ws": ["asr_cleanup", "proofing", "realtime"],                       "profs": ["depo_direct"]},
+
+    # Full Suite: all 5 workspaces. Agencies running end-to-end pipelines.
+    "full_suite":              {"label": "Full Suite — all 5 workspaces",   "amount_cents": 19900,  "interval": "month", "ws": ["asr", "asr_cleanup", "proofing", "realtime", "agency_suite"], "profs": ["depo_direct", "legacy_oregon", "legacy_texas"]},
+    "full_suite_annual":       {"label": "Full Suite — all 5 (annual)",     "amount_cents": 218900, "interval": "year",  "ws": ["asr", "asr_cleanup", "proofing", "realtime", "agency_suite"], "profs": ["depo_direct", "legacy_oregon", "legacy_texas"]},
+
+    # ─── LEGACY volume-tier bundles (kept for existing customers; not
+    # shown on new checkout flows). Pre-flat-pricing model. New buyers get
+    # the per-user bundles above. Existing customers retain their tier
+    # until they upgrade. ──────────────────────────────────────────────────
+    "proofing_5":  {"label": "[legacy] Proofreading — Up to 5/mo",            "amount_cents": 25000,  "interval": "month", "ws": ["proofing"],            "profs": ["depo_direct"]},
+    "proofing_15": {"label": "[legacy] Proofreading — Up to 15/mo",           "amount_cents": 67500,  "interval": "month", "ws": ["proofing"],            "profs": ["depo_direct"]},
+    "proofing_30": {"label": "[legacy] Proofreading — Up to 30/mo",           "amount_cents": 105000, "interval": "month", "ws": ["proofing"],            "profs": ["depo_direct"]},
+    "asr_5":       {"label": "[legacy] Transcribe + ASR Cleanup — Up to 5/mo",  "amount_cents": 30000,  "interval": "month", "ws": ["asr", "asr_cleanup"], "profs": []},
+    "asr_15":      {"label": "[legacy] Transcribe + ASR Cleanup — Up to 15/mo", "amount_cents": 80000,  "interval": "month", "ws": ["asr", "asr_cleanup"], "profs": []},
+    "asr_30":      {"label": "[legacy] Transcribe + ASR Cleanup — Up to 30/mo", "amount_cents": 125000, "interval": "month", "ws": ["asr", "asr_cleanup"], "profs": []},
+    "bundle_5":    {"label": "[legacy] Full Bundle — Up to 5/mo",             "amount_cents": 45000,  "interval": "month", "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
+    "bundle_15":   {"label": "[legacy] Full Bundle — Up to 15/mo",            "amount_cents": 120000, "interval": "month", "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
+    "bundle_30":   {"label": "[legacy] Full Bundle — Up to 30/mo",            "amount_cents": 185000, "interval": "month", "ws": ["asr", "asr_cleanup", "proofing"], "profs": ["depo_direct"]},
 }
 
 
@@ -2017,11 +2045,12 @@ def _notare_get_or_create_price(tier_id: str) -> str:
         ("metadata[tier_id]", tier_id),
         ("metadata[product]", "notare"),
     ])
-    # Create recurring Price attached to the Product
+    # Create recurring Price attached to the Product. Interval is "month"
+    # for all monthly tiers and "year" for *_annual variants.
     price = _notare_stripe_request("POST", "/v1/prices", [
         ("unit_amount", str(spec["amount_cents"])),
         ("currency", "usd"),
-        ("recurring[interval]", "month"),
+        ("recurring[interval]", spec.get("interval", "month")),
         ("product", product["id"]),
         ("metadata[tier_id]", tier_id),
     ])
@@ -2032,12 +2061,22 @@ def _notare_get_or_create_price(tier_id: str) -> str:
 
 @app.get("/api/notare/checkout-config")
 async def notare_checkout_config():
-    """Frontend boot config — publishable key + tier catalog for the picker."""
+    """Frontend boot config — publishable key + tier catalog for the picker.
+    Hides tiers labeled '[legacy]' from public checkout; they remain valid
+    for existing customers but new buyers only see the current per-user
+    pricing model.
+    """
     return JSONResponse({
         "publishable_key": NOTARE_STRIPE_PUBLISHABLE_KEY,
         "tiers": [
-            {"id": tier_id, "label": spec["label"], "amount_cents": spec["amount_cents"]}
+            {
+                "id": tier_id,
+                "label": spec["label"],
+                "amount_cents": spec["amount_cents"],
+                "interval": spec.get("interval", "month"),
+            }
             for tier_id, spec in NOTARE_TIER_CATALOG.items()
+            if not spec.get("label", "").startswith("[legacy]")
         ],
     })
 
@@ -2147,8 +2186,12 @@ def _notare_create_license_for_subscription(tier_id: str, customer_email: str, c
     else:
         raise RuntimeError("could not generate unique key")
 
-    # 30 days from now — license rolls forward each renewal via webhook
-    expires_dt = datetime.now() + timedelta(days=30)
+    # Expiry depends on billing interval — yearly subs get 365 days,
+    # monthly subs get 30. License rolls forward each successful renewal
+    # via the webhook handler (_notare_extend_license_for_subscription).
+    interval = spec.get("interval", "month")
+    expiry_days = 365 if interval == "year" else 30
+    expires_dt = datetime.now() + timedelta(days=expiry_days)
 
     new_lic = {
         "key": candidate,
@@ -2169,11 +2212,17 @@ def _notare_create_license_for_subscription(tier_id: str, customer_email: str, c
 
 
 def _notare_extend_license_for_subscription(subscription_id: str) -> dict | None:
-    """Find the license tied to this subscription and push its expiry forward
-    by 30 days. Called on each successful renewal invoice."""
+    """Find the license tied to this subscription and push its expiry forward.
+    Yearly subscriptions extend by 365 days; monthly by 30. Called on each
+    successful renewal invoice."""
     admin_data = _load_admin_data()
     for lic in admin_data.get("licenses", []):
         if lic.get("stripe_subscription_id") == subscription_id:
+            tier = lic.get("tier", "")
+            spec = NOTARE_TIER_CATALOG.get(tier, {})
+            interval = spec.get("interval", "month")
+            extend_days = 365 if interval == "year" else 30
+
             cur = lic.get("expires") or datetime.now().strftime("%Y-%m-%d")
             try:
                 cur_dt = datetime.strptime(cur, "%Y-%m-%d")
@@ -2181,7 +2230,7 @@ def _notare_extend_license_for_subscription(subscription_id: str) -> dict | None
                 cur_dt = datetime.now()
             # Extend from whichever is later: current expiry or now
             base = max(cur_dt, datetime.now())
-            new_expires = (base + timedelta(days=30)).strftime("%Y-%m-%d")
+            new_expires = (base + timedelta(days=extend_days)).strftime("%Y-%m-%d")
             lic["expires"] = new_expires
             lic["status"] = "active"
             _save_admin_data(admin_data)
