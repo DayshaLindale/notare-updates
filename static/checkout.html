@@ -183,11 +183,16 @@
         let elements = null;
         let clientSecret = null;
         // Tiers available for purchase RIGHT NOW. WS4 (Live Capture) and WS5
-        // (Production & Delivery) are still being built — anything that depends
-        // on them is filtered out so we don't sell what we can't yet deliver.
+        // (Production & Delivery) standalones are blocked because they'd be
+        // paying for something that doesn't exist yet. Bundles ARE purchasable —
+        // they include WS1+2+3 which work today, and the missing workspaces
+        // unlock for the customer when they ship.
         const AVAILABLE_TIERS = new Set([
-            'ws12_only', 'ws12_only_annual',
-            'ws3_only',  'ws3_only_annual',
+            'ws12_only',            'ws12_only_annual',
+            'ws3_only',             'ws3_only_annual',
+            'transcription_bundle', 'transcription_bundle_annual',
+            'reporter_bundle',      'reporter_bundle_annual',
+            'full_suite',           'full_suite_annual',
         ]);
 
         let selectedTier = null;

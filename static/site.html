@@ -468,9 +468,8 @@
         <!-- Bundle cards: 3 main bundles -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 24px;">
 
-            <!-- Transcription Suite (COMING SOON — depends on WS5) -->
-            <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); position: relative; opacity: 0.85;">
-                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--text-muted); color: white; padding: 4px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 2px;">COMING SOON</div>
+            <!-- Transcription Suite -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
                 <div style="font-size: 11px; color: var(--gold); font-weight: 700; letter-spacing: 2px; margin-bottom: 12px;">TRANSCRIPTION SUITE</div>
                 <h3 style="font-size: 19px; color: var(--navy); margin-bottom: 8px; font-family: 'Inter', sans-serif; font-weight: 600;">For agencies receiving audio</h3>
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6;">Court / client sends you the audio. You handle ASR, cleanup, proofing, and delivery. Live capture not needed.</p>
@@ -483,14 +482,13 @@
                     <div>✓ <strong>WS1</strong> — Transcribe (file upload)</div>
                     <div>✓ <strong>WS2</strong> — ASR Cleanup</div>
                     <div>✓ <strong>WS3</strong> — Proofreading</div>
-                    <div style="color: var(--text-muted);">⏳ <strong>WS5</strong> — Production &amp; Delivery <em>(building)</em></div>
+                    <div style="color: var(--text-muted);">⏳ <strong>WS5</strong> — Production &amp; Delivery <em>(coming soon)</em></div>
                 </div>
-                <span style="display: block; text-align: center; background: var(--text-muted); color: white; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; letter-spacing: 1px; margin-top: 28px; cursor: not-allowed;">Available when WS5 ships</span>
+                <a href="/static/checkout.html?tier=transcription_bundle" class="btn-primary tier-cta" data-monthly-tier="transcription_bundle" data-annual-tier="transcription_bundle_annual" style="display: block; text-align: center; background: var(--navy); color: var(--gold); padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 1px; margin-top: 28px;">Subscribe</a>
             </div>
 
-            <!-- Reporter Suite (COMING SOON — depends on WS4) -->
-            <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); position: relative; opacity: 0.85;">
-                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--text-muted); color: white; padding: 4px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 2px;">COMING SOON</div>
+            <!-- Reporter Suite -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
                 <div style="font-size: 11px; color: var(--gold); font-weight: 700; letter-spacing: 2px; margin-bottom: 12px;">REPORTER SUITE</div>
                 <h3 style="font-size: 19px; color: var(--navy); margin-bottom: 8px; font-family: 'Inter', sans-serif; font-weight: 600;">For solo reporters</h3>
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6;">You're capturing live audio and producing the clean transcript. Your agency handles delivery — you don't need WS5.</p>
@@ -502,14 +500,14 @@
                 <div style="font-size: 13px; color: var(--text-body); line-height: 1.9;">
                     <div>✓ <strong>WS2</strong> — ASR Cleanup</div>
                     <div>✓ <strong>WS3</strong> — Proofreading</div>
-                    <div style="color: var(--text-muted);">⏳ <strong>WS4</strong> — Live Capture <em>(building)</em></div>
+                    <div style="color: var(--text-muted);">⏳ <strong>WS4</strong> — Live Capture <em>(coming soon)</em></div>
                 </div>
-                <span style="display: block; text-align: center; background: var(--text-muted); color: white; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; letter-spacing: 1px; margin-top: 28px; cursor: not-allowed;">Available when WS4 ships</span>
+                <a href="/static/checkout.html?tier=reporter_bundle" class="btn-primary tier-cta" data-monthly-tier="reporter_bundle" data-annual-tier="reporter_bundle_annual" style="display: block; text-align: center; background: var(--navy); color: var(--gold); padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 1px; margin-top: 28px;">Subscribe</a>
             </div>
 
-            <!-- Full Suite (COMING SOON — depends on WS4 + WS5) -->
-            <div style="background: var(--cream); border: 2px solid var(--gold); border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 18px rgba(200,165,92,0.15); position: relative; opacity: 0.9;">
-                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--text-muted); color: white; padding: 4px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 2px;">COMING SOON</div>
+            <!-- Full Suite (highlighted) -->
+            <div style="background: var(--cream); border: 2px solid var(--gold); border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 18px rgba(200,165,92,0.15); position: relative;">
+                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--gold); color: white; padding: 4px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 2px;">BEST VALUE</div>
                 <div style="font-size: 11px; color: var(--gold); font-weight: 700; letter-spacing: 2px; margin-bottom: 12px;">FULL SUITE</div>
                 <h3 style="font-size: 19px; color: var(--navy); margin-bottom: 8px; font-family: 'Inter', sans-serif; font-weight: 600;">For full-pipeline agencies</h3>
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6;">All five workspaces. Capture, transcribe, edit, proof, deliver — one tool, one workflow, one bill.</p>
@@ -522,10 +520,10 @@
                     <div>✓ <strong>WS1</strong> — Transcribe (file upload)</div>
                     <div>✓ <strong>WS2</strong> — ASR Cleanup</div>
                     <div>✓ <strong>WS3</strong> — Proofreading (3 profiles)</div>
-                    <div style="color: var(--text-muted);">⏳ <strong>WS4</strong> — Live Capture <em>(building)</em></div>
-                    <div style="color: var(--text-muted);">⏳ <strong>WS5</strong> — Production &amp; Delivery <em>(building)</em></div>
+                    <div style="color: var(--text-muted);">⏳ <strong>WS4</strong> — Live Capture <em>(coming soon)</em></div>
+                    <div style="color: var(--text-muted);">⏳ <strong>WS5</strong> — Production &amp; Delivery <em>(coming soon)</em></div>
                 </div>
-                <span style="display: block; text-align: center; background: var(--text-muted); color: white; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; letter-spacing: 1px; margin-top: 28px; cursor: not-allowed;">Available when WS4 + WS5 ship</span>
+                <a href="/static/checkout.html?tier=full_suite" class="btn-primary tier-cta" data-monthly-tier="full_suite" data-annual-tier="full_suite_annual" style="display: block; text-align: center; background: var(--navy); color: var(--gold); padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 1px; margin-top: 28px;">Subscribe</a>
             </div>
         </div>
 

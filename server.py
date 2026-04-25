@@ -2106,12 +2106,17 @@ async def notare_create_subscription(request: Request):
 
     if tier_id not in NOTARE_TIER_CATALOG:
         return JSONResponse({"error": "invalid tier"}, status_code=400)
-    # Tiers depending on WS4 (Live Capture) and WS5 (Production & Delivery) are
-    # not yet shippable. Reject server-side so direct API calls can't bypass the
-    # frontend whitelist.
+    # WS4 (Live Capture) and WS5 (Production & Delivery) standalones are blocked
+    # because they'd be selling something that doesn't exist yet. Bundles ARE
+    # purchasable — they include WS1+2+3 today and the missing workspaces unlock
+    # for the customer when they ship. Reject blocked tiers server-side so direct
+    # API calls can't bypass the frontend whitelist.
     NOTARE_AVAILABLE_TIERS = {
-        "ws12_only", "ws12_only_annual",
-        "ws3_only",  "ws3_only_annual",
+        "ws12_only",            "ws12_only_annual",
+        "ws3_only",             "ws3_only_annual",
+        "transcription_bundle", "transcription_bundle_annual",
+        "reporter_bundle",      "reporter_bundle_annual",
+        "full_suite",           "full_suite_annual",
     }
     if tier_id not in NOTARE_AVAILABLE_TIERS:
         return JSONResponse({"error": "tier not yet available"}, status_code=400)
