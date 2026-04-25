@@ -2318,6 +2318,119 @@ async def notare_stripe_webhook(request: Request):
     return JSONResponse({"ok": True, "ignored": etype})
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# AGENCY SUITE (WS5) — Read-only data feed staging
+# ═══════════════════════════════════════════════════════════════════════════
+# These endpoints expose what Notare's existing workflow already produces, so
+# the agency-suite UI (whether mom builds it as a separate page or inside
+# the desktop app) has working data feeds before any agency-specific tables
+# are designed. All admin-only — no public access.
+#
+# When the actual implementation lands, these can be deprecated or extended.
+# They exist NOW so the front-end work isn't blocked on backend decisions.
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/agency/health")
+async def agency_health(authorization: str = Header(None)):
+    """Confirm WS5 staging is alive on the server side. No license required —
+    safe to call from anywhere as a probe."""
+    return JSONResponse({
+        "ok": True,
+        "workspace": "agency_suite",
+        "implementation": "staging — endpoints serve data feeds; full UI pending Mom's build",
+        "endpoints": [
+            "/api/agency/health",
+            "/api/agency/transcripts",
+            "/api/agency/cases",
+            "/api/agency/license-summary",
+        ],
+    })
+
+
+@app.get("/api/agency/transcripts")
+async def agency_list_transcripts(authorization: str = Header(None), limit: int = 200):
+    """List all transcripts that have flowed through Notare's workflow. Pulled
+    from the existing licenses store — every license has customer info that
+    could be a 'job' anchor — but the real source of truth will be a job/case
+    table mom designs. For now this returns the closest available proxy:
+    licensed customers + their workflow tier."""
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    data = _load_admin_data()
+    licenses = data.get("licenses", [])[:limit]
+    # Shape into a "transcript-bearing record" until real job/case data exists
+    transcripts = [
+        {
+            "id": lic.get("key"),
+            "customer_name": lic.get("customer_name", ""),
+            "customer_email": lic.get("email", ""),
+            "org": lic.get("org", ""),
+            "tier": lic.get("tier", ""),
+            "created": lic.get("created", ""),
+            "expires": lic.get("expires", ""),
+            "status": lic.get("status", ""),
+            "stripe_subscription_id": lic.get("stripe_subscription_id", ""),
+            "source": lic.get("source", "manual"),
+        }
+        for lic in licenses
+    ]
+    return JSONResponse({"transcripts": transcripts, "total": len(transcripts)})
+
+
+@app.get("/api/agency/cases")
+async def agency_list_cases(authorization: str = Header(None)):
+    """Group transcripts by org (firm) — closest proxy for cases until mom's
+    real case table exists. When the WS3 proofing pipeline starts attaching
+    case_id to transcript output, this aggregates by case_id instead."""
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    data = _load_admin_data()
+    by_org: dict[str, list] = {}
+    for lic in data.get("licenses", []):
+        org = lic.get("org", "").strip() or "(no org)"
+        by_org.setdefault(org, []).append({
+            "key_tail": (lic.get("key", "") or "")[-8:],
+            "customer_name": lic.get("customer_name", ""),
+            "tier": lic.get("tier", ""),
+            "status": lic.get("status", ""),
+            "created": lic.get("created", ""),
+        })
+    cases = [
+        {"org": org, "transcript_count": len(items), "items": items}
+        for org, items in sorted(by_org.items(), key=lambda x: x[0].lower())
+    ]
+    return JSONResponse({"cases": cases, "total_orgs": len(cases)})
+
+
+@app.get("/api/agency/license-summary")
+async def agency_license_summary(authorization: str = Header(None)):
+    """Top-level numbers for an admin dashboard — total licenses, active vs
+    inactive, subscription customers vs hand-issued, MRR estimate from
+    NOTARE_TIER_CATALOG. Read-only; no state changes."""
+    if not _check_admin_key(authorization):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    data = _load_admin_data()
+    licenses = data.get("licenses", [])
+    active = [l for l in licenses if l.get("status") == "active"]
+    subscription = [l for l in licenses if l.get("source") == "notare_checkout"]
+    mrr_cents = 0
+    for l in subscription:
+        if l.get("status") != "active":
+            continue
+        spec = NOTARE_TIER_CATALOG.get(l.get("tier", ""))
+        if spec:
+            mrr_cents += spec["amount_cents"]
+    return JSONResponse({
+        "total_licenses": len(licenses),
+        "active_licenses": len(active),
+        "subscription_licenses": len(subscription),
+        "manual_licenses": len(licenses) - len(subscription),
+        "mrr_cents": mrr_cents,
+        "mrr_dollars": mrr_cents / 100,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Local development
 # ---------------------------------------------------------------------------
