@@ -1,6 +1,6 @@
 {
-  "current_version": "2.0.47",
-  "released": "2026-04-29 17:35",
+  "current_version": "2.0.48",
+  "released": "2026-04-29 17:43",
   "updates": [
     {
       "version": "1.4.1",
@@ -433,6 +433,12 @@
       "released": "2026-04-29 17:35",
       "size": 137139,
       "checksum": "a21c11858dfa36465cd6bb54d24debc88b145641241e2d4b11b8f2ac1ed9a57e"
+    },
+    {
+      "version": "2.0.48",
+      "released": "2026-04-29 17:43",
+      "size": 3429,
+      "checksum": "3f5651d6f333c720e0d7381310b77de49b2327587ccd7ccb4ee72f31525dd489"
     }
   ]
 }
