@@ -1,6 +1,6 @@
 {
-  "current_version": "2.0.42",
-  "released": "2026-04-28 22:31",
+  "current_version": "2.0.43",
+  "released": "2026-04-28 22:55",
   "updates": [
     {
       "version": "1.4.1",
@@ -403,6 +403,12 @@
       "released": "2026-04-28 22:31",
       "size": 88453,
       "checksum": "90363a3266f5176cb44b740451fc276370c0547186ef04025b902a95e4f2b716"
+    },
+    {
+      "version": "2.0.43",
+      "released": "2026-04-28 22:55",
+      "size": 91412,
+      "checksum": "4628c6a26e6c1901b7021ad8511686ecf43d2fc9d2a25dafd302fe25379a309e"
     }
   ]
 }
