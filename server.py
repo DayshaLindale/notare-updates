@@ -215,6 +215,10 @@ async def validate_license_post(request: Request):
                     "workspaces":     entitlements.get("workspaces", []),
                     "proof_profiles": entitlements.get("proof_profiles", []),
                 },
+                # Timestamps the client's self-heal plugin uses to detect
+                # admin-signaled refreshes. Empty string when not set.
+                "force_refresh_at":         lic.get("force_refresh_at", ""),
+                "entitlements_updated_at":  lic.get("entitlements_updated_at", ""),
             })
     except Exception:
         pass
