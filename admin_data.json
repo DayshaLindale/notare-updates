@@ -207,7 +207,22 @@
       "created": "2026-04-02",
       "expires": "",
       "notes": "First external tester. Non-expiring Professional access in exchange for testing and testimonial.",
-      "tester": true
+      "tester": true,
+      "entitlements": {
+        "workspaces": [
+          "asr",
+          "asr_cleanup",
+          "proofing",
+          "realtime",
+          "reporting"
+        ],
+        "proof_profiles": [
+          "depo_direct",
+          "legacy_oregon",
+          "legacy_texas"
+        ]
+      },
+      "entitlements_updated_at": "2026-05-03T22:12:44.475915"
     },
     {
       "key": "NOTARE-29E58817-D65A3EC7-3B3B9FC5",
@@ -215,6 +230,32 @@
       "customer_name": "Laptop Test",
       "status": "active",
       "expires": ""
+    },
+    {
+      "key": "NOTARE-608D48F6-EFF0530F-2601AA63",
+      "customer_name": "Ryan Eversole",
+      "email": "Ryan.eversole@outlook.com",
+      "org": "",
+      "tier": "professional",
+      "status": "active",
+      "created": "2026-05-03",
+      "expires": "",
+      "entitlements": {
+        "workspaces": [
+          "asr",
+          "asr_cleanup",
+          "proofing",
+          "realtime",
+          "reporting"
+        ],
+        "proof_profiles": [
+          "depo_direct",
+          "legacy_oregon",
+          "legacy_texas"
+        ]
+      },
+      "notes": "Prepurchase tester. Original key restored after deploy wipe.",
+      "tester": true
     }
   ],
   "tokens": {

@@ -34,6 +34,22 @@ UPDATES_DIR = BASE_DIR / "packages"
 MANIFEST_FILE = BASE_DIR / "manifest.json"
 UPDATES_DIR.mkdir(exist_ok=True)
 
+# Runtime data directory. Defaults to BASE_DIR for local dev, but in production
+# we set NOTARE_DATA_DIR to the persistent-disk mount path so admin_data.json
+# (and any other runtime-mutable state) survives deploys. Without this every
+# deploy reset the licenses to whatever was committed in git — which caused
+# weeks of "missing customer key" pain. Bootstrap: if the env points at an
+# empty disk on first deploy, copy whatever shipped in BASE_DIR onto it once.
+DATA_DIR = Path(os.environ.get("NOTARE_DATA_DIR", str(BASE_DIR)))
+if DATA_DIR != BASE_DIR:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _seed_admin = BASE_DIR / "admin_data.json"
+    _live_admin = DATA_DIR / "admin_data.json"
+    if _seed_admin.exists() and not _live_admin.exists():
+        import shutil as _sh
+        _sh.copy2(str(_seed_admin), str(_live_admin))
+        print(f"bootstrapped {_live_admin.name} from {_seed_admin}")
+
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 if not ADMIN_KEY:
     ADMIN_KEY = secrets.token_hex(32)
@@ -143,7 +159,7 @@ async def validate_key(key: str = ""):
         return JSONResponse({"valid": False, "reason": "no_key"})
 
     # Load admin data from the server's copy
-    admin_file = BASE_DIR / "admin_data.json"
+    admin_file = DATA_DIR / "admin_data.json"
     if not admin_file.exists():
         return JSONResponse({"valid": False, "reason": "no_database"})
 
@@ -184,7 +200,7 @@ async def validate_license_post(request: Request):
     if not key:
         return JSONResponse({"valid": False, "reason": "no_key"})
 
-    admin_file = BASE_DIR / "admin_data.json"
+    admin_file = DATA_DIR / "admin_data.json"
     if not admin_file.exists():
         return JSONResponse({"valid": False, "reason": "no_database"})
 
@@ -261,7 +277,7 @@ async def deactivate_license(request: Request):
     if not key:
         return JSONResponse({"error": "No key provided"}, status_code=400)
 
-    admin_file = BASE_DIR / "admin_data.json"
+    admin_file = DATA_DIR / "admin_data.json"
     try:
         admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
         for lic in admin_data.get("licenses", []):
@@ -335,7 +351,7 @@ async def sync_admin_data(request: Request):
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
     try:
         data = await request.json()
-        admin_file = BASE_DIR / "admin_data.json"
+        admin_file = DATA_DIR / "admin_data.json"
         admin_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
         return JSONResponse({"ok": True, "licenses": len(data.get("licenses", []))})
     except Exception as e:
@@ -349,7 +365,7 @@ async def sync_admin_data(request: Request):
 # ---------------------------------------------------------------------------
 
 def _load_admin_data():
-    admin_file = BASE_DIR / "admin_data.json"
+    admin_file = DATA_DIR / "admin_data.json"
     if not admin_file.exists():
         return {"admins": [], "licenses": []}
     try:
@@ -359,7 +375,7 @@ def _load_admin_data():
 
 
 def _save_admin_data(data):
-    admin_file = BASE_DIR / "admin_data.json"
+    admin_file = DATA_DIR / "admin_data.json"
     admin_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
