@@ -715,7 +715,9 @@ async function loadDashboard() {
 
 async function loadLicenses() {
     const r = await authFetch(`${API}/licenses`);
-    const licenses = await r.json();
+    const payload = await r.json();
+    // Server returns {licenses: [...]} — unwrap. Tolerate raw-array responses too.
+    const licenses = Array.isArray(payload) ? payload : (payload.licenses || []);
     document.getElementById('licenseTable').innerHTML = licenses.map(l => `
         <tr>
             <td style="font-family: monospace; font-size: 12px;"><span style="cursor:pointer;" onclick="this.textContent=this.dataset.full; this.style.fontSize='11px'" data-full="${l.key}" title="Click to reveal">${l.key.substring(0,8)}...</span> <button class="btn btn-sm btn-secondary" style="padding:2px 6px; font-size:10px;" onclick="navigator.clipboard.writeText('${l.key}'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy',2000)">Copy</button></td>

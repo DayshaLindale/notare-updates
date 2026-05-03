@@ -480,6 +480,10 @@ async def admin_license_update_entitlements(key: str, request: Request):
             lic["entitlements"] = new_ent
             if "tier" in data:
                 lic["tier"] = data["tier"]
+            # Stamp the change so the client's self-heal plugin picks up new
+            # workspaces/profiles immediately on its next periodic validate
+            # (without waiting for an app restart).
+            lic["entitlements_updated_at"] = datetime.now().isoformat()
             _save_admin_data(admin_data)
             return JSONResponse({"ok": True, "key": key, "entitlements": new_ent})
     return JSONResponse({"error": "Key not found"}, status_code=404)
