@@ -4,3 +4,4 @@ static/NotareSetup_v0.3.0.exe
 .secrets/
 *.secrets
 admin_key*
+admin_data.json
