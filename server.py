@@ -50,6 +50,29 @@ if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
+# Cache-busting middleware. The recurring problem: when admin.html (or any
+# operator-facing static HTML) changes, browsers and Render's edge CDN keep
+# serving the stale copy because no Cache-Control header was sent and they
+# heuristically cache HTML for hours-to-days. That blocks fixes from being
+# seen even after the deploy succeeds.
+#
+# Fix: force HTML responses to revalidate every load. The browser still gets
+# a 304 Not Modified when the file is unchanged (so it's cheap), but a 200
+# with the fresh bytes the moment something changed. JSON responses already
+# don't get cached. Binary download packages (/packages/) keep default
+# caching — those are immutable per filename.
+@app.middleware("http")
+async def _no_cache_html(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    # Only target HTML paths — admin panel, marketing pages, anything with
+    # human-facing rendered content where staleness is a real bug.
+    if path.endswith(".html") or path == "/" or path.endswith("/admin"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+    return response
+
+
 # ---------------------------------------------------------------------------
 # Manifest — tracks current version and update history
 # ---------------------------------------------------------------------------
