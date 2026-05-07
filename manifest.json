@@ -1,6 +1,6 @@
 {
-  "current_version": "2.0.50",
-  "released": "2026-04-29 18:00",
+  "current_version": "2.1.56",
+  "released": "2026-05-07 18:44",
   "updates": [
     {
       "version": "1.4.1",
@@ -451,6 +451,48 @@
       "released": "2026-04-29 18:00",
       "size": 19839,
       "checksum": "bb146db204610214705aecb8a39521304b3db2a923c6624a0f31550104b86f3f"
+    },
+    {
+      "version": "2.1.50",
+      "released": "2026-05-06 17:57",
+      "size": 278215,
+      "checksum": "19dd91c22d5ad7401a56ed30fec623fa0364e0870def788fa228278978312654"
+    },
+    {
+      "version": "2.1.51",
+      "released": "2026-05-06 18:09",
+      "size": 295803,
+      "checksum": "a46c37f69cbf97d6d6db85ecbcd4963733ad04f8db0054e4ca8ec43f4b3df019"
+    },
+    {
+      "version": "2.1.52",
+      "released": "2026-05-06 18:11",
+      "size": 341959,
+      "checksum": "b6fc75eb22a2b613df0a9c38b4c0e2cec9ba3562d0f580e525645da41f0f5080"
+    },
+    {
+      "version": "2.1.53",
+      "released": "2026-05-06 18:17",
+      "size": 361185,
+      "checksum": "1e344b93c139eae230937ac161133529b1f2386e9303c1606be846117ee6964e"
+    },
+    {
+      "version": "2.1.54",
+      "released": "2026-05-06 18:22",
+      "size": 383601,
+      "checksum": "fa978b1dcd86e70025d0a680ba1d8858aa31c2646b11d4cacbf0e87ec70821d9"
+    },
+    {
+      "version": "2.1.55",
+      "released": "2026-05-06 21:02",
+      "size": 401276,
+      "checksum": "87ca1ff635fb136991d508a4e2e7668abce58c2cba16468990a94b5880a6166a"
+    },
+    {
+      "version": "2.1.56",
+      "released": "2026-05-07 18:44",
+      "size": 590596,
+      "checksum": "8632ef3d993089fe6763f5a176bafaa1d57b68a4fd9c6b63422513cf672ba636"
     }
   ]
 }
