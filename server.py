@@ -860,6 +860,12 @@ async def sitemap_xml():
     return FileResponse(str(STATIC_DIR / "sitemap.xml"), media_type="application/xml")
 
 
+@app.get("/googlefb6153095a4f2019.html")
+async def google_search_console_verify():
+    """Google Search Console site-ownership verification file."""
+    return FileResponse(str(STATIC_DIR / "googlefb6153095a4f2019.html"), media_type="text/html")
+
+
 # ---------------------------------------------------------------------------
 # SEO: clean marketing URLs ( /about instead of /static/about.html ).
 # The /static/*.html files still serve (mount is untouched); these are the
