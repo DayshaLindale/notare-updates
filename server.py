@@ -848,6 +848,18 @@ async def root():
     })
 
 
+@app.get("/robots.txt")
+async def robots_txt():
+    """Serve robots.txt from the domain root (not /static/) for crawlers."""
+    return FileResponse(str(STATIC_DIR / "robots.txt"), media_type="text/plain")
+
+
+@app.get("/sitemap.xml")
+async def sitemap_xml():
+    """Serve sitemap.xml from the domain root for search engines."""
+    return FileResponse(str(STATIC_DIR / "sitemap.xml"), media_type="application/xml")
+
+
 @app.get("/health")
 async def health():
     return JSONResponse({"status": "ok"})

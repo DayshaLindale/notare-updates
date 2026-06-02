@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /static/admin.html
+Disallow: /static/sozawen-admin.html
+Disallow: /static/checkout.html
+Disallow: /static/thank-you-notare.html
+
+Sitemap: https://notarelegal.com/sitemap.xml
