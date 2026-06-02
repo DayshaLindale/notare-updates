@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://notarelegal.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://notarelegal.com/static/court-reporting-software.html</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://notarelegal.com/static/legal-transcription-software.html</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://notarelegal.com/static/alternative.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://notarelegal.com/static/download.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://notarelegal.com/static/about.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://notarelegal.com/static/help.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://notarelegal.com/static/contact.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://notarelegal.com/static/terms.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
-  <url><loc>https://notarelegal.com/static/privacy.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://notarelegal.com/court-reporting-software</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://notarelegal.com/legal-transcription-software</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://notarelegal.com/alternative</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://notarelegal.com/download</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://notarelegal.com/about</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://notarelegal.com/help</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://notarelegal.com/contact</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://notarelegal.com/terms</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://notarelegal.com/privacy</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
 </urlset>

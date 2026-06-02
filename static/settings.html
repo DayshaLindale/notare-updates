@@ -19,7 +19,7 @@
             <a href="/static/voices.html">Voices</a>
             <a href="/static/profiles.html">Profiles</a>
             <a href="/static/settings.html">Settings</a>
-            <a href="/static/help.html">Help</a>
+            <a href="/help">Help</a>
         </nav>
     </div>
 
@@ -279,7 +279,7 @@
                 const updateResp = await fetch('/api/update');
                 const update = await updateResp.json();
                 if (update.update_available) {
-                    updateHtml = ` &mdash; <a href="https://notarelegal.com/static/download.html" target="_blank" style="color:var(--gold); font-weight:600;">Update available: v${update.version}</a>`;
+                    updateHtml = ` &mdash; <a href="https://notarelegal.com/download" target="_blank" style="color:var(--gold); font-weight:600;">Update available: v${update.version}</a>`;
                 } else {
                     updateHtml = ' &mdash; <span style="color:var(--green);">Up to date</span>';
                 }

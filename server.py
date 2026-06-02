@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Header, Request
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # ---------------------------------------------------------------------------
@@ -858,6 +858,48 @@ async def robots_txt():
 async def sitemap_xml():
     """Serve sitemap.xml from the domain root for search engines."""
     return FileResponse(str(STATIC_DIR / "sitemap.xml"), media_type="application/xml")
+
+
+# ---------------------------------------------------------------------------
+# SEO: clean marketing URLs ( /about instead of /static/about.html ).
+# The /static/*.html files still serve (mount is untouched); these are the
+# canonical URLs the pages point at. Additive — nothing existing breaks.
+# ---------------------------------------------------------------------------
+
+CLEAN_URL_PAGES = {
+    "/court-reporting-software": "court-reporting-software.html",
+    "/legal-transcription-software": "legal-transcription-software.html",
+    "/alternative": "alternative.html",
+    "/about": "about.html",
+    "/download": "download.html",
+    "/contact": "contact.html",
+    "/help": "help.html",
+    "/privacy": "privacy.html",
+    "/terms": "terms.html",
+}
+
+
+def _make_clean_route(filename: str):
+    async def _serve_clean():
+        return FileResponse(str(STATIC_DIR / filename), media_type="text/html")
+    return _serve_clean
+
+
+for _clean_path, _clean_file in CLEAN_URL_PAGES.items():
+    app.add_api_route(_clean_path, _make_clean_route(_clean_file),
+                      methods=["GET"], include_in_schema=False)
+
+
+@app.middleware("http")
+async def canonical_host_redirect(request: Request, call_next):
+    """301 www.notarelegal.com -> notarelegal.com so only the apex is indexed."""
+    host = request.headers.get("host", "").lower()
+    if host == "www.notarelegal.com":
+        target = "https://notarelegal.com" + request.url.path
+        if request.url.query:
+            target += "?" + request.url.query
+        return RedirectResponse(target, status_code=301)
+    return await call_next(request)
 
 
 @app.get("/health")
