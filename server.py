@@ -152,6 +152,36 @@ async def download_update(version: str):
     return JSONResponse({"error": "Package not found"}, status_code=404)
 
 
+# ---------------------------------------------------------------------------
+# Suspension — operator kill switch.
+#
+# A global `"suspend_all": true` in admin_data.json (or a per-license
+# `"suspended": true`) makes validation fail with reason "suspended". This is
+# the deliberate freeze lever: set the flag, commit admin_data.json, redeploy —
+# every install that re-validates gets rejected and (client-side) has its
+# offline cache wiped. Reversible: set the flag back to false and redeploy.
+#
+# Free-tier Render has no persistent disk, so runtime edits to admin_data.json
+# don't survive a restart — the flag MUST be committed to git to be reliable.
+#
+# The client surfaces only a neutral "contact your administrator" message; the
+# reason is never shown to the end user, by design.
+# ---------------------------------------------------------------------------
+_SUSPEND_MESSAGE = "Licensing check failed — contact your administrator to restore service."
+
+def _suspended_response(admin_data, key=""):
+    """Return a JSONResponse if the fleet (or this key) is suspended, else None."""
+    if admin_data.get("suspend_all"):
+        return JSONResponse({"valid": False, "reason": "suspended",
+                             "message": admin_data.get("suspend_message", _SUSPEND_MESSAGE)})
+    if key:
+        for lic in admin_data.get("licenses", []):
+            if lic.get("key", "").upper() == key.upper() and lic.get("suspended"):
+                return JSONResponse({"valid": False, "reason": "suspended",
+                                     "message": admin_data.get("suspend_message", _SUSPEND_MESSAGE)})
+    return None
+
+
 @app.get("/api/validate-key")
 async def validate_key(key: str = ""):
     """Server-side license validation. Fallback when local admin_data doesn't have the key."""
@@ -165,6 +195,10 @@ async def validate_key(key: str = ""):
 
     try:
         admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
+        # Kill switch — global or per-license suspension short-circuits here.
+        _susp = _suspended_response(admin_data, key)
+        if _susp:
+            return _susp
         for lic in admin_data.get("licenses", []):
             if lic.get("key", "").upper() == key.upper() and lic.get("status") == "active":
                 exp = lic.get("expires", "")
@@ -207,6 +241,12 @@ async def validate_license_post(request: Request):
     try:
         admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
         save_needed = False
+
+        # Kill switch — global or per-license suspension short-circuits here,
+        # BEFORE hardware binding, so a suspended client's cache gets cleared.
+        _susp = _suspended_response(admin_data, key)
+        if _susp:
+            return _susp
 
         for lic in admin_data.get("licenses", []):
             if lic.get("key", "").upper() != key.upper():
@@ -377,6 +417,50 @@ def _load_admin_data():
 def _save_admin_data(data):
     admin_file = DATA_DIR / "admin_data.json"
     admin_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _admin_key_ok(request: Request) -> bool:
+    auth = request.headers.get("Authorization", "")
+    token = auth[7:] if auth[:7].lower() == "bearer " else auth
+    return bool(ADMIN_KEY) and token == ADMIN_KEY
+
+
+@app.get("/api/admin/suspend")
+async def admin_suspend_status(request: Request):
+    """Read the current global suspension state (ADMIN_KEY bearer)."""
+    if not _admin_key_ok(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    data = _load_admin_data()
+    return JSONResponse({
+        "suspend_all": bool(data.get("suspend_all", False)),
+        "suspend_message": data.get("suspend_message", ""),
+    })
+
+
+@app.post("/api/admin/suspend")
+async def admin_suspend(request: Request):
+    """Operator kill switch — flip global suspension on/off at RUNTIME.
+
+    Body: {"suspend": true|false, "message": "optional custom notice"}.
+    Auth: ADMIN_KEY bearer (the same secret used to publish updates).
+
+    Writes admin_data.json on the server's persistent disk, so it survives
+    redeploys and takes effect immediately (no git push, no redeploy needed) —
+    the correct lever for this deployment, where admin_data.json is disk-backed
+    and gitignored. Reversible: POST again with {"suspend": false}.
+    """
+    if not _admin_key_ok(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    data = _load_admin_data()
+    data["suspend_all"] = bool(body.get("suspend", True))
+    if body.get("message"):
+        data["suspend_message"] = body["message"]
+    _save_admin_data(data)
+    return JSONResponse({"ok": True, "suspend_all": data["suspend_all"]})
 
 
 def _generate_license_key():
